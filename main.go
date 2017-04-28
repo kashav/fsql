@@ -47,7 +47,11 @@ func main() {
 		go func(src string) {
 			defer wg.Done()
 
-			filepath.Walk(filepath.Join(usr.HomeDir, src[2:]), func(path string, info os.FileInfo, err error) error {
+			if strings.Contains(src, "~/") {
+				src = filepath.Join(usr.HomeDir, src[2:])
+			}
+
+			filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
 				if path == "." {
 					return nil
 				}
@@ -74,7 +78,10 @@ func main() {
 					}
 
 					if showName {
-						fmt.Printf("%s", filepath.Join("~", path[len(usr.HomeDir):]))
+						if strings.Contains(path, usr.HomeDir) {
+							path = filepath.Join("~", path[len(usr.HomeDir):])
+						}
+						fmt.Printf("%s", path)
 					}
 
 					fmt.Printf("\n")
