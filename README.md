@@ -4,7 +4,7 @@
 
 ### Demo
 
-  - Coming soon
+![](./fsql.gif)
 
 ### Setup / installation
 
