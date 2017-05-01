@@ -159,7 +159,7 @@ func (p *parser) expect(t TokenType) *Token {
 
 func (p *parser) currentError() error {
 	if p.current == nil {
-		return io.EOF
+		return io.ErrUnexpectedEOF
 	}
 
 	if p.current.Type == Unknown {

@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"log"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -15,19 +17,24 @@ import (
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Println("Expected input string.")
+		fmt.Println("Expected query.")
 		os.Exit(1)
 	}
 	input := os.Args[1]
 
 	usr, err := user.Current()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	q, err := query.Run(input)
+
 	if err != nil {
-		panic(err)
+		if err == io.ErrUnexpectedEOF {
+			log.Fatal("Unexpected end of line.")
+		}
+
+		log.Fatal(err)
 	}
 
 	var wg sync.WaitGroup
@@ -42,7 +49,7 @@ func main() {
 			}
 
 			filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
-				if path == "." {
+				if path == "." || path == ".." {
 					return nil
 				}
 

@@ -87,7 +87,7 @@ Use the following to test that your changes comply with [Golint](https://github.
 
 #### __TODO__
 
-  - [ ] Handle errors more gracefully (instead of just panicking everything).
+  - [x] Handle errors more gracefully (instead of just panicking everything).
   - [ ] Add support for regex in string comparisons (e.g. `... ENDSWITH jsx?`).
   - [ ] Add support for `OR` / `AND`  / `()` (for precedence) in condition statements (lexing is already done for these, just need to add the parsers).
   - [ ] Add support for times/dates (to query file creation/modification time).
