@@ -15,6 +15,49 @@ import (
 	"github.com/kshvmdn/fsql/query"
 )
 
+func compareName(comparator query.TokenType, fileName string, inputFileName string) bool {
+	isMatch := false
+
+	switch comparator {
+	case query.BeginsWith:
+		isMatch = strings.HasPrefix(fileName, inputFileName)
+	case query.EndsWith:
+		isMatch = strings.HasSuffix(fileName, inputFileName)
+	case query.Is:
+		isMatch = fileName == inputFileName
+	case query.Contains:
+		isMatch = strings.Contains(fileName, inputFileName)
+	}
+
+	return isMatch
+}
+
+func compareSize(comparator query.TokenType, fileSize int64, inputSizeStr string) bool {
+	isMatch := false
+
+	size, err := strconv.ParseInt(inputSizeStr, 10, 64)
+	if err != nil {
+		return isMatch
+	}
+
+	switch comparator {
+	case query.Equals:
+		isMatch = fileSize == size
+	case query.NotEquals:
+		isMatch = fileSize != size
+	case query.GreaterThanEquals:
+		isMatch = fileSize >= size
+	case query.GreaterThan:
+		isMatch = fileSize > size
+	case query.LessThanEquals:
+		isMatch = fileSize <= size
+	case query.LessThan:
+		isMatch = fileSize < size
+	}
+
+	return isMatch
+}
+
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("Expected query.")
@@ -97,47 +140,4 @@ func main() {
 	}
 
 	wg.Wait()
-}
-
-func compareName(comparator query.TokenType, fileName string, inputFileName string) bool {
-	isMatch := false
-
-	switch comparator {
-	case query.BeginsWith:
-		isMatch = strings.HasPrefix(fileName, inputFileName)
-	case query.EndsWith:
-		isMatch = strings.HasSuffix(fileName, inputFileName)
-	case query.Is:
-		isMatch = fileName == inputFileName
-	case query.Contains:
-		isMatch = strings.Contains(fileName, inputFileName)
-	}
-
-	return isMatch
-}
-
-func compareSize(comparator query.TokenType, fileSize int64, inputSizeStr string) bool {
-	isMatch := false
-
-	size, err := strconv.ParseInt(inputSizeStr, 10, 64)
-	if err != nil {
-		return isMatch
-	}
-
-	switch comparator {
-	case query.Equals:
-		isMatch = fileSize == size
-	case query.NotEquals:
-		isMatch = fileSize != size
-	case query.GreaterThanEquals:
-		isMatch = fileSize >= size
-	case query.GreaterThan:
-		isMatch = fileSize > size
-	case query.LessThanEquals:
-		isMatch = fileSize <= size
-	case query.LessThan:
-		isMatch = fileSize < size
-	}
-
-	return isMatch
 }

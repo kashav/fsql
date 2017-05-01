@@ -7,6 +7,8 @@ type Query struct {
 	Conditions []Condition
 }
 
+// HasAttribute checks if the query's attribute map contains the provided
+// attribute.
 func (q *Query) HasAttribute(attribute string) bool {
 	_, found := q.Attributes[attribute]
 	return found
