@@ -10,7 +10,7 @@
 
   - Requires Go to be [installed](https://golang.org/doc/install) and [configured](https://golang.org/doc/install#testing).
 
-  - Install with Go tools:
+  - Install with Go:
 
     ```sh
     $ go get -v github.com/kshvmdn/fsql
@@ -40,6 +40,8 @@
 
     + `name`
     + `size`
+    + `mode`
+    + `time`
 
   - Supported comparators:
 
@@ -89,7 +91,7 @@ Use the following to test that your changes comply with [Golint](https://github.
   - [ ] Add support for regex in string comparisons (e.g. `... ENDSWITH jsx?`).
   - [ ] Add support for `OR` / `AND`  / `()` (for precedence) in condition statements (lexing is already done for these, just need to add the parsers).
   - [ ] Add support for times/dates (to query file creation/modification time).
-  - [ ] Introduce new attributes to select from (creation/modification time, file mode, _basically whatever else [`os.FileInfo`](https://golang.org/pkg/os/#FileInfo) supports_).
+  - [x] Introduce new attributes to select from (creation/modification time, file mode, _basically whatever else [`os.FileInfo`](https://golang.org/pkg/os/#FileInfo) supports_).
   - [ ] Add unit tests (test files are empty right now).
 
 ### Inspirations

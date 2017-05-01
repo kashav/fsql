@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/kshvmdn/fsql/query"
 )
@@ -31,17 +32,6 @@ func main() {
 
 	var wg sync.WaitGroup
 
-	var showName bool
-	var showSize bool
-
-	for _, attr := range q.Attributes {
-		if attr == "name" {
-			showName = true
-		} else if attr == "size" {
-			showSize = true
-		}
-	}
-
 	for _, src := range q.Sources {
 		wg.Add(1)
 		go func(src string) {
@@ -61,10 +51,10 @@ func main() {
 				for _, condition := range q.Conditions {
 					switch condition.Attribute {
 					case "name":
-						isMatch = handleNameComparison(condition.Comparator, info.Name(), condition.Value)
+						isMatch = compareName(condition.Comparator, info.Name(), condition.Value)
 
 					case "size":
-						isMatch = handleSizeComparison(condition.Comparator, info.Size(), condition.Value)
+						isMatch = compareSize(condition.Comparator, info.Size(), condition.Value)
 					}
 
 					if !isMatch {
@@ -73,11 +63,19 @@ func main() {
 				}
 
 				if isMatch {
-					if showSize {
+					if q.HasAttribute("mode") {
+						fmt.Printf("%s\t", info.Mode())
+					}
+
+					if q.HasAttribute("size") {
 						fmt.Printf("%d\t", info.Size())
 					}
 
-					if showName {
+					if q.HasAttribute("time") {
+						fmt.Printf("%s\t", info.ModTime().Format(time.Stamp))
+					}
+
+					if q.HasAttribute("name") {
 						if strings.Contains(path, usr.HomeDir) {
 							path = filepath.Join("~", path[len(usr.HomeDir):])
 						}
@@ -94,7 +92,7 @@ func main() {
 	wg.Wait()
 }
 
-func handleNameComparison(comparator query.TokenType, fileName string, inputFileName string) bool {
+func compareName(comparator query.TokenType, fileName string, inputFileName string) bool {
 	isMatch := false
 
 	switch comparator {
@@ -111,7 +109,7 @@ func handleNameComparison(comparator query.TokenType, fileName string, inputFile
 	return isMatch
 }
 
-func handleSizeComparison(comparator query.TokenType, fileSize int64, inputSizeStr string) bool {
+func compareSize(comparator query.TokenType, fileSize int64, inputSizeStr string) bool {
 	isMatch := false
 
 	size, err := strconv.ParseInt(inputSizeStr, 10, 64)

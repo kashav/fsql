@@ -5,7 +5,7 @@ import (
 	"io"
 )
 
-// Run parses and returns input.
+// Run parses input and returns the output.
 func Run(input string) (*Query, error) {
 	return (&parser{}).parse(input)
 }
@@ -23,16 +23,16 @@ func (p *parser) parse(input string) (*Query, error) {
 	if p.expect(Select) == nil {
 		return nil, p.currentError()
 	}
-	attributes, err := p.parseList()
+	q.Attributes = make(map[string]bool)
+	err := p.parseAttributes(&q.Attributes)
 	if err != nil {
 		return nil, err
 	}
-	q.Attributes = attributes
 
 	if p.expect(From) == nil {
 		return nil, p.currentError()
 	}
-	sources, err := p.parseList()
+	sources, err := p.parseSources()
 	if err != nil {
 		return nil, err
 	}
@@ -50,25 +50,46 @@ func (p *parser) parse(input string) (*Query, error) {
 	return q, nil
 }
 
-func (p *parser) parseList() ([]string, error) {
-	list := []string{}
+func (p *parser) parseAttributes(attributes *map[string]bool) error {
+	attribute := p.expect(Identifier)
+	if attribute == nil {
+		return p.currentError()
+	}
+	if attribute.Raw == "*" {
+		*attributes = map[string]bool{
+			"mode": true,
+			"name": true,
+			"size": true,
+			"time": true,
+		}
+	} else {
+		(*attributes)[attribute.Raw] = true
+	}
+	if p.expect(Comma) == nil {
+		return nil
+	}
+	return p.parseAttributes(attributes)
+}
 
-	tok := p.expect(Identifier)
-	if tok == nil {
+func (p *parser) parseSources() ([]string, error) {
+	sources := []string{}
+
+	source := p.expect(Identifier)
+	if source == nil {
 		return nil, p.currentError()
 	}
-	list = append(list, tok.Raw)
+	sources = append(sources, source.Raw)
 
 	for {
 		if p.expect(Comma) == nil {
-			return list, nil
+			return sources, nil
 		}
 
-		tok = p.expect(Identifier)
-		if tok == nil {
+		source = p.expect(Identifier)
+		if source == nil {
 			return nil, p.currentError()
 		}
-		list = append(list, tok.Raw)
+		sources = append(sources, source.Raw)
 	}
 }
 
