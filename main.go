@@ -74,7 +74,7 @@ func main() {
 			defer wg.Done()
 
 			if strings.Contains(src, "~") {
-				src = filepath.Join(usr.HomeDir, src[2:])
+				src = filepath.Join(usr.HomeDir, src[1:])
 			}
 
 			filepath.Walk(src, func(path string, info os.FileInfo, err error) error {

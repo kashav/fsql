@@ -33,37 +33,36 @@
   - Query structure:
 
     ```sql
-    SELECT <attribute, ...> FROM <directory, ...> WHERE <condition, ...>
+    SELECT attribute, ... FROM directory, ... WHERE conditional ...
     ```
 
-  - Supported attributes:
+    + Attribute can be any of the following: `name`, `size`, `mode`, `time`, or `*` (for all).
 
-    + `name`
-    + `size`
-    + `mode`
-    + `time`
+    + Directory should be a relative/absolute path to some directory on your file system. Also supports expanding environment variables (e.g. `$GOPATH`) and `~` (for your home directory).
 
-  - Supported comparators:
+    + Conditionals:
 
-    + For numeric comparisons:
+      * Supported comparators:
 
-      * `>`
-      * `>=`
-      * `<`
-      * `<=`
-      * `=`
-      * `<>`
+        - For numeric comparisons (also applies to time):
+          + `>`
+          + `>=`
+          + `<`
+          + `<=`
+          + `=`
+          + `<>`
 
-    + For string comparisons:
+        - For string comparisons:
+          + `BEGINSWITH`
+          + `ENDSWITH`
+          + `IS`
+          + `CONTAINS`
 
-      * `BEGINSWITH`
-      * `ENDSWITH`
-      * `IS`
-      * `CONTAINS`
+      * Use `AND` / `OR` for conditional conjunction/disjunction. Note that precedence is assigned based on order of appearance (i.e. `"WHERE a AND b OR c"` ≠ `"WHERE c OR b AND a"`). Use parentheses to get around this behaviour (`"WHERE a AND b OR c"` = `"WHERE c OR (b AND a)"`).
 
-  - Use `AND` and `OR` for conditional conjunction/disjunction. Note that precedence is assigned based on order of appearance (i.e. `"WHERE a AND b OR c"` ≠ `"WHERE c OR b AND a"`). Use parentheses to get around this behaviour (`"WHERE a AND b OR c"` = `"WHERE c OR (b AND a)"`).
+      * Use `NOT` to negate a conditional statement. This keyword **must** precede the statement (e.g. `"... WHERE NOT name IS foo ..."`).
 
-  - Use single quotes (`'`) or escaped backticks (<code>`</code>) for multi-space conditional values.
+      * Use single quotes (`'`) or escaped backticks (<code>`</code>) for multi-space conditional values.
 
   - Examples:
     
@@ -95,9 +94,8 @@ Use the following to test that your changes comply with [Golint](https://github.
   $ make lint
   ```
 
-#### __TODO__
+#### TODO
   
-  - [x] Add `NOT` operator for negating conditional.
   - [ ] Add support for querying and selecting using other size units (only supports bytes right now, add functionality for KB, MB, and GB as well).
   - [ ] Add unit tests (test files are empty right now).
   - [ ] Add support for regex in string comparisons (e.g. `... ENDSWITH jsx?`).
@@ -106,6 +104,7 @@ Use the following to test that your changes comply with [Golint](https://github.
   - [x] Add support for times/dates (to query file creation/modification time).
   - [x] Introduce new attributes to select from (creation/modification time, file mode, _basically whatever else [`os.FileInfo`](https://golang.org/pkg/os/#FileInfo) supports_).
   - [x] **Bug**: Space-separated queries. Currently something like `"... WHERE time > May 1 ..."` is broken since we're splitting conditionals by space. Fix by allowing single quotes and backticks in query strings, so something like `"... WHERE time > 'May 1' ..."` works and evaluates the conditional to have value of `"May 1"`.
+  - [x] Add `NOT` operator for negating conditionals.
 
 ### Inspirations
 
