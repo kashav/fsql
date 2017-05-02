@@ -1,20 +1,18 @@
 .PHONY: fsql clean install lint
 
-name = fsql
-
 all: fsql
 
 fsql:
-	go build -o ./$(name) -v .
+	go build -o ./fsql -v .
 
 clean:
-	rm -f ./$(name)
+	rm -f ./fsql
 
 install:
 	go install
 
 lint:
-	${GOPATH}/bin/golint . query
+	${GOPATH}/bin/golint . query compare
 
 test: fsql
 	go test
