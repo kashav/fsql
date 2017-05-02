@@ -14,6 +14,8 @@ func Alpha(comp query.TokenType, a, b string) bool {
 		return strings.HasPrefix(a, b)
 	case query.EndsWith:
 		return strings.HasSuffix(a, b)
+	case query.Equals:
+		fallthrough
 	case query.Is:
 		return a == b
 	case query.Contains:

@@ -96,14 +96,15 @@ Use the following to test that your changes comply with [Golint](https://github.
   ```
 
 #### __TODO__
-
-  - [x] Handle errors more gracefully (instead of just panicking everything).
+  
+  - [ ] Add `NOT` operator for negating conditional.
+  - [ ] Add support for querying and selecting using other size units (only supports bytes right now, add functionality for KB, MB, and GB as well).
+  - [ ] Add unit tests (test files are empty right now).
   - [ ] Add support for regex in string comparisons (e.g. `... ENDSWITH jsx?`).
+  - [x] Handle errors more gracefully (instead of just panicking everything).
   - [x] Add support for `OR` / `AND`  / `()` (for precedence) in condition statements (lexing is already done for these, just need to add the parsers).
   - [x] Add support for times/dates (to query file creation/modification time).
   - [x] Introduce new attributes to select from (creation/modification time, file mode, _basically whatever else [`os.FileInfo`](https://golang.org/pkg/os/#FileInfo) supports_).
-  - [ ] Add unit tests (test files are empty right now).
-  - [ ] Add support for querying and selecting using other size units (only supports bytes right now, add functionality for KB, MB, and GB as well).
   - [x] **Bug**: Space-separated queries. Currently something like `"... WHERE time > May 1 ..."` is broken since we're splitting conditionals by space. Fix by allowing single quotes and backticks in query strings, so something like `"... WHERE time > 'May 1' ..."` works and evaluates the conditional to have value of `"May 1"`.
 
 ### Inspirations
