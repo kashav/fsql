@@ -17,25 +17,30 @@ import (
 )
 
 func compare(condition query.Condition, file os.FileInfo) bool {
+	var retval bool
+
 	switch condition.Attribute {
 	case "name":
-		return cmp.Alpha(condition.Comparator, file.Name(), condition.Value)
+		retval = cmp.Alpha(condition.Comparator, file.Name(), condition.Value)
+
 	case "size":
 		size, err := strconv.ParseInt(condition.Value, 10, 64)
 		if err != nil {
 			return false
 		}
-		return cmp.Numeric(condition.Comparator, file.Size(), size)
+		retval = cmp.Numeric(condition.Comparator, file.Size(), size)
+
 	case "time":
 		t, err := time.Parse("Jan 02 2006 15 04", condition.Value)
 		if err != nil {
 			return false
 		}
-		return cmp.Time(condition.Comparator, file.ModTime(), t)
-	case "mode":
-		// TODO
+		retval = cmp.Time(condition.Comparator, file.ModTime(), t)
+
+	case "file":
+		retval = cmp.File(condition.Comparator, file, condition.Value)
 	}
-	return false
+	return (condition.Negate && !retval) || retval
 }
 
 func main() {

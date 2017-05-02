@@ -1,6 +1,7 @@
 package compare
 
 import (
+	"os"
 	"strings"
 	"time"
 
@@ -58,6 +59,19 @@ func Time(comp query.TokenType, a, b time.Time) bool {
 		return a.Before(b) || a.Equal(b)
 	case query.LessThan:
 		return a.Before(b)
+	}
+	return false
+}
+
+func File(comp query.TokenType, file os.FileInfo, filetype string) bool {
+	switch comp {
+	case query.Is:
+		switch filetype {
+		case "dir":
+			return file.Mode().IsDir()
+		case "reg":
+			return file.Mode().IsRegular()
+		}
 	}
 	return false
 }

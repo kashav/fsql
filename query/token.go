@@ -18,10 +18,12 @@ const (
 	From
 	// Where represents the WHERE clause.
 	Where
-	// Or represents the OR condition concatenator (unimplemented).
+	// Or represents the OR keyword for conditional disjunction.
 	Or
-	// And represents the AND condition concatenator (unimplemented).
+	// And represents the AND keyword for conditonal conjunction.
 	And
+	// Not represents the NOT keyword for conditional negation.
+	Not
 	// BeginsWith represents the BEGINSWITH comparator for string comparisons.
 	BeginsWith
 	// EndsWith represents the ENDSWITH comparator for string comparisons.
@@ -64,6 +66,8 @@ func (t TokenType) String() string {
 		return "or"
 	case And:
 		return "and"
+	case Not:
+		return "not"
 	case BeginsWith:
 		return "begins-with"
 	case EndsWith:
@@ -199,6 +203,8 @@ func (t *Tokenizer) Next() *Token {
 			tok.Type = Or
 		case "AND":
 			tok.Type = And
+		case "NOT":
+			tok.Type = Not
 		case "BEGINSWITH":
 			tok.Type = BeginsWith
 		case "ENDSWITH":

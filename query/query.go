@@ -25,6 +25,7 @@ type Condition struct {
 	Attribute  string
 	Comparator TokenType
 	Value      string
+	Negate     bool
 }
 
 // HasAttribute checks if the query's attribute map contains the provided

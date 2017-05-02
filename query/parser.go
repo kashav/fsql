@@ -94,6 +94,8 @@ func (p *parser) parseConditionTree() (*ConditionNode, error) {
 		}
 
 		switch p.current.Type {
+		case Not:
+			fallthrough
 		case Identifier:
 			condition, err := p.parseNextCondition()
 			if err != nil {
@@ -140,6 +142,12 @@ func (p *parser) parseConditionTree() (*ConditionNode, error) {
 }
 
 func (p *parser) parseNextCondition() (*Condition, error) {
+	negate := false
+	not := p.expect(Not)
+	if not != nil {
+		negate = true
+	}
+
 	attr := p.expect(Identifier)
 	if attr == nil {
 		return nil, p.currentError()
@@ -162,6 +170,7 @@ func (p *parser) parseNextCondition() (*Condition, error) {
 		Attribute:  attr.Raw,
 		Comparator: comp,
 		Value:      value.Raw,
+		Negate:     negate,
 	}, nil
 }
 

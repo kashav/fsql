@@ -61,9 +61,9 @@
       * `IS`
       * `CONTAINS`
 
-  - Also supports the use of `AND` and `OR` for ordering conditionals. Note that precedence is assigned from left-to-right (so `"WHERE a AND b OR c"` ≠ `"WHERE c OR b AND a"`). Use parentheses to normalize this behaviour (`"WHERE a AND b OR c"` = `"WHERE c OR (b AND a)"`).
+  - Use `AND` and `OR` for conditional conjunction/disjunction. Note that precedence is assigned based on order of appearance (i.e. `"WHERE a AND b OR c"` ≠ `"WHERE c OR b AND a"`). Use parentheses to get around this behaviour (`"WHERE a AND b OR c"` = `"WHERE c OR (b AND a)"`).
 
-  - Use single quotes (`'`) or escaped backticks (<code>`</code>) for multi-space conditionals.
+  - Use single quotes (`'`) or escaped backticks (<code>`</code>) for multi-space conditional values.
 
   - Examples:
     
@@ -97,7 +97,7 @@ Use the following to test that your changes comply with [Golint](https://github.
 
 #### __TODO__
   
-  - [ ] Add `NOT` operator for negating conditional.
+  - [x] Add `NOT` operator for negating conditional.
   - [ ] Add support for querying and selecting using other size units (only supports bytes right now, add functionality for KB, MB, and GB as well).
   - [ ] Add unit tests (test files are empty right now).
   - [ ] Add support for regex in string comparisons (e.g. `... ENDSWITH jsx?`).
