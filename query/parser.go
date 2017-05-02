@@ -32,7 +32,10 @@ func (p *parser) parse(input string) (*Query, error) {
 	if p.expect(From) == nil {
 		return nil, p.currentError()
 	}
-	q.Sources = make([]string, 0)
+	q.Sources = map[string][]string{
+		"include": make([]string, 0),
+		"exclude": make([]string, 0),
+	}
 	err = p.parseSources(&q.Sources)
 	if err != nil {
 		return nil, err
@@ -72,12 +75,20 @@ func (p *parser) parseAttributes(attributes *map[string]bool) error {
 	return p.parseAttributes(attributes)
 }
 
-func (p *parser) parseSources(sources *[]string) error {
+func (p *parser) parseSources(sources *map[string][]string) error {
+	exclude := false
+	if p.expect(Minus) != nil {
+		exclude = true
+	}
 	source := p.expect(Identifier)
 	if source == nil {
 		return p.currentError()
 	}
-	*sources = append(*sources, source.Raw)
+	if exclude {
+		(*sources)["exclude"] = append((*sources)["exclude"], source.Raw)
+	} else {
+		(*sources)["include"] = append((*sources)["include"], source.Raw)
+	}
 	if p.expect(Comma) == nil {
 		return nil
 	}

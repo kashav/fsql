@@ -43,6 +43,16 @@ func compare(condition query.Condition, file os.FileInfo) bool {
 	return (condition.Negate && !retval) || retval
 }
 
+func containsAny(path string, exclusions []string) bool {
+	for _, exclusion := range exclusions {
+		if strings.Contains(path, exclusion) {
+			return true
+		}
+	}
+
+	return false
+}
+
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("Expected query.")
@@ -67,7 +77,7 @@ func main() {
 
 	var wg sync.WaitGroup
 
-	for _, src := range q.Sources {
+	for _, src := range q.Sources["include"] {
 		wg.Add(1)
 
 		go func(src string) {
@@ -78,7 +88,7 @@ func main() {
 			}
 
 			filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
-				if path == "." || path == ".." {
+				if path == "." || path == ".." || containsAny(path, q.Sources["exclude"]) {
 					return nil
 				}
 

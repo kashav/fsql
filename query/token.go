@@ -40,6 +40,8 @@ const (
 	CloseParen
 	// Comma represents a comma.
 	Comma
+	// Minus represents the `-` operator for directory exclusion.
+	Minus
 	// Equals represents the `=` comparator for numeric comparisons.
 	Equals
 	// NotEquals represents the `<>` comparator for numeric comparisons.
@@ -84,6 +86,8 @@ func (t TokenType) String() string {
 		return "close-parentheses"
 	case Comma:
 		return "comma"
+	case Minus:
+		return "minus"
 	case Equals:
 		return "equal"
 	case NotEquals:
@@ -158,6 +162,10 @@ func (t *Tokenizer) Next() *Token {
 	case ',':
 		t.input = t.input[1:]
 		return &Token{Type: Comma, Raw: ","}
+
+	case '-':
+		t.input = t.input[1:]
+		return &Token{Type: Minus, Raw: "-"}
 
 	case '=':
 		t.input = t.input[1:]

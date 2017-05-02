@@ -8,7 +8,7 @@ import (
 // Query represents an input query.
 type Query struct {
 	Attributes    map[string]bool
-	Sources       []string
+	Sources       map[string][]string
 	ConditionTree *ConditionNode // Root node of this query's condition tree.
 }
 

@@ -96,6 +96,7 @@ Use the following to test that your changes comply with [Golint](https://github.
 
 #### TODO
   
+  - [ ] **Bug**: Selecting from a subdirectory causes duplicates.
   - [ ] Add support for querying and selecting using other size units (only supports bytes right now, add functionality for KB, MB, and GB as well).
   - [ ] Add unit tests (test files are empty right now).
   - [ ] Add support for regex in string comparisons (e.g. `... ENDSWITH jsx?`).
