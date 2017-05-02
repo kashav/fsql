@@ -63,10 +63,11 @@ func Time(comp query.TokenType, a, b time.Time) bool {
 	return false
 }
 
-func File(comp query.TokenType, file os.FileInfo, filetype string) bool {
+// File compares the file type of the provided file with fileType.
+func File(comp query.TokenType, file os.FileInfo, fileType string) bool {
 	switch comp {
 	case query.Is:
-		switch filetype {
+		switch fileType {
 		case "dir":
 			return file.Mode().IsDir()
 		case "reg":
