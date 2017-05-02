@@ -15,47 +15,51 @@ import (
 	"github.com/kshvmdn/fsql/query"
 )
 
-func compareName(comparator query.TokenType, fileName string, inputFileName string) bool {
-	isMatch := false
-
-	switch comparator {
+func alphaComparison(comp query.TokenType, a, b string) bool {
+	switch comp {
 	case query.BeginsWith:
-		isMatch = strings.HasPrefix(fileName, inputFileName)
+		return strings.HasPrefix(a, b)
 	case query.EndsWith:
-		isMatch = strings.HasSuffix(fileName, inputFileName)
+		return strings.HasSuffix(a, b)
 	case query.Is:
-		isMatch = fileName == inputFileName
+		return a == b
 	case query.Contains:
-		isMatch = strings.Contains(fileName, inputFileName)
+		return strings.Contains(a, b)
 	}
-
-	return isMatch
+	return false
 }
 
-func compareSize(comparator query.TokenType, fileSize int64, inputSizeStr string) bool {
-	isMatch := false
-
-	size, err := strconv.ParseInt(inputSizeStr, 10, 64)
-	if err != nil {
-		return isMatch
-	}
-
-	switch comparator {
+func numericComparison(comp query.TokenType, a, b int64) bool {
+	switch comp {
 	case query.Equals:
-		isMatch = fileSize == size
+		return a == b
 	case query.NotEquals:
-		isMatch = fileSize != size
+		return a != b
 	case query.GreaterThanEquals:
-		isMatch = fileSize >= size
+		return a >= b
 	case query.GreaterThan:
-		isMatch = fileSize > size
+		return a > b
 	case query.LessThanEquals:
-		isMatch = fileSize <= size
+		return a <= b
 	case query.LessThan:
-		isMatch = fileSize < size
+		return a < b
 	}
+	return false
+}
 
-	return isMatch
+func compare(condition query.Condition, file os.FileInfo) bool {
+	switch condition.Attribute {
+	case "name":
+		return alphaComparison(condition.Comparator, file.Name(), condition.Value)
+	case "size":
+		size, err := strconv.ParseInt(condition.Value, 10, 64)
+		if err != nil {
+			return false
+		}
+		return numericComparison(condition.Comparator, file.Size(), size)
+	case "time":
+	}
+	return false
 }
 
 func main() {
@@ -84,6 +88,7 @@ func main() {
 
 	for _, src := range q.Sources {
 		wg.Add(1)
+
 		go func(src string) {
 			defer wg.Done()
 
@@ -96,23 +101,7 @@ func main() {
 					return nil
 				}
 
-				var isMatch bool
-
-				for _, condition := range q.Conditions {
-					switch condition.Attribute {
-					case "name":
-						isMatch = compareName(condition.Comparator, info.Name(), condition.Value)
-
-					case "size":
-						isMatch = compareSize(condition.Comparator, info.Size(), condition.Value)
-					}
-
-					if !isMatch {
-						return nil
-					}
-				}
-
-				if isMatch {
+				if q.ConditionTree.Evaluate(info, compare) {
 					if q.HasAttribute("mode") {
 						fmt.Printf("%s\t", info.Mode())
 					}
@@ -134,6 +123,7 @@ func main() {
 
 					fmt.Printf("\n")
 				}
+
 				return nil
 			})
 		}(src)

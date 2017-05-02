@@ -32,20 +32,21 @@ func (p *parser) parse(input string) (*Query, error) {
 	if p.expect(From) == nil {
 		return nil, p.currentError()
 	}
-	sources, err := p.parseSources()
+	q.Sources = make([]string, 0)
+	err = p.parseSources(&q.Sources)
 	if err != nil {
 		return nil, err
 	}
-	q.Sources = sources
 
 	if p.expect(Where) == nil {
 		return nil, p.currentError()
 	}
-	conditions, err := p.parseConditions()
+
+	root, err := p.parseConditionTree()
 	if err != nil {
 		return nil, err
 	}
-	q.Conditions = conditions
+	q.ConditionTree = root
 
 	return q, nil
 }
@@ -71,48 +72,71 @@ func (p *parser) parseAttributes(attributes *map[string]bool) error {
 	return p.parseAttributes(attributes)
 }
 
-func (p *parser) parseSources() ([]string, error) {
-	sources := []string{}
-
+func (p *parser) parseSources(sources *[]string) error {
 	source := p.expect(Identifier)
 	if source == nil {
-		return nil, p.currentError()
+		return p.currentError()
 	}
-	sources = append(sources, source.Raw)
-
-	for {
-		if p.expect(Comma) == nil {
-			return sources, nil
-		}
-
-		source = p.expect(Identifier)
-		if source == nil {
-			return nil, p.currentError()
-		}
-		sources = append(sources, source.Raw)
+	*sources = append(*sources, source.Raw)
+	if p.expect(Comma) == nil {
+		return nil
 	}
+	return p.parseSources(sources)
 }
 
-func (p *parser) parseConditions() ([]Condition, error) {
-	conditions := []Condition{}
-
-	cond, err := p.parseNextCondition()
-	if err != nil {
-		return nil, err
-	}
-	conditions = append(conditions, *cond)
+func (p *parser) parseConditionTree() (*ConditionNode, error) {
+	s := new(stack)
 
 	for {
-		if p.expect(Comma) == nil {
-			return conditions, nil
+		p.current = p.tokenizer.Next()
+		if p.current == nil {
+			break
 		}
 
-		cond, err = p.parseNextCondition()
-		if err != nil {
-			return nil, err
+		switch p.current.Type {
+		case Identifier:
+			condition, err := p.parseNextCondition()
+			if err != nil {
+				return nil, p.currentError()
+			}
+
+			leaf := ConditionNode{Condition: condition}
+			previous := s.pop()
+			if previous == nil {
+				s.push(&leaf)
+			} else {
+				if (*previous).Condition == nil {
+					(*previous).Right = &leaf
+				}
+				s.push(previous)
+			}
+		case And:
+			fallthrough
+		case Or:
+			left := s.pop()
+			node := ConditionNode{
+				Type: p.current.Type,
+				Left: left,
+			}
+			s.push(&node)
+		case OpenParen:
+			s.push(nil)
+		case CloseParen:
+			right := s.pop()
+			root := s.pop()
+			if root != nil {
+				root.Right = right
+				s.push(root)
+			}
 		}
-		conditions = append(conditions, *cond)
 	}
+
+	if s.len() > 1 {
+		// FIXME: create/return appropriate error
+		return nil, p.currentError()
+	}
+
+	return s.pop(), nil
 }
 
 func (p *parser) parseNextCondition() (*Condition, error) {
