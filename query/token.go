@@ -186,7 +186,6 @@ func (t *Tokenizer) Next() *Token {
 	if unicode.IsLetter(current) || unicode.IsDigit(current) ||
 		current == '*' || current == '~' || current == '/' || current == '.' {
 		word := t.readWord()
-
 		tok := &Token{Raw: word}
 
 		switch strings.ToUpper(word) {
@@ -215,6 +214,23 @@ func (t *Tokenizer) Next() *Token {
 		return tok
 	}
 
+	if current == '\'' || current == '`' {
+		t.input = t.input[1:]
+
+		word := t.readWord()
+
+		for t.current() != '\'' && t.current() != '`' {
+			for unicode.IsSpace(t.current()) {
+				t.input = t.input[1:]
+			}
+
+			word = fmt.Sprintf("%s %s", word, t.readWord())
+		}
+
+		t.input = t.input[1:]
+		return &Token{Type: Identifier, Raw: word}
+	}
+
 	t.input = t.input[1:]
 	return &Token{Type: Unknown, Raw: string([]rune{current})}
 }
@@ -241,7 +257,8 @@ func (t *Tokenizer) readWord() string {
 	for {
 		r := t.current()
 
-		if !(unicode.IsLetter(r) || r == '*' || r == '~' || r == '/' || r == '.' || unicode.IsDigit(r)) {
+		if !(unicode.IsLetter(r) || unicode.IsDigit(r) || r == '*' || r == '~' ||
+			r == '/' || r == '.') {
 			return string(word)
 		}
 

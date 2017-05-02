@@ -61,7 +61,9 @@
       * `IS`
       * `CONTAINS`
 
-  - Also supports the use of `AND` and `OR` for ordering conditionals. Note that precedence is assigned from left-to-right (so `"WHERE a AND b OR c"` ≠ `"WHERE c OR b AND a"`). Use parentheses to normalize this behaviour (`"WHERE a AND b OR c"` = `"WHERE c OR (b AND a)"`)
+  - Also supports the use of `AND` and `OR` for ordering conditionals. Note that precedence is assigned from left-to-right (so `"WHERE a AND b OR c"` ≠ `"WHERE c OR b AND a"`). Use parentheses to normalize this behaviour (`"WHERE a AND b OR c"` = `"WHERE c OR (b AND a)"`).
+
+  - Use single quotes (`'`) or escaped backticks (<code>`</code>) for multi-space conditionals.
 
   - Examples:
     
@@ -71,10 +73,10 @@
       $ fsql "SELECT name FROM ~/Desktop, ~/Downloads WHERE name BEGINSWITH csc"
       ```
 
-    - List all JavaScript files in the current directory (try running this on a `node_modules` directory, it's fast :sunglasses:).
+    - List all JavaScript files in the current directory that were modified after April 1st 2017 (try running this on a `node_modules` directory, it's fast :sunglasses:).
 
       ```sh
-      $ fsql "SELECT name, size, time FROM . WHERE name ENDSWITH .js"
+      $ fsql "SELECT name, size, time FROM . WHERE name ENDSWITH .js AND time > 'Apr 01 2017 00 00'"
       ```
 
     - List all files named `main.go` in `$GOPATH` which are at least 1000 bytes in size.
@@ -102,7 +104,7 @@ Use the following to test that your changes comply with [Golint](https://github.
   - [x] Introduce new attributes to select from (creation/modification time, file mode, _basically whatever else [`os.FileInfo`](https://golang.org/pkg/os/#FileInfo) supports_).
   - [ ] Add unit tests (test files are empty right now).
   - [ ] Add support for querying and selecting using other size units (only supports bytes right now, add functionality for KB, MB, and GB as well).
-  - [ ] **Bug**: Space-separated queries. Currently something like `"... WHERE time > May 1 ..."` is broken since we're splitting conditionals by space. Fix by allowing single quotes and backticks in query strings, so something like `"... WHERE time > 'May 1' ..."` works and evaluates the conditional to have value of `"May 1"`.
+  - [x] **Bug**: Space-separated queries. Currently something like `"... WHERE time > May 1 ..."` is broken since we're splitting conditionals by space. Fix by allowing single quotes and backticks in query strings, so something like `"... WHERE time > 'May 1' ..."` works and evaluates the conditional to have value of `"May 1"`.
 
 ### Inspirations
 

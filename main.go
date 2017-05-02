@@ -76,7 +76,7 @@ func compare(condition query.Condition, file os.FileInfo) bool {
 		}
 		return numericComparison(condition.Comparator, file.Size(), size)
 	case "time":
-		t, err := time.Parse("Jan _2 2006 3 04 PM", condition.Value)
+		t, err := time.Parse("Jan 02 2006 15 04", condition.Value)
 		if err != nil {
 			return false
 		}
