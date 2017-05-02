@@ -4,7 +4,7 @@
 
 ### Demo
 
-![](./fsql.gif)
+<a href="https://asciinema.org/a/118075" target="_blank">![](./fsql.gif)</a>
 
 ### Setup / installation
 
@@ -14,14 +14,14 @@
 
     ```sh
     $ go get -v github.com/kshvmdn/fsql
-    $ fsql
+    $ fsql # Should be located in $GOPATH/bin
     ```
 
   - Or install directly via source:
 
     ```sh
     $ git clone https://github.com/kshvmdn/fsql.git $GOPATH/src/github.com/kshvmdn/fsql
-    $ cd $_  # $GOPATH/src/github.com/kshvmdn/fsql
+    $ cd $_ # $GOPATH/src/github.com/kshvmdn/fsql
     $ make install && make
     $ ./fsql
     ```
@@ -61,18 +61,26 @@
       * `IS`
       * `CONTAINS`
 
+  - Also supports the use of `AND` and `OR` for ordering conditionals. Note that precedence is assigned from left-to-right (so `"WHERE a AND b OR c"` ≠ `"WHERE c OR b AND a"`). Use parentheses to normalize this behaviour (`"WHERE a AND b OR c"` = `"WHERE c OR (b AND a)"`)
+
   - Examples:
     
-    - List all files & directories in Desktop and Downloads directories that start with `csc`:
+    - List all files & directories in `~/Desktop` and `~/Downloads` that begin with `csc`.
 
       ```sh
       $ fsql "SELECT name FROM ~/Desktop, ~/Downloads WHERE name BEGINSWITH csc"
       ```
 
-    - List all JavaScript files that are larger than 300 bytes in the current directory (try running this on a `node_modules` directory, it's fast :sunglasses:).
+    - List all JavaScript files in the current directory (try running this on a `node_modules` directory, it's fast :sunglasses:).
 
       ```sh
-      $ fsql "SELECT name, size FROM . WHERE size > 300, name ENDSWITH .js"
+      $ fsql "SELECT name, size, time FROM . WHERE name ENDSWITH .js"
+      ```
+
+    - List all files named `main.go` in `$GOPATH` which are at least 1000 bytes in size.
+
+      ```sh
+      $ fsql "SELECT * FROM $GOPATH WHERE name IS main.go AND size >= 1000"
       ```
 
 ### Contribute
@@ -93,6 +101,7 @@ Use the following to test that your changes comply with [Golint](https://github.
   - [ ] Add support for times/dates (to query file creation/modification time).
   - [x] Introduce new attributes to select from (creation/modification time, file mode, _basically whatever else [`os.FileInfo`](https://golang.org/pkg/os/#FileInfo) supports_).
   - [ ] Add unit tests (test files are empty right now).
+  - [ ] Add support for querying and selecting using other size units (only supports bytes right now, add functionality for KB, MB, and GB as well).
 
 ### Inspirations
 
