@@ -47,6 +47,24 @@ func numericComparison(comp query.TokenType, a, b int64) bool {
 	return false
 }
 
+func timeComparison(comp query.TokenType, a, b time.Time) bool {
+	switch comp {
+	case query.Equals:
+		return a.Equal(b)
+	case query.NotEquals:
+		return !a.Equal(b)
+	case query.GreaterThanEquals:
+		return a.After(b) || a.Equal(b)
+	case query.GreaterThan:
+		return a.After(b)
+	case query.LessThanEquals:
+		return a.Before(b) || a.Equal(b)
+	case query.LessThan:
+		return a.Before(b)
+	}
+	return false
+}
+
 func compare(condition query.Condition, file os.FileInfo) bool {
 	switch condition.Attribute {
 	case "name":
@@ -58,6 +76,12 @@ func compare(condition query.Condition, file os.FileInfo) bool {
 		}
 		return numericComparison(condition.Comparator, file.Size(), size)
 	case "time":
+		t, err := time.Parse("Jan _2 2006 3 04 PM", condition.Value)
+		if err != nil {
+			return false
+		}
+		return timeComparison(condition.Comparator, file.ModTime(), t)
+	case "mode":
 	}
 	return false
 }
