@@ -3,6 +3,8 @@ package query
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
 // Query represents an input query.
@@ -26,6 +28,61 @@ type Condition struct {
 	Comparator TokenType
 	Value      string
 	Negate     bool
+}
+
+// ReduceSources reduces this qeury's sources by removing any source
+// which is a subdirectory of another source.
+func (q *Query) ReduceSources() error {
+	redundants := make(map[int]bool, len(q.Sources["include"])-1)
+
+	for i, base := range q.Sources["include"] {
+		for j, target := range q.Sources["include"][i+1:] {
+			if i == (i + j + 1) {
+				break
+			}
+
+			if base == target {
+				// Duplicate source entry.
+				redundants[i+j+1] = true
+				continue
+			}
+
+			rel, err := filepath.Rel(base, target)
+			if err != nil {
+				// Only returns error when can't make target relative to base, i.e.
+				// they're disjoint (which is what we want).
+				continue
+			} else {
+				if strings.Contains(rel, "..") {
+					// Base directory is redundant.
+					redundants[i] = true
+					break
+				} else {
+					// Target directory is redundant.
+					redundants[i+j+1] = true
+				}
+			}
+		}
+	}
+
+	sources := make([]string, 0)
+	for i := 0; i < len(q.Sources["include"]); i++ {
+		// Skip all redundant directories.
+		if _, ok := redundants[i]; ok {
+			continue
+		}
+
+		// Return error iff directory doesn't exist. Should we just ignore
+		// nonexistent directories instead?
+		path := q.Sources["include"][i]
+		_, err := os.Stat(path)
+		if os.IsNotExist(err) {
+			return fmt.Errorf("no such file or directory: %s", path)
+		}
+		sources = append(sources, q.Sources["include"][i])
+	}
+	q.Sources["include"] = sources
+	return nil
 }
 
 // HasAttribute checks if the query's attribute map contains the provided

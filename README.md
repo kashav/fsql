@@ -98,7 +98,6 @@ Use the following to test that your changes comply with [Golint](https://github.
 
 #### TODO
   
-  - [ ] **Bug**: Selecting from a directory and it's subdirectory results in duplicates and malformed output.
   - [ ] **Bug**: Exclude skips files with similar names (e.g. excluding `.git` results in `.gitignore` not being listed).
   - [ ] Add unit tests (test files are empty right now).
   - [ ] Add support for regex in string comparisons (e.g. `... ENDSWITH jsx?`).
@@ -109,5 +108,6 @@ Use the following to test that your changes comply with [Golint](https://github.
   - [x] **Bug**: Space-separated queries. Currently something like `"... WHERE time > May 1 ..."` is broken since we're splitting conditionals by space. Fix by allowing single quotes and backticks in query strings, so something like `"... WHERE time > 'May 1' ..."` works and evaluates the conditional to have value of `"May 1"`.
   - [x] Add `NOT` operator for negating conditionals.
   - [x] Add support for querying and selecting using other size units (only supports bytes right now, add functionality for KB, MB, and GB as well).
+  - [x] **Bug**: Selecting from a directory and it's subdirectory results in duplicates and malformed output.
 
 Lexer & parser are based on the amazing work of [**@JamesOwenHall**](https://github.com/JamesOwenHall) ([json2](https://github.com/JamesOwenHall/json2), [timed](https://github.com/JamesOwenHall/timed)).

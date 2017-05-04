@@ -17,10 +17,10 @@ import (
 )
 
 const (
-	BYTE     = 1.0
-	KILOBYTE = 1024 * BYTE
-	MEGABYTE = 1024 * KILOBYTE
-	GIGABYTE = 1024 * MEGABYTE
+	uBYTE     = 1.0
+	uKILOBYTE = 1024 * uBYTE
+	uMEGABYTE = 1024 * uKILOBYTE
+	uGIGABYTE = 1024 * uMEGABYTE
 )
 
 func compare(condition query.Condition, file os.FileInfo) bool {
@@ -32,14 +32,14 @@ func compare(condition query.Condition, file os.FileInfo) bool {
 
 	case "size":
 		unit := strings.ToLower(condition.Value[len(condition.Value)-2:])
-		mult := BYTE
+		mult := uBYTE
 		switch unit {
 		case "kb":
-			mult = KILOBYTE
+			mult = uKILOBYTE
 		case "mb":
-			mult = MEGABYTE
+			mult = uMEGABYTE
 		case "gb":
-			mult = GIGABYTE
+			mult = uGIGABYTE
 		}
 
 		if mult > 1 {
@@ -89,12 +89,15 @@ func main() {
 	}
 
 	q, err := query.Run(input)
-
 	if err != nil {
 		if err == io.ErrUnexpectedEOF {
 			log.Fatal("Unexpected end of line.")
 		}
+		log.Fatal(err)
+	}
 
+	err = q.ReduceSources()
+	if err != nil {
 		log.Fatal(err)
 	}
 
