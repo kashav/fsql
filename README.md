@@ -64,6 +64,8 @@
 
       * Use single quotes (`'`) or escaped backticks (<code>`</code>) for multi-space conditional values.
 
+      * The default unit for size is bytes, to use kilobytes / megabytes / gigabytes, append `kb` / `mb` / `gb` to the size value.
+
   - Examples:
     
     - List all files & directories in `~/Desktop` and `~/Downloads` that begin with `csc`.
@@ -78,10 +80,10 @@
       $ fsql "SELECT name, size, time FROM . WHERE name ENDSWITH .js AND time > 'Apr 01 2017 00 00'"
       ```
 
-    - List all files named `main.go` in `$GOPATH` which are at least 1000 bytes in size.
+    - List all files named `main.go` in `$GOPATH` which are at least 10.5 kilobytes in size or less than 100 bytes in size.
 
       ```sh
-      $ fsql "SELECT * FROM $GOPATH WHERE name IS main.go AND size >= 1000"
+      $ fsql "SELECT * FROM $GOPATH WHERE name IS main.go AND (size >= 10.5kb OR size < 100)"
       ```
 
 ### Contribute
@@ -108,6 +110,4 @@ Use the following to test that your changes comply with [Golint](https://github.
   - [x] Add `NOT` operator for negating conditionals.
   - [x] Add support for querying and selecting using other size units (only supports bytes right now, add functionality for KB, MB, and GB as well).
 
-### Inspirations
-
-Lexer & parser are loosely based on the amazing work of [JamesOwnHall/json2](https://github.com/JamesOwenHall/json2).
+Lexer & parser are based on the amazing work of [**@JamesOwenHall**](https://github.com/JamesOwenHall) ([json2](https://github.com/JamesOwenHall/json2), [timed](https://github.com/JamesOwenHall/timed)).
