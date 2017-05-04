@@ -33,7 +33,7 @@ func compare(condition query.Condition, file os.FileInfo) bool {
 	case "size":
 		unit := strings.ToLower(condition.Value[len(condition.Value)-2:])
 		mult := BYTE
-		switch strings.ToLower(unit) {
+		switch unit {
 		case "kb":
 			mult = KILOBYTE
 		case "mb":
