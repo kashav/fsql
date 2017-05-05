@@ -88,7 +88,7 @@
 
 ### Contribute
 
-This project is completely open source, feel free to [open an issue](https://github.com/kshvmdn/issues) for questions/features/bugs or [submit a pull request](https://github.com/kshvmdn/pulls).
+This project is completely open source, feel free to [open an issue](https://github.com/kshvmdn/fsql/issues) for questions/features/bugs or [submit a pull request](https://github.com/kshvmdn/fsql/pulls).
 
 Use the following to test that your changes comply with [Golint](https://github.com/golang/lint).
 
