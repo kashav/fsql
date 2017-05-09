@@ -38,7 +38,7 @@
 
     + Attribute can be any of the following: `name`, `size`, `mode`, `time`, or `*` (for all).
 
-    + Directory should be a relative/absolute path to some directory on your file system. Also supports expanding environment variables (e.g. `$GOPATH`) and `~` (for your home directory).
+    + Directory should be a relative/absolute path to some directory on your file system. Also supports expanding environment variables (e.g. `$GOPATH`) and `~` (for your home directory). You can exclude directories with a minus sign (`-`), e.g. select from the CWD, except `.git`: `"... FROM ., -.git/ ..."`.
 
     + Conditionals:
 
@@ -97,7 +97,7 @@ Use the following to test that your changes comply with [Golint](https://github.
   ```
 
 #### TODO
-  
+
   - [ ] **Bug**: Exclude skips files with similar names (e.g. excluding `.git` results in `.gitignore` not being listed).
   - [ ] Add unit tests (test files are empty right now).
   - [ ] Add support for regex in string comparisons (e.g. `... ENDSWITH jsx?`).
