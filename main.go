@@ -31,19 +31,22 @@ func compare(condition query.Condition, file os.FileInfo) bool {
 		retval = cmp.Alpha(condition.Comparator, file.Name(), condition.Value)
 
 	case "size":
-		unit := strings.ToLower(condition.Value[len(condition.Value)-2:])
 		mult := uBYTE
-		switch unit {
-		case "kb":
-			mult = uKILOBYTE
-		case "mb":
-			mult = uMEGABYTE
-		case "gb":
-			mult = uGIGABYTE
-		}
 
-		if mult > 1 {
-			condition.Value = condition.Value[:len(condition.Value)-2]
+		if len(condition.Value) > 2 {
+			unit := strings.ToLower(condition.Value[len(condition.Value)-2:])
+			switch unit {
+			case "kb":
+				mult = uKILOBYTE
+			case "mb":
+				mult = uMEGABYTE
+			case "gb":
+				mult = uGIGABYTE
+			}
+
+			if mult > 1 {
+				condition.Value = condition.Value[:len(condition.Value)-2]
+			}
 		}
 
 		size, err := strconv.ParseFloat(condition.Value, 64)
@@ -63,7 +66,11 @@ func compare(condition query.Condition, file os.FileInfo) bool {
 		retval = cmp.File(condition.Comparator, file, condition.Value)
 	}
 
-	return (condition.Negate && !retval) || retval
+	if condition.Negate {
+		return !retval
+	}
+
+	return retval
 }
 
 func containsAny(path string, exclusions []string) bool {

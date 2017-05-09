@@ -76,19 +76,15 @@ func (p *parser) parseAttributes(attributes *map[string]bool) error {
 }
 
 func (p *parser) parseSources(sources *map[string][]string) error {
-	exclude := false
+	sourceType := "include"
 	if p.expect(Minus) != nil {
-		exclude = true
+		sourceType = "exclude"
 	}
 	source := p.expect(Identifier)
 	if source == nil {
 		return p.currentError()
 	}
-	if exclude {
-		(*sources)["exclude"] = append((*sources)["exclude"], source.Raw)
-	} else {
-		(*sources)["include"] = append((*sources)["include"], source.Raw)
-	}
+	(*sources)[sourceType] = append((*sources)[sourceType], source.Raw)
 	if p.expect(Comma) == nil {
 		return nil
 	}
@@ -154,8 +150,7 @@ func (p *parser) parseConditionTree() (*ConditionNode, error) {
 
 func (p *parser) parseNextCondition() (*Condition, error) {
 	negate := false
-	not := p.expect(Not)
-	if not != nil {
+	if p.expect(Not) != nil {
 		negate = true
 	}
 

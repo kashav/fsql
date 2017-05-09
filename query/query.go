@@ -49,18 +49,16 @@ func (q *Query) ReduceSources() error {
 
 			rel, err := filepath.Rel(base, target)
 			if err != nil {
-				// Only returns error when can't make target relative to base, i.e.
-				// they're disjoint (which is what we want).
+				// filepath.Rel only returns error when can't make target relative to
+				// base, i.e. they're disjoint (which is what we want).
 				continue
+			} else if strings.Contains(rel, "..") {
+				// Base directory is redundant, we can exit the inner loop.
+				redundants[i] = true
+				break
 			} else {
-				if strings.Contains(rel, "..") {
-					// Base directory is redundant.
-					redundants[i] = true
-					break
-				} else {
-					// Target directory is redundant.
-					redundants[i+j+1] = true
-				}
+				// Target directory is redundant.
+				redundants[i+j+1] = true
 			}
 		}
 	}
