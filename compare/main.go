@@ -2,6 +2,7 @@ package compare
 
 import (
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -11,16 +12,26 @@ import (
 // Alpha compares two strings a and b.
 func Alpha(comp query.TokenType, a, b string) bool {
 	switch comp {
-	case query.BeginsWith:
-		return strings.HasPrefix(a, b)
-	case query.EndsWith:
-		return strings.HasSuffix(a, b)
 	case query.Equals:
-		fallthrough
-	case query.Is:
 		return a == b
-	case query.Contains:
-		return strings.Contains(a, b)
+	case query.NotEquals:
+		return a != b
+	case query.Like:
+		if b[0] == '%' && b[len(b)-1] == '%' {
+			return strings.Contains(a, b[1:len(b)-1])
+		}
+
+		if b[0] == '%' {
+			return strings.HasSuffix(a, b[1:])
+		}
+
+		if b[len(b)-1] == '%' {
+			return strings.HasPrefix(a, b[:len(b)-1])
+		}
+
+		return a == b
+	case query.RLike:
+		return regexp.MustCompile(b).MatchString(a)
 	}
 	return false
 }

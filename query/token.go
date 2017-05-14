@@ -24,14 +24,12 @@ const (
 	And
 	// Not represents the NOT keyword for conditional negation.
 	Not
-	// BeginsWith represents the BEGINSWITH comparator for string comparisons.
-	BeginsWith
-	// EndsWith represents the ENDSWITH comparator for string comparisons.
-	EndsWith
-	// Is represents the IS comparator for string comparisons.
+	// Is represents the IS keyword for file type comparisons.
 	Is
-	// Contains represents the CONTAINS comparator for string comparisons.
-	Contains
+	// Like represents the LIKE keyword for string comparisons.
+	Like
+	// RLike represents the RLIKE keyword for string regexp comparisons.
+	RLike
 	// Identifier represents the value for each Query.
 	Identifier
 	// OpenParen represents an open parenthesis.
@@ -42,9 +40,9 @@ const (
 	Comma
 	// Minus represents the `-` operator for directory exclusion.
 	Minus
-	// Equals represents the `=` comparator for numeric comparisons.
+	// Equals represents the `=` comparator for string/numeric comparisons.
 	Equals
-	// NotEquals represents the `<>` comparator for numeric comparisons.
+	// NotEquals represents the `<>` comparator for string/numeric comparisons.
 	NotEquals
 	// GreaterThanEquals represents the `>=` comparator for numeric comparisons.
 	GreaterThanEquals
@@ -70,14 +68,12 @@ func (t TokenType) String() string {
 		return "and"
 	case Not:
 		return "not"
-	case BeginsWith:
-		return "begins-with"
-	case EndsWith:
-		return "ends-with"
 	case Is:
 		return "is"
-	case Contains:
-		return "contains"
+	case Like:
+		return "like"
+	case RLike:
+		return "RLike"
 	case Identifier:
 		return "identifier"
 	case OpenParen:
@@ -196,7 +192,8 @@ func (t *Tokenizer) Next() *Token {
 	}
 
 	if unicode.IsLetter(current) || unicode.IsDigit(current) ||
-		current == '*' || current == '~' || current == '/' || current == '.' {
+		current == '*' || current == '~' || current == '/' ||
+		current == '.' || current == '%' {
 		word := t.readWord()
 		tok := &Token{Raw: word}
 
@@ -213,14 +210,12 @@ func (t *Tokenizer) Next() *Token {
 			tok.Type = And
 		case "NOT":
 			tok.Type = Not
-		case "BEGINSWITH":
-			tok.Type = BeginsWith
-		case "ENDSWITH":
-			tok.Type = EndsWith
 		case "IS":
 			tok.Type = Is
-		case "CONTAINS":
-			tok.Type = Contains
+		case "LIKE":
+			tok.Type = Like
+		case "RLIKE":
+			tok.Type = RLike
 		default:
 			tok.Type = Identifier
 		}
@@ -228,12 +223,12 @@ func (t *Tokenizer) Next() *Token {
 		return tok
 	}
 
-	if current == '\'' || current == '`' {
+	if current == '\'' || current == '`' || current == '"' {
 		t.input = t.input[1:]
 
 		word := t.readWord()
 
-		for t.current() != '\'' && t.current() != '`' {
+		for t.current() != '\'' && t.current() != '`' && t.current() != '"' {
 			for unicode.IsSpace(t.current()) {
 				t.input = t.input[1:]
 			}
@@ -271,8 +266,8 @@ func (t *Tokenizer) readWord() string {
 	for {
 		r := t.current()
 
-		if !(unicode.IsLetter(r) || unicode.IsDigit(r) || r == '*' || r == '~' ||
-			r == '/' || r == '.') {
+		if r == -1 || unicode.IsSpace(r) || r == '`' || r == '\'' ||
+			r == '"' || r == ',' {
 			return string(word)
 		}
 

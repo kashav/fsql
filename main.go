@@ -73,7 +73,7 @@ func compare(condition query.Condition, file os.FileInfo) bool {
 	return retval
 }
 
-func containsAny(path string, exclusions []string) bool {
+func containsAny(exclusions []string, path string) bool {
 	for _, exclusion := range exclusions {
 		if strings.Contains(path, exclusion) {
 			return true
@@ -103,16 +103,15 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = q.ReduceSources()
+	err = q.ReduceInclusions()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	var wg sync.WaitGroup
+	wg.Add(len(q.Sources["include"]))
 
 	for _, src := range q.Sources["include"] {
-		wg.Add(1)
-
 		go func(src string) {
 			defer wg.Done()
 
@@ -121,7 +120,7 @@ func main() {
 			}
 
 			filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
-				if path == "." || path == ".." || containsAny(path, q.Sources["exclude"]) {
+				if path == "." || path == ".." || containsAny(q.Sources["exclude"], path) {
 					return nil
 				}
 

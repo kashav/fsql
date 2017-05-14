@@ -30,9 +30,9 @@ type Condition struct {
 	Negate     bool
 }
 
-// ReduceSources reduces this qeury's sources by removing any source
+// ReduceInclusions reduces this query's sources by removing any source
 // which is a subdirectory of another source.
-func (q *Query) ReduceSources() error {
+func (q *Query) ReduceInclusions() error {
 	redundants := make(map[int]bool, len(q.Sources["include"])-1)
 
 	for i, base := range q.Sources["include"] {
