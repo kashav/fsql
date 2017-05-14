@@ -9,7 +9,7 @@ clean:
 	rm -f ./fsql
 
 install:
-	go install
+	go get -u -v
 
 lint:
 	${GOPATH}/bin/golint . query compare
