@@ -4,7 +4,7 @@
 
 ### Demo
 
-<a href="https://asciinema.org/a/118075" target="_blank">![](./fsql.gif)</a>
+[![fsql.gif](./fsql.gif)](https://asciinema.org/a/120534)
 
 ### Setup / installation
 
