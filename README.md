@@ -1,116 +1,154 @@
-## fsql
+# fsql
 
 >Search through your file system with SQL-esque queries.
 
-### Demo
+- [Demo](#demo)
+- [Installation](#setup-installation)
+- [Usage](#usage)
+  + [Query](#query-syntax)
+    * [Attribute](#attribute)
+    * [Source](#source)
+    * [Conditon](#condition)
+  + [Examples](#examples)
+- [Contribute](#contribute)
+- [Credits](#credits)
+- [License](#license)
+
+## Demo
 
 [![fsql.gif](./fsql.gif)](https://asciinema.org/a/120534)
 
-### Setup / installation
+## Setup / installation
 
-  - Requires Go to be [installed](https://golang.org/doc/install) and [configured](https://golang.org/doc/install#testing).
+Requires Go to be [installed](https://golang.org/doc/install) and [configured](https://golang.org/doc/install#testing).
 
-  - Install with Go:
+Install with `go get`:
 
-    ```sh
-    $ go get -v github.com/kshvmdn/fsql/...
-    $ which fsql
-    $GOPATH/bin/fsql
-    ```
+```console
+$ go get -v github.com/kshvmdn/fsql/...
+$ which fsql
+$GOPATH/bin/fsql
+```
 
-  - Or install directly via source:
+Or, install directly via source:
 
-    ```sh
-    $ git clone https://github.com/kshvmdn/fsql.git $GOPATH/src/github.com/kshvmdn/fsql
-    $ cd $_ # $GOPATH/src/github.com/kshvmdn/fsql
-    $ make install && make
-    $ ./fsql
-    ```
+```console
+$ git clone https://github.com/kshvmdn/fsql.git $GOPATH/src/github.com/kshvmdn/fsql
+$ cd $_ # $GOPATH/src/github.com/kshvmdn/fsql
+$ make install && make
+$ ./fsql
+```
 
-### Usage
+## Usage
 
-  - Pass the fsql query as a command line argument.
+fsql expects the query as a command line argument.
 
-  - Query structure:
+### Query syntax
 
-    ```sql
-    SELECT attribute, ... FROM directory, ... WHERE conditional ...
-    ```
+In general, each query requires one or more attributes, one or more source directories, and a condition.
 
-    + Attribute can be any of the following: `name`, `size`, `mode`, `time`, or `*` (for all).
+```sql
+SELECT attribute, ... FROM source, ... WHERE conditonal
+```
 
-    + Directory should be a relative/absolute path to some directory on your file system. Also supports expanding environment variables (e.g. `$GOPATH`) and `~` (for your home directory). You can exclude a directory with a minus sign (`-`), e.g. exclude `.git`: `"... FROM ., -.git/ ..."`.
+#### Attribute
 
-    + Conditionals:
+Currently supported attributes include `name`, `size`, `mode`, `time`, or `*` (for all).
 
-      * Supported comparators:
+#### Source
 
-        - For numeric comparisons (also applies to time):
-          + `>`
-          + `>=`
-          + `<`
-          + `<=`
-          + `=`
-          + `<>`
+Each source should be a relative or absolute path to some directory on your machine. You can also use environment variables (e.g. `$GOPATH`) or `~` (for your home directory).
 
-        - For string comparisons:
-          + `=` - String equality (synonymous to using `LIKE` without any wildcards).
-          + `<>` - Synonymous to using `WHERE NOT ... = ...`.
-          + `LIKE` - For simple string pattern matching, use `%` to match zero, one, or multiple characters. Check that a string begins with a value using `<value>%`, ends with a value: `%<value>`, or contains a value: `<value>`.
-          + `RLIKE` - For pattern matching with regular expressions.
+Use `-` to exclude a directory. For example, to exclude `.git`: `"... FROM ., -.git/ ..."`.
 
-      * Use `AND` / `OR` for conditional conjunction/disjunction. Note that precedence is assigned based on order of appearance (i.e. `"WHERE a AND b OR c"` ≠ `"WHERE c OR b AND a"`). Use parentheses to get around this behaviour (`"WHERE a AND b OR c"` = `"WHERE c OR (b AND a)"`).
+#### Condition
 
-      * Use `NOT` to negate a conditional statement. This keyword **must** precede the statement (e.g. `"... WHERE NOT name LIKE foo ..."`).
+##### Conjunction/Disjunction
 
-      * If your value contains spaces and/or escaped characters, wrap the value in quotes (either single or double) or backticks.
+Use `AND` / `OR` to join conditions. Note that precedence is assigned based on order of appearance.
 
-      * The default unit for size is bytes, to use kilobytes / megabytes / gigabytes, append `kb` / `mb` / `gb` to the size value (e.g. `100kb`).
+This means `"WHERE a AND b OR c"` is **not** the same as `"WHERE c OR b AND a"`. Use parentheses to get around this behaviour, `"WHERE a AND b OR c"` **is** the same as `"WHERE c OR (b AND a)"`.
 
-  - Examples:
-    
-    - List all files & directories in Desktop and Downloads directory that contain `csc`.
+##### Negation
 
-      ```sh
-      $ fsql "SELECT name FROM ~/Desktop, ~/Downloads WHERE name LIKE %csc%"
-      $ # equivalent to:
-      $ fsql "SELECT name FROM ~/Desktop, ~/Downloads WHERE name RLIKE .*csc.*"
-      ```
+Use `NOT` to negate a condition. This keyword **must** precede the condition (e.g. `"... WHERE NOT a ..."`).
 
-    - List all JavaScript files in the current directory that were modified after April 1st 2017 (try running this on a `node_modules` directory, it's fast :sunglasses:).
+Note that wrapping parentheses with `NOT` is currently not supported. This can easily be resolved with [De Morgan's laws](https://en.wikipedia.org/wiki/De_Morgan%27s_laws). For example, `... WHERE NOT (a AND b) ...` is the same as `... WHERE NOT a OR NOT b ...`.
 
-      ```sh
-      $ fsql "SELECT name, size, time FROM . WHERE name LIKE %.js AND time > 'Apr 01 2017 00 00'"
-      ```
+##### Condition Syntax
 
-    - List all files named `main.go` in `$GOPATH` which are at least 10.5 kilobytes in size or less than 100 bytes in size.
+A single condition is made up of 3 parts: attribute, comparator, and value.
 
-      ```sh
-      $ fsql "SELECT * FROM $GOPATH WHERE name = main.go AND (size >= 10.5kb OR size < 100)"
-      ```
+###### attribute
 
-### Contribute
+A valid attribute is any of the following: `name`, `size`, `mode`, `time`.
 
-This project is completely open source, feel free to [open an issue](https://github.com/kshvmdn/fsql/issues) for questions/features/bugs or [submit a pull request](https://github.com/kshvmdn/fsql/pulls).
+###### comparator
 
-Use the following to test that your changes comply with [Golint](https://github.com/golang/lint).
+Comparators depend on the attribute.
 
-  ```sh
-  $ make lint
-  ```
+For `name`:
 
-#### TODO
+  - `=` - Strings that are an exact match.
+  - `<>` - Synonymous to using `WHERE NOT ... = ...`.
+  - `LIKE` - For simple pattern matching. Use `%` to match zero, one, or multiple characters. Check that a string begins with a value: `<value>%`, ends with a value: `%<value>`, or contains a value: `<value>`.
+  - `RLIKE` - For pattern matching with regular expressions.
 
-  - [ ] **Bug**: Exclude skips files with similar names (e.g. excluding `.git` results in `.gitignore` not being listed).
-  - [ ] Add unit tests (test files are empty right now).
-  - [x] Add support for regex in string comparisons (e.g. `... ENDSWITH jsx?`).
-  - [x] Handle errors more gracefully (instead of just panicking everything).
-  - [x] Add support for `OR` / `AND`  / `()` (for precedence) in condition statements (lexing is already done for these, just need to add the parsers).
-  - [x] Add support for times/dates (to query file creation/modification time).
-  - [x] Introduce new attributes to select from (creation/modification time, file mode, _basically whatever else [`os.FileInfo`](https://golang.org/pkg/os/#FileInfo) supports_).
-  - [x] **Bug**: Space-separated queries. Currently something like `"... WHERE time > May 1 ..."` is broken since we're splitting conditionals by space. Fix by allowing single quotes and backticks in query strings, so something like `"... WHERE time > 'May 1' ..."` works and evaluates the conditional to have value of `"May 1"`.
-  - [x] Add `NOT` operator for negating conditionals.
-  - [x] Add support for querying and selecting using other size units (only supports bytes right now, add functionality for KB, MB, and GB as well).
-  - [x] **Bug**: Selecting from a directory and it's subdirectory results in duplicates and malformed output.
+For `size` and `time`:
 
-Lexer & parser are based on the amazing work of [**@JamesOwenHall**](https://github.com/JamesOwenHall) ([json2](https://github.com/JamesOwenHall/json2), [timed](https://github.com/JamesOwenHall/timed)).
+  - `>`
+  - `>=`
+  - `<`
+  - `<=`
+  - `=`
+  - `<>`
+
+And, for `mode`:
+
+  - `IS`
+
+###### value
+
+If the value contains spaces and/or escaped characters, wrap the value in quotes (either single or double) or backticks.
+
+The default unit for `size` is bytes. To use kilobytes / megabytes / gigabytes, append `kb` / `mb` / `gb` to the size value (e.g. `100kb` for 100 kilobytes).
+
+Attribute `mode` only has 2 supported values: `DIR` (to check that the file is a directory) and `REG` (to check that the file is regular).
+
+Use the following format for `time` values: `MMM DD YYYY HH MM` (eg. `Jan 02 2006 15 04`).
+
+### Examples
+
+List all files & directories in Desktop and Downloads that contain `csc` in the name:
+
+```sh
+$ fsql "SELECT name FROM ~/Desktop, ~/Downloads WHERE name LIKE %csc%"
+$ # this is equivalent to:
+$ fsql "SELECT name FROM ~/Desktop, ~/Downloads WHERE name RLIKE .*csc.*"
+```
+
+List all JavaScript files in the current directory that were modified after April 1st 2017 (try running this on a `node_modules` directory, it's fast :sunglasses:).
+
+```sh
+$ fsql "SELECT name, size, time FROM . WHERE name LIKE %.js AND time > 'Apr 01 2017 00 00'"
+```
+
+List all files named `main.go` in `$GOPATH` which are larger than 10.5 kilobytes or smaller than 100 bytes.
+
+```sh
+$ fsql "SELECT * FROM $GOPATH WHERE name = main.go AND (size >= 10.5kb OR size < 100)"
+```
+
+## Contribute
+
+This project is completely open source, feel free to [open an issue](https://github.com/kshvmdn/fsql/issues) or [submit a pull request](https://github.com/kshvmdn/fsql/pulls).
+
+Before submitting code, please ensure your changes comply with [Golint](https://github.com/golang/lint). Use `make lint` to test this.
+
+## Credits
+
+Lexer & parser are based on the work of [JamesOwenHall](https://github.com/JamesOwenHall) ([json2](https://github.com/JamesOwenHall/json2), [timed](https://github.com/JamesOwenHall/timed)).
+
+## License
+
+fsql source code is available under the [MIT license](./LICENSE).
