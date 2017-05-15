@@ -1,8 +1,10 @@
 package query
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"strings"
 )
 
 // Run parses input and returns the output.
@@ -141,8 +143,7 @@ func (p *parser) parseConditionTree() (*ConditionNode, error) {
 	}
 
 	if s.len() > 1 {
-		// FIXME: create/return appropriate error
-		return nil, p.currentError()
+		return nil, errors.New("failed to parse condition tree")
 	}
 
 	return s.pop(), nil
@@ -163,13 +164,18 @@ func (p *parser) parseNextCondition() (*Condition, error) {
 	if p.current == nil {
 		return nil, p.currentError()
 	}
-	// TODO: check that p.current is a valid comparator
 	comp := p.current.Type
 	p.current = nil
 
 	value := p.expect(Identifier)
 	if value == nil {
 		return nil, p.currentError()
+	}
+
+	// Use regexp to evaluate wildcard (%) in LIKE conditions.
+	if comp == Like && strings.Contains(value.Raw, "%") {
+		comp = RLike
+		value.Raw = strings.Replace(value.Raw, "%", ".*", -1)
 	}
 
 	return &Condition{

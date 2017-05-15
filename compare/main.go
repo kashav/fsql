@@ -17,19 +17,7 @@ func Alpha(comp query.TokenType, a, b string) bool {
 	case query.NotEquals:
 		return a != b
 	case query.Like:
-		if b[0] == '%' && b[len(b)-1] == '%' {
-			return strings.Contains(a, b[1:len(b)-1])
-		}
-
-		if b[0] == '%' {
-			return strings.HasSuffix(a, b[1:])
-		}
-
-		if b[len(b)-1] == '%' {
-			return strings.HasPrefix(a, b[:len(b)-1])
-		}
-
-		return a == b
+		return strings.Contains(a, b)
 	case query.RLike:
 		return regexp.MustCompile(b).MatchString(a)
 	}

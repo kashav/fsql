@@ -56,7 +56,7 @@
         - For string comparisons:
           + `=` - String equality (synonymous to using `LIKE` without any wildcards).
           + `<>` - Synonymous to using `WHERE NOT ... = ...`.
-          + `LIKE` - For simple string matching, use `%` to match zero, one, or multiple characters. Check that a string begins with a value using `<value>%`, ends with a value: `%<value>`, or contains a value: `%<value>%`.
+          + `LIKE` - For simple string pattern matching, use `%` to match zero, one, or multiple characters. Check that a string begins with a value using `<value>%`, ends with a value: `%<value>`, or contains a value: `<value>`.
           + `RLIKE` - For pattern matching with regular expressions.
 
       * Use `AND` / `OR` for conditional conjunction/disjunction. Note that precedence is assigned based on order of appearance (i.e. `"WHERE a AND b OR c"` ≠ `"WHERE c OR b AND a"`). Use parentheses to get around this behaviour (`"WHERE a AND b OR c"` = `"WHERE c OR (b AND a)"`).
