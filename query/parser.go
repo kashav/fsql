@@ -18,17 +18,29 @@ type parser struct {
 	expected  TokenType
 }
 
+var allAttributes = map[string]bool{
+	"mode": true,
+	"name": true,
+	"size": true,
+	"time": true,
+}
+
 func (p *parser) parse(input string) (*Query, error) {
 	p.tokenizer = NewTokenizer(input)
 	q := new(Query)
 
-	if p.expect(Select) == nil {
-		return nil, p.currentError()
-	}
-	q.Attributes = make(map[string]bool)
-	err := p.parseAttributes(&q.Attributes)
-	if err != nil {
-		return nil, err
+	// We don't care if this is nil, since SELECT is optional. We must call it
+	// anyways so the parser is aware of the current spot in the query.
+	p.expect(Select)
+
+	if p.current != nil && p.current.Type == From {
+		q.Attributes = allAttributes
+	} else {
+		q.Attributes = make(map[string]bool)
+		err := p.parseAttributes(&q.Attributes)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if p.expect(From) == nil {
@@ -38,7 +50,7 @@ func (p *parser) parse(input string) (*Query, error) {
 		"include": make([]string, 0),
 		"exclude": make([]string, 0),
 	}
-	err = p.parseSources(&q.Sources)
+	err := p.parseSources(&q.Sources)
 	if err != nil {
 		return nil, err
 	}
@@ -61,13 +73,8 @@ func (p *parser) parseAttributes(attributes *map[string]bool) error {
 	if attribute == nil {
 		return p.currentError()
 	}
-	if attribute.Raw == "*" {
-		*attributes = map[string]bool{
-			"mode": true,
-			"name": true,
-			"size": true,
-			"time": true,
-		}
+	if attribute.Raw == "*" || attribute.Raw == "all" {
+		*attributes = allAttributes
 	} else {
 		(*attributes)[attribute.Raw] = true
 	}

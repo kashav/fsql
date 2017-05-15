@@ -88,7 +88,12 @@ func main() {
 		fmt.Println("Expected query.")
 		os.Exit(1)
 	}
-	input := os.Args[1]
+	var input string
+	if len(os.Args) == 2 {
+		input = os.Args[1]
+	} else {
+		input = strings.Join(os.Args[1:], " ")
+	}
 
 	usr, err := user.Current()
 	if err != nil {
