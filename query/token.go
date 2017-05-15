@@ -191,9 +191,8 @@ func (t *Tokenizer) Next() *Token {
 		return &Token{Type: LessThan, Raw: "<"}
 	}
 
-	if unicode.IsLetter(current) || unicode.IsDigit(current) ||
-		current == '*' || current == '~' || current == '/' ||
-		current == '.' || current == '%' {
+	if !(current == -1 || current == '`' || current == '\'' ||
+		current == '"' || current == ',') {
 		word := t.readWord()
 		tok := &Token{Raw: word}
 
