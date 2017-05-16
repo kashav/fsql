@@ -32,7 +32,6 @@ func (p *parser) parse(input string) (*Query, error) {
 	// We don't care if this is nil, since SELECT is optional. We must call it
 	// anyways so the parser is aware of the current spot in the query.
 	p.expect(Select)
-
 	if p.current != nil && p.current.Type == From {
 		q.Attributes = allAttributes
 	} else {
@@ -56,9 +55,12 @@ func (p *parser) parse(input string) (*Query, error) {
 	}
 
 	if p.expect(Where) == nil {
-		return nil, p.currentError()
+		err = p.currentError()
+		if p.expect(Identifier) == nil {
+			return q, nil
+		}
+		return nil, err
 	}
-
 	root, err := p.parseConditionTree()
 	if err != nil {
 		return nil, err
@@ -149,6 +151,10 @@ func (p *parser) parseConditionTree() (*ConditionNode, error) {
 		}
 	}
 
+	if s.len() == 0 {
+		return nil, p.currentError()
+	}
+
 	if s.len() > 1 {
 		return nil, errors.New("failed to parse condition tree")
 	}
@@ -228,7 +234,7 @@ type ErrUnexpectedToken struct {
 }
 
 func (e *ErrUnexpectedToken) Error() string {
-	return fmt.Sprintf("expected %s; got %s", e.Expected.String(), e.Actual.String())
+	return fmt.Sprintf("Expected %s; got %s.", e.Expected.String(), e.Actual.String())
 }
 
 // ErrUnknownToken represents an unknown token error.
@@ -237,5 +243,5 @@ type ErrUnknownToken struct {
 }
 
 func (e *ErrUnknownToken) Error() string {
-	return fmt.Sprintf("unknown token: %s", e.Raw)
+	return fmt.Sprintf("Unknown token: %s.", e.Raw)
 }
