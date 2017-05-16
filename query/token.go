@@ -191,8 +191,8 @@ func (t *Tokenizer) Next() *Token {
 		return &Token{Type: LessThan, Raw: "<"}
 	}
 
-	if !(current == -1 || current == '`' || current == '\'' ||
-		current == '"' || current == ',') {
+	if !(current == -1 || current == '`' || current == '\'' || current == '"' ||
+		current == ',' || current == '(' || current == ')') {
 		word := t.readWord()
 		tok := &Token{Raw: word}
 
@@ -266,7 +266,7 @@ func (t *Tokenizer) readWord() string {
 		r := t.current()
 
 		if r == -1 || unicode.IsSpace(r) || r == '`' || r == '\'' ||
-			r == '"' || r == ',' {
+			r == '"' || r == ',' || r == '(' || r == ')' {
 			return string(word)
 		}
 

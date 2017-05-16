@@ -138,6 +138,8 @@ func (p *parser) parseConditionTree() (*ConditionNode, error) {
 			if root != nil {
 				root.Right = right
 				s.push(root)
+			} else {
+				s.push(right)
 			}
 		}
 	}
