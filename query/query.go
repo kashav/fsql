@@ -48,7 +48,7 @@ func (q *Query) ReduceInclusions() error {
 			}
 
 			rel, err := filepath.Rel(base, target)
-			if err != nil {
+			if err != nil || (rel[:2] == ".." && rel[len(rel)-1] != '.') {
 				// filepath.Rel only returns error when can't make target relative to
 				// base, i.e. they're disjoint (which is what we want).
 				continue
