@@ -118,7 +118,8 @@ func main() {
 
 	for _, src := range q.Sources["include"] {
 		filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
-			if path == "." || path == ".." || containsAny(q.Sources["exclude"], path) {
+			if path == "." || path == ".." || err != nil ||
+				containsAny(q.Sources["exclude"], path) {
 				return nil
 			}
 

@@ -113,15 +113,16 @@ func (root *ConditionNode) Evaluate(file os.FileInfo, compareFn interface{}) boo
 		return compareFn.(func(Condition, os.FileInfo) bool)(*root.Condition, file)
 	}
 
-	left := root.Left.Evaluate(file, compareFn)
-	right := root.Right.Evaluate(file, compareFn)
-
 	if root.Type == And {
-		return left && right
+		return root.Left.Evaluate(file, compareFn) &&
+			root.Right.Evaluate(file, compareFn)
 	}
 
 	if root.Type == Or {
-		return left || right
+		if root.Left.Evaluate(file, compareFn) {
+			return true
+		}
+		return root.Right.Evaluate(file, compareFn)
 	}
 
 	return false
