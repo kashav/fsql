@@ -158,7 +158,7 @@ See the next section for examples.
 
 ### Examples
 
-List all files & directories in Desktop and Downloads that contain `csc` in the name:
+List the name of files & directories in Desktop and Downloads that contain `csc` in the name:
 
 ```console
 $ fsql SELECT name FROM ~/Desktop, ~/Downloads WHERE name LIKE %csc%
@@ -166,7 +166,14 @@ $ # this is equivalent to:
 $ fsql SELECT name FROM ~/Desktop, ~/Downloads WHERE name RLIKE .*csc.*
 ```
 
-List all JavaScript files in the current directory that were modified after April 1st 2017 (try running this on a `node_modules` directory, it's fast :sunglasses:).
+List all attributes of each directory in your home directory (note the escaped `*`).
+
+```console
+$ fsql SELECT \* FROM ~ WHERE file IS dir
+$ fsql SELECT all FROM ~ WHERE file IS dir
+```
+
+List the name, size, and modification time of JavaScript files in the current directory that were modified after April 1st 2017 (try running this on a `node_modules` directory, it's fast :sunglasses:).
 
 ```sh
 $ fsql name, size, time FROM . WHERE name LIKE %.js AND time > 'Apr 01 2017 00 00'
