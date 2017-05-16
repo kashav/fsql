@@ -102,16 +102,21 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Replace ~ with the home directory in each source directory.
+	for _, sourceType := range []string{"include", "exclude"} {
+		for i, src := range q.Sources[sourceType] {
+			if strings.Contains(src, "~") {
+				q.Sources[sourceType][i] = filepath.Join(usr.HomeDir, src[1:])
+			}
+		}
+	}
+
 	err = q.ReduceInclusions()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	for _, src := range q.Sources["include"] {
-		if strings.Contains(src, "~") {
-			src = filepath.Join(usr.HomeDir, src[1:])
-		}
-
 		filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
 			if path == "." || path == ".." || containsAny(q.Sources["exclude"], path) {
 				return nil
