@@ -5,7 +5,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"os/user"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -22,6 +21,19 @@ const (
 	uGIGABYTE = 1024 * uMEGABYTE
 )
 
+// Used to track which paths we've seen to avoid revisiting a directory.
+var seen = make(map[string]bool, 0)
+
+// Read the command line arguments for the query.
+func readInput() string {
+	if len(os.Args) > 2 {
+		return strings.Join(os.Args[1:], " ")
+	}
+
+	return os.Args[1]
+}
+
+// Runs the appropriate cmp method for the provided condition.
 func compare(condition query.Condition, file os.FileInfo) bool {
 	var retval bool
 
@@ -72,6 +84,7 @@ func compare(condition query.Condition, file os.FileInfo) bool {
 	return retval
 }
 
+// Return true iff path contains a substring of any element of exclusions.
 func containsAny(exclusions []string, path string) bool {
 	for _, exclusion := range exclusions {
 		if strings.Contains(path, exclusion) {
@@ -83,70 +96,60 @@ func containsAny(exclusions []string, path string) bool {
 }
 
 func main() {
-	var input string
-	if len(os.Args) == 2 {
-		input = os.Args[1]
-	} else {
-		input = strings.Join(os.Args[1:], " ")
-	}
-
-	usr, err := user.Current()
-	if err != nil {
-		log.Fatal(err)
-	}
+	input := readInput()
 
 	q, err := query.RunParser(input)
 	if err != nil {
 		if err == io.ErrUnexpectedEOF {
-			log.Fatal("Unexpected end of line.")
+			log.Fatal("Unexpected end of line")
 		}
-		log.Fatal(err)
-	}
-
-	// Replace ~ with the home directory in each source directory.
-	for _, sourceType := range []string{"include", "exclude"} {
-		for i, src := range q.Sources[sourceType] {
-			if strings.Contains(src, "~") {
-				q.Sources[sourceType][i] = filepath.Join(usr.HomeDir, src[1:])
-			}
-		}
-	}
-
-	err = q.ReduceInclusions()
-	if err != nil {
 		log.Fatal(err)
 	}
 
 	for _, src := range q.Sources["include"] {
 		filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
-			if path == "." || path == ".." || err != nil ||
-				containsAny(q.Sources["exclude"], path) {
+			if path == "." || path == ".." || err != nil {
 				return nil
 			}
 
-			if q.ConditionTree.Evaluate(info, compare) {
-				if q.HasAttribute("mode") {
-					fmt.Printf("%s\t", info.Mode())
-				}
+			if _, ok := seen[path]; ok {
+				return nil
+			}
+			seen[path] = true
 
-				if q.HasAttribute("size") {
-					fmt.Printf("%d\t", info.Size())
-				}
-
-				if q.HasAttribute("time") {
-					fmt.Printf("%s\t", info.ModTime().Format(time.Stamp))
-				}
-
-				if q.HasAttribute("name") {
-					if strings.Contains(path, usr.HomeDir) {
-						path = filepath.Join("~", path[len(usr.HomeDir):])
-					}
-					fmt.Printf("%s", path)
-				}
-
-				fmt.Printf("\n")
+			// If this path is excluded or the condition is false, return.
+			if containsAny(q.Sources["exclude"], path) ||
+				!q.ConditionTree.Evaluate(info, compare) {
+				return nil
 			}
 
+			if q.HasAttribute("mode") {
+				fmt.Printf("%s", info.Mode())
+				if q.HasAttribute("size", "time", "name") {
+					fmt.Print("\t")
+				}
+			}
+
+			if q.HasAttribute("size") {
+				fmt.Printf("%d", info.Size())
+				if q.HasAttribute("time", "name") {
+					fmt.Print("\t")
+				}
+			}
+
+			if q.HasAttribute("time") {
+				fmt.Printf("%s", info.ModTime().Format(time.Stamp))
+				if q.HasAttribute("name") {
+					fmt.Print("\t")
+				}
+			}
+
+			if q.HasAttribute("name") {
+				// TODO: Only show file name, instead of the full path?
+				fmt.Printf("%s", path)
+			}
+
+			fmt.Printf("\n")
 			return nil
 		})
 	}

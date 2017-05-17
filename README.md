@@ -176,7 +176,8 @@ $ fsql SELECT all FROM ~ WHERE file IS dir
 List the name, size, and modification time of JavaScript files in the current directory that were modified after April 1st 2017 (try running this on a `node_modules` directory, it's fast :sunglasses:).
 
 ```sh
-$ fsql name, size, time FROM . WHERE name LIKE %.js AND time > 'Apr 01 2017 00 00'
+$ fsql name, size, time FROM . WHERE name LIKE %.js AND time \> \'Apr 01 2017 00 00\'
+$ fsql "name, size, time FROM . WHERE name LIKE %.js AND time > 'Apr 01 2017 00 00'"
 ```
 
 List all files named `main.go` in `$GOPATH` which are larger than 10.5 kilobytes or smaller than 100 bytes (note the escaped parentheses and redirection symbols, to avoid this, wrap the query in quotes).

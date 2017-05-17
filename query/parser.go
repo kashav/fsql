@@ -4,18 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os/user"
+	"path/filepath"
 	"strings"
 )
 
 // RunParser runs the parser on the input string and returns the parsed AST.
 func RunParser(input string) (*Query, error) {
 	return (&parser{}).parse(input)
-}
-
-type parser struct {
-	tokenizer *Tokenizer
-	current   *Token
-	expected  TokenType
 }
 
 var allAttributes = map[string]bool{
@@ -25,8 +21,20 @@ var allAttributes = map[string]bool{
 	"time": true,
 }
 
+type parser struct {
+	tokenizer *Tokenizer
+	current   *Token
+	expected  TokenType
+}
+
+// Return true when no attributes are provided (regardless of if the SELECT
+// keyword is provided). Returns false otherwise.
 func (p *parser) showAllAttributes() (bool, error) {
 	if p.expect(Select) == nil {
+		if p.current == nil {
+			return false, nil
+		}
+
 		if p.current.Type == From || p.current.Type == Where {
 			return true, nil
 		}
@@ -47,6 +55,7 @@ func (p *parser) showAllAttributes() (bool, error) {
 	return true, nil
 }
 
+// Parse each of the clauses in the input string.
 func (p *parser) parse(input string) (*Query, error) {
 	p.tokenizer = NewTokenizer(input)
 	q := new(Query)
@@ -80,6 +89,21 @@ func (p *parser) parse(input string) (*Query, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		// Replace the tilde with the home directory in each source directory. This
+		// is only required when the query is wrapped in quotes, since the shell
+		// will automatically expand tildes otherwise.
+		usr, err := user.Current()
+		if err != nil {
+			return nil, err
+		}
+		for _, sourceType := range []string{"include", "exclude"} {
+			for i, src := range q.Sources[sourceType] {
+				if strings.Contains(src, "~") {
+					q.Sources[sourceType][i] = filepath.Join(usr.HomeDir, src[1:])
+				}
+			}
+		}
 	}
 
 	if p.expect(Where) == nil {
@@ -98,6 +122,7 @@ func (p *parser) parse(input string) (*Query, error) {
 	return q, nil
 }
 
+// Parse the list of attributes provided to the SELECT clause.
 func (p *parser) parseAttributes(attributes *map[string]bool) error {
 	attribute := p.expect(Identifier)
 	if attribute == nil {
@@ -118,6 +143,8 @@ func (p *parser) parseAttributes(attributes *map[string]bool) error {
 	return p.parseAttributes(attributes)
 }
 
+// Parse the list of directories passed to the FROM clause. Expects that
+// the sources input has an "include" and "exclude" key.
 func (p *parser) parseSources(sources *map[string][]string) error {
 	sourceType := "include"
 	if p.expect(Minus) != nil {
@@ -128,6 +155,7 @@ func (p *parser) parseSources(sources *map[string][]string) error {
 	if source == nil {
 		return p.currentError()
 	}
+
 	(*sources)[sourceType] = append((*sources)[sourceType], source.Raw)
 
 	if p.expect(Comma) == nil {
@@ -137,6 +165,7 @@ func (p *parser) parseSources(sources *map[string][]string) error {
 	return p.parseSources(sources)
 }
 
+// Parse the condition passed to the WHERE clause.
 func (p *parser) parseConditionTree() (*ConditionNode, error) {
 	s := new(stack)
 
@@ -199,6 +228,8 @@ func (p *parser) parseConditionTree() (*ConditionNode, error) {
 	return s.pop(), nil
 }
 
+// Parse a single condition, made up of the negation, identifier (attribute),
+// comparator, and value.
 func (p *parser) parseNextCondition() (*Condition, error) {
 	negate := false
 	if p.expect(Not) != nil {
@@ -222,12 +253,6 @@ func (p *parser) parseNextCondition() (*Condition, error) {
 		return nil, p.currentError()
 	}
 
-	// Use regexp to evaluate wildcard (%) in LIKE conditions.
-	if comp == Like && strings.Contains(value.Raw, "%") {
-		comp = RLike
-		value.Raw = strings.Replace(value.Raw, "%", ".*", -1)
-	}
-
 	return &Condition{
 		Attribute:  attr.Raw,
 		Comparator: comp,
@@ -236,6 +261,7 @@ func (p *parser) parseNextCondition() (*Condition, error) {
 	}, nil
 }
 
+// Returns the next token if it matches the expectation, nil otherwise.
 func (p *parser) expect(t TokenType) *Token {
 	p.expected = t
 
@@ -252,6 +278,8 @@ func (p *parser) expect(t TokenType) *Token {
 	return nil
 }
 
+// Returns the current error, based on the parser's current Token and the
+// previously expected TokenType (set in expect).
 func (p *parser) currentError() error {
 	if p.current == nil {
 		return io.ErrUnexpectedEOF
