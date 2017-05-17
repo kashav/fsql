@@ -48,7 +48,7 @@ fsql expects the query as a command line argument.
 In general, each query requires a `SELECT` clause (to specify which attributes should be shown), a `FROM` clause (to specify the directories to search in), and a `WHERE` clause (to specify conditions for the files).
 
 ```sql
-SELECT attribute, ... FROM source, ... WHERE conditon
+SELECT attribute, ... FROM source, ... WHERE condition
 ```
 
 You may omit the `SELECT` clause, as well as the `WHERE` clause.
@@ -179,10 +179,10 @@ List the name, size, and modification time of JavaScript files in the current di
 $ fsql name, size, time FROM . WHERE name LIKE %.js AND time > 'Apr 01 2017 00 00'
 ```
 
-List all files named `main.go` in `$GOPATH` which are larger than 10.5 kilobytes or smaller than 100 bytes (note the escaped redirection symbols, to avoid this wrap the query in quotes).
+List all files named `main.go` in `$GOPATH` which are larger than 10.5 kilobytes or smaller than 100 bytes (note the escaped parentheses and redirection symbols, to avoid this, wrap the query in quotes).
 
 ```sh
-$ fsql FROM $GOPATH WHERE name = main.go AND (size \>= 10.5kb OR size \< 100)
+$ fsql FROM $GOPATH WHERE name = main.go AND \(size \>= 10.5kb OR size \< 100\)
 $ fsql "FROM $GOPATH WHERE name = main.go AND (size >= 10.5kb OR size < 100)"
 ```
 
