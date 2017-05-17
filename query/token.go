@@ -12,6 +12,8 @@ type TokenType int8
 const (
 	// Unknown represents an unknown Token type.
 	Unknown TokenType = iota
+	// Subquery represents a subquery in this query string
+	Subquery
 	// Select represents the SELECT clause.
 	Select
 	// From represents the FROM clause.
@@ -24,6 +26,8 @@ const (
 	And
 	// Not represents the NOT keyword for conditional negation.
 	Not
+	// In represents the IN keyword for list-based comparisons.
+	In
 	// Is represents the IS keyword for file type comparisons.
 	Is
 	// Like represents the LIKE keyword for string comparisons.
@@ -56,6 +60,8 @@ const (
 
 func (t TokenType) String() string {
 	switch t {
+	case Subquery:
+		return "subquery"
 	case Select:
 		return "select"
 	case From:
@@ -68,6 +74,8 @@ func (t TokenType) String() string {
 		return "and"
 	case Not:
 		return "not"
+	case In:
+		return "in"
 	case Is:
 		return "is"
 	case Like:
@@ -103,8 +111,9 @@ func (t TokenType) String() string {
 
 // Token represents a single token.
 type Token struct {
-	Type TokenType
-	Raw  string
+	Type     TokenType
+	Raw      string
+	Previous *Token
 }
 
 func (t Token) String() string {
@@ -113,12 +122,13 @@ func (t Token) String() string {
 
 // Tokenizer represents a token worker.
 type Tokenizer struct {
-	input []rune
+	input    []rune
+	previous *Token
 }
 
 // NewTokenizer initializes a new Tokenizer.
 func NewTokenizer(input string) *Tokenizer {
-	return &Tokenizer{input: []rune(input)}
+	return &Tokenizer{input: []rune(input), previous: nil}
 }
 
 // All parses all tokens for this Tokenizer.
@@ -129,6 +139,33 @@ func (t *Tokenizer) All() []Token {
 	}
 
 	return tokens
+}
+
+// Set the supplied token's Previous to the t's previous and set t's previous
+// to token.
+func (t *Tokenizer) setAndReturnToken(token *Token) *Token {
+	token.Previous, t.previous = t.previous, token
+	return token
+}
+
+// Read input, starting at startWord, until reaching a rune in chars.
+func (t *Tokenizer) readUntil(start *string, chars ...rune) {
+	in := func(c rune) bool {
+		for _, char := range chars {
+			if c == char {
+				return true
+			}
+		}
+		return false
+	}
+
+	for !in(t.current()) {
+		for unicode.IsSpace(t.current()) {
+			t.input = t.input[1:]
+		}
+
+		*start = fmt.Sprintf("%s %s", *start, t.readWord())
+	}
 }
 
 // Next gets the next Token in this Tokenizer.
@@ -149,46 +186,46 @@ func (t *Tokenizer) Next() *Token {
 	switch current {
 	case '(':
 		t.input = t.input[1:]
-		return &Token{Type: OpenParen, Raw: "("}
+		return t.setAndReturnToken(&Token{Type: OpenParen, Raw: "("})
 
 	case ')':
 		t.input = t.input[1:]
-		return &Token{Type: CloseParen, Raw: ")"}
+		return t.setAndReturnToken(&Token{Type: CloseParen, Raw: ")"})
 
 	case ',':
 		t.input = t.input[1:]
-		return &Token{Type: Comma, Raw: ","}
+		return t.setAndReturnToken(&Token{Type: Comma, Raw: ","})
 
 	case '-':
 		t.input = t.input[1:]
-		return &Token{Type: Minus, Raw: "-"}
+		return t.setAndReturnToken(&Token{Type: Minus, Raw: "-"})
 
 	case '=':
 		t.input = t.input[1:]
-		return &Token{Type: Equals, Raw: "="}
+		return t.setAndReturnToken(&Token{Type: Equals, Raw: "="})
 
 	case '>':
-		if t.peek() == '=' {
+		if t.nextRune() == '=' {
 			t.input = t.input[2:]
-			return &Token{Type: GreaterThanEquals, Raw: ">="}
+			return t.setAndReturnToken(&Token{Type: GreaterThanEquals, Raw: ">="})
 		}
 
 		t.input = t.input[1:]
-		return &Token{Type: GreaterThan, Raw: ">"}
+		return t.setAndReturnToken(&Token{Type: GreaterThan, Raw: ">"})
 
 	case '<':
-		if t.peek() == '=' {
+		if t.nextRune() == '=' {
 			t.input = t.input[2:]
-			return &Token{Type: LessThanEquals, Raw: ">="}
+			return t.setAndReturnToken(&Token{Type: LessThanEquals, Raw: ">="})
 		}
 
-		if t.peek() == '>' {
+		if t.nextRune() == '>' {
 			t.input = t.input[2:]
-			return &Token{Type: NotEquals, Raw: "<>"}
+			return t.setAndReturnToken(&Token{Type: NotEquals, Raw: "<>"})
 		}
 
 		t.input = t.input[1:]
-		return &Token{Type: LessThan, Raw: "<"}
+		return t.setAndReturnToken(&Token{Type: LessThan, Raw: "<"})
 	}
 
 	if !(current == -1 || current == '`' || current == '\'' || current == '"' ||
@@ -209,6 +246,8 @@ func (t *Tokenizer) Next() *Token {
 			tok.Type = And
 		case "NOT":
 			tok.Type = Not
+		case "IN":
+			tok.Type = In
 		case "IS":
 			tok.Type = Is
 		case "LIKE":
@@ -219,28 +258,41 @@ func (t *Tokenizer) Next() *Token {
 			tok.Type = Identifier
 		}
 
-		return tok
-	}
-
-	if current == '\'' || current == '`' || current == '"' {
-		t.input = t.input[1:]
-
-		word := t.readWord()
-
-		for t.current() != '\'' && t.current() != '`' && t.current() != '"' {
-			for unicode.IsSpace(t.current()) {
-				t.input = t.input[1:]
-			}
-
-			word = fmt.Sprintf("%s %s", word, t.readWord())
+		// If the previous token was a `(`, and the one before was IN, then
+		// this must be a subquery. Keep reading until we reach a `)`.
+		//
+		// FIXME: We aren't counting parens, so as soon as we we reach a closing
+		// paren, we stop. This breaks when the subquery also has parens in it.
+		if t.previous != nil && t.previous.Type == OpenParen &&
+			t.previous.Previous != nil && t.previous.Previous.Type == In {
+			t.input = t.input[1:]
+			t.readUntil(&word, ')')
+			tok.Type = Subquery
+			tok.Raw = word
 		}
 
-		t.input = t.input[1:]
-		return &Token{Type: Identifier, Raw: word}
+		return t.setAndReturnToken(tok)
 	}
 
 	t.input = t.input[1:]
-	return &Token{Type: Unknown, Raw: string([]rune{current})}
+
+	// If the current rune is a single/double quote or backtick, we want to keep
+	// reading until we reach the closing symbol.
+	//
+	// FIXME: This doesn't actually check that the closing symbol matches the
+	// opening one (i.e. <single-quote> ... <double-quote> works fine, which
+	// is wrong!).
+	if current == '\'' || current == '`' || current == '"' {
+		word := t.readWord()
+		t.readUntil(&word, '\'', '`', '"')
+		t.input = t.input[1:]
+		return t.setAndReturnToken(&Token{Type: Identifier, Raw: word})
+	}
+
+	return t.setAndReturnToken(&Token{
+		Type: Unknown,
+		Raw:  string([]rune{current})},
+	)
 }
 
 func (t *Tokenizer) current() rune {
@@ -251,7 +303,7 @@ func (t *Tokenizer) current() rune {
 	return t.input[0]
 }
 
-func (t *Tokenizer) peek() rune {
+func (t *Tokenizer) nextRune() rune {
 	if len(t.input) == 1 {
 		return -1
 	}
