@@ -1,5 +1,5 @@
 name := fsql
-sources := $(wildcard *.go)
+sources := $(wildcard **/*.go)
 
 build = GOOS=$(1) GOARCH=$(2) go build -o build/$(name)$(3)
 tar = cd build && tar -cvzf $(1)_$(2).tar.gz $(name)$(3) && rm $(name)$(3)
@@ -11,7 +11,7 @@ all: fsql
 
 build: darwin linux windows
 
-fsql:
+fsql: $(sources)
 	go build -o ./$(name) -v .
 
 clean:
