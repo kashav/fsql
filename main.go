@@ -26,6 +26,10 @@ var seen = make(map[string]bool, 0)
 
 // Read the command line arguments for the query.
 func readInput() string {
+	if len(os.Args) == 1 {
+		log.Fatal("Expected query.")
+	}
+
 	if len(os.Args) > 2 {
 		return strings.Join(os.Args[1:], " ")
 	}
