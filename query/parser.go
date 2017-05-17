@@ -7,8 +7,8 @@ import (
 	"strings"
 )
 
-// Run parses input and returns the output.
-func Run(input string) (*Query, error) {
+// RunParser runs the parser on the input string and returns the parsed AST.
+func RunParser(input string) (*Query, error) {
 	return (&parser{}).parse(input)
 }
 
@@ -18,35 +18,77 @@ type parser struct {
 	expected  TokenType
 }
 
+var allAttributes = map[string]bool{
+	"mode": true,
+	"name": true,
+	"size": true,
+	"time": true,
+}
+
+func (p *parser) showAllAttributes() (bool, error) {
+	if p.expect(Select) == nil {
+		if p.current.Type == From || p.current.Type == Where {
+			return true, nil
+		}
+
+		if p.current.Type == Identifier {
+			return false, nil
+		}
+
+		return false, p.currentError()
+	}
+
+	current := p.expect(Identifier)
+	if current != nil {
+		p.current = current
+		return false, nil
+	}
+
+	return true, nil
+}
+
 func (p *parser) parse(input string) (*Query, error) {
 	p.tokenizer = NewTokenizer(input)
 	q := new(Query)
 
-	if p.expect(Select) == nil {
-		return nil, p.currentError()
-	}
-	q.Attributes = make(map[string]bool)
-	err := p.parseAttributes(&q.Attributes)
+	all, err := p.showAllAttributes()
 	if err != nil {
 		return nil, err
 	}
-
-	if p.expect(From) == nil {
-		return nil, p.currentError()
+	if all {
+		q.Attributes = allAttributes
+	} else {
+		q.Attributes = make(map[string]bool)
+		err := p.parseAttributes(&q.Attributes)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	q.Sources = map[string][]string{
 		"include": make([]string, 0),
 		"exclude": make([]string, 0),
 	}
-	err = p.parseSources(&q.Sources)
-	if err != nil {
-		return nil, err
+	if p.expect(From) == nil {
+		err := p.currentError()
+		if p.expect(Identifier) != nil {
+			return nil, err
+		}
+		q.Sources["include"] = append(q.Sources["include"], ".")
+	} else {
+		err := p.parseSources(&q.Sources)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if p.expect(Where) == nil {
-		return nil, p.currentError()
+		err := p.currentError()
+		if p.expect(Identifier) == nil {
+			return q, nil
+		}
+		return nil, err
 	}
-
 	root, err := p.parseConditionTree()
 	if err != nil {
 		return nil, err
@@ -61,19 +103,18 @@ func (p *parser) parseAttributes(attributes *map[string]bool) error {
 	if attribute == nil {
 		return p.currentError()
 	}
-	if attribute.Raw == "*" {
-		*attributes = map[string]bool{
-			"mode": true,
-			"name": true,
-			"size": true,
-			"time": true,
-		}
+	if attribute.Raw == "*" || attribute.Raw == "all" {
+		*attributes = allAttributes
+	} else if _, ok := allAttributes[attribute.Raw]; !ok {
+		return &ErrUnknownToken{attribute.Raw}
 	} else {
 		(*attributes)[attribute.Raw] = true
 	}
+
 	if p.expect(Comma) == nil {
 		return nil
 	}
+
 	return p.parseAttributes(attributes)
 }
 
@@ -82,14 +123,17 @@ func (p *parser) parseSources(sources *map[string][]string) error {
 	if p.expect(Minus) != nil {
 		sourceType = "exclude"
 	}
+
 	source := p.expect(Identifier)
 	if source == nil {
 		return p.currentError()
 	}
 	(*sources)[sourceType] = append((*sources)[sourceType], source.Raw)
+
 	if p.expect(Comma) == nil {
 		return nil
 	}
+
 	return p.parseSources(sources)
 }
 
@@ -142,6 +186,10 @@ func (p *parser) parseConditionTree() (*ConditionNode, error) {
 				s.push(right)
 			}
 		}
+	}
+
+	if s.len() == 0 {
+		return nil, p.currentError()
 	}
 
 	if s.len() > 1 {
@@ -223,7 +271,7 @@ type ErrUnexpectedToken struct {
 }
 
 func (e *ErrUnexpectedToken) Error() string {
-	return fmt.Sprintf("expected %s; got %s", e.Expected.String(), e.Actual.String())
+	return fmt.Sprintf("Expected %s; got %s", e.Expected.String(), e.Actual.String())
 }
 
 // ErrUnknownToken represents an unknown token error.
@@ -232,5 +280,5 @@ type ErrUnknownToken struct {
 }
 
 func (e *ErrUnknownToken) Error() string {
-	return fmt.Sprintf("unknown token: %s", e.Raw)
+	return fmt.Sprintf("Unknown token: %s", e.Raw)
 }
