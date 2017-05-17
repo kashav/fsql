@@ -14,22 +14,6 @@ type Query struct {
 	ConditionTree *ConditionNode // Root node of this query's condition tree.
 }
 
-// ConditionNode represents a single node of a query's WHERE clause tree.
-type ConditionNode struct {
-	Type      TokenType
-	Condition *Condition
-	Left      *ConditionNode
-	Right     *ConditionNode
-}
-
-// Condition represents a WHERE condition.
-type Condition struct {
-	Attribute  string
-	Comparator TokenType
-	Value      string
-	Negate     bool
-}
-
 // ReduceInclusions reduces this query's sources by removing any source
 // which is a subdirectory of another source.
 func (q *Query) ReduceInclusions() error {
@@ -90,16 +74,25 @@ func (q *Query) HasAttribute(attribute string) bool {
 	return found
 }
 
+// ConditionNode represents a single node of a query's WHERE clause tree.
+type ConditionNode struct {
+	Type      TokenType
+	Condition *Condition
+	Left      *ConditionNode
+	Right     *ConditionNode
+}
+
 func (root *ConditionNode) String() string {
 	if root == nil {
-		return "<nil>"
+		return "(nil)"
 	}
 
 	if root.Condition != nil {
-		return fmt.Sprintf("<%s>", *root.Condition)
+		return fmt.Sprintf("(%s)", (*root).Condition.String())
 	}
 
-	return fmt.Sprintf("<%s (%s, %s)>", root.Type, root.Left, root.Right)
+	return fmt.Sprintf("(%s (%s, %s))", root.Type, root.Left.String(),
+		root.Right.String())
 }
 
 // Evaluate runs pre-order traversal on the ConditionNode tree rooted at root
@@ -125,4 +118,18 @@ func (root *ConditionNode) Evaluate(file os.FileInfo, compareFn interface{}) boo
 	}
 
 	return false
+}
+
+// Condition represents a WHERE condition.
+type Condition struct {
+	Attribute  string
+	Comparator TokenType
+	Value      string
+	Negate     bool
+}
+
+func (c *Condition) String() string {
+	return fmt.Sprintf(
+		"{attribute: %s, comparator: %s, value: \"%s\", negate: %t}",
+		c.Attribute, c.Comparator, c.Value, c.Negate)
 }

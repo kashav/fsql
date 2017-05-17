@@ -84,10 +84,6 @@ func containsAny(exclusions []string, path string) bool {
 }
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("Expected query.")
-		os.Exit(1)
-	}
 	var input string
 	if len(os.Args) == 2 {
 		input = os.Args[1]
@@ -100,7 +96,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	q, err := query.Run(input)
+	q, err := query.RunParser(input)
 	if err != nil {
 		if err == io.ErrUnexpectedEOF {
 			log.Fatal("Unexpected end of line.")
