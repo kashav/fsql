@@ -7,6 +7,8 @@ import (
 	"os/user"
 	"path/filepath"
 	"strings"
+
+	lane "gopkg.in/oleiade/lane.v1"
 )
 
 // RunParser runs the parser on the input string and returns the parsed AST.
@@ -167,7 +169,8 @@ func (p *parser) parseSources(sources *map[string][]string) error {
 
 // Parse the condition passed to the WHERE clause.
 func (p *parser) parseConditionTree() (*ConditionNode, error) {
-	s := new(stack)
+	stack := lane.NewStack()
+	errFailedToParse := errors.New("Failed to parse conditions")
 
 	for {
 		p.current = p.tokenizer.Next()
@@ -185,47 +188,57 @@ func (p *parser) parseConditionTree() (*ConditionNode, error) {
 			}
 
 			leaf := ConditionNode{Condition: condition}
-			previous := s.pop()
-			if previous == nil {
-				s.push(&leaf)
+			if prev, ok := stack.Pop().(*ConditionNode); !ok {
+				stack.Push(&leaf)
 			} else {
-				if (*previous).Condition == nil {
-					(*previous).Right = &leaf
+				if prev.Condition == nil {
+					prev.Right = &leaf
 				}
-				s.push(previous)
+				stack.Push(prev)
 			}
 		case And:
 			fallthrough
 		case Or:
-			left := s.pop()
+			left, ok := stack.Pop().(*ConditionNode)
+			if !ok {
+				return nil, errFailedToParse
+			}
+
 			node := ConditionNode{
 				Type: p.current.Type,
 				Left: left,
 			}
-			s.push(&node)
+			stack.Push(&node)
 		case OpenParen:
-			s.push(nil)
+			stack.Push(nil)
 		case CloseParen:
-			right := s.pop()
-			root := s.pop()
-			if root != nil {
+			right, ok := stack.Pop().(*ConditionNode)
+			if !ok {
+				return nil, errFailedToParse
+			}
+
+			if root, ok := stack.Pop().(*ConditionNode); ok {
 				root.Right = right
-				s.push(root)
+				stack.Push(root)
 			} else {
-				s.push(right)
+				stack.Push(right)
 			}
 		}
 	}
 
-	if s.len() == 0 {
+	if stack.Size() == 0 {
 		return nil, p.currentError()
 	}
 
-	if s.len() > 1 {
-		return nil, errors.New("failed to parse condition tree")
+	if stack.Size() > 1 {
+		return nil, errFailedToParse
 	}
 
-	return s.pop(), nil
+	node, ok := stack.Pop().(*ConditionNode)
+	if !ok {
+		return nil, errFailedToParse
+	}
+	return node, nil
 }
 
 // Parse a single condition, made up of the negation, identifier (attribute),
