@@ -230,7 +230,7 @@ func (t *Tokenizer) Next() *Token {
 		if t.previous != nil && t.previous.Type == OpenParen &&
 			t.previous.Previous != nil && t.previous.Previous.Type == In {
 			tok.Type = Subquery
-			tok.Raw = t.readQuery(word)
+			tok.Raw = word + t.readQuery()
 		}
 
 		return t.setNextToken(tok)
@@ -242,7 +242,7 @@ func (t *Tokenizer) Next() *Token {
 	// reading until we reach the closing symbol.
 	if t.currentIs('\'', '"', '`') {
 		t.input = t.input[1:]
-		tok.Raw = t.readUntil(t.readWord(), current)
+		tok.Raw = t.readWord() + t.readUntil(current)
 		tok.Type = Identifier
 	}
 
@@ -298,8 +298,8 @@ func (t *Tokenizer) readWord() string {
 
 // Read a full string until we reaching a closing parentheses. Maintains a
 // count of opening parens to ensure we don't return early.
-func (t *Tokenizer) readQuery(start string) string {
-	query := fmt.Sprintf("%s ", start)
+func (t *Tokenizer) readQuery() string {
+	var query string
 
 	var count = 1
 	for count > 0 {
@@ -307,18 +307,22 @@ func (t *Tokenizer) readQuery(start string) string {
 			t.input = t.input[1:]
 		}
 
-		word := fmt.Sprintf("%s ", t.readWord())
+		word := fmt.Sprintf(" %s", t.readWord())
+
+		if t.current() == -1 {
+			break
+		}
 
 		if t.current() == '(' {
 			count++
 			word = "("
 		} else if t.current() == ')' {
 			count--
+			if count <= 0 {
+				query += word
+				break
+			}
 			word = ")"
-		}
-
-		if t.current() == -1 || count <= 0 {
-			break
 		}
 
 		query += word
@@ -329,8 +333,8 @@ func (t *Tokenizer) readQuery(start string) string {
 }
 
 // Read the input starting at start, until reaching a rune in runes.
-func (t *Tokenizer) readUntil(start string, runes ...rune) string {
-	word := start
+func (t *Tokenizer) readUntil(runes ...rune) string {
+	var word string
 	for !t.currentIs(runes...) {
 		for unicode.IsSpace(t.current()) {
 			t.input = t.input[1:]
