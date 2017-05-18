@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -15,6 +16,8 @@ import (
 )
 
 const (
+	version = "0.1.0"
+
 	uBYTE     = 1.0
 	uKILOBYTE = 1024 * uBYTE
 	uMEGABYTE = 1024 * uKILOBYTE
@@ -25,16 +28,30 @@ const (
 var seen = make(map[string]bool, 0)
 
 // Read the command line arguments for the query.
-func readInput() string {
-	if len(os.Args) == 1 {
-		log.Fatal("Expected query.")
+func readFlags() string {
+	flag.Usage = func() {
+		fmt.Printf("usage: %s [options] query\n", os.Args[0])
+		flag.PrintDefaults()
 	}
 
-	if len(os.Args) > 2 {
-		return strings.Join(os.Args[1:], " ")
+	versionPtr := flag.Bool("version", false, "print version and exit")
+	flag.Parse()
+
+	if *versionPtr {
+		fmt.Printf("fsql v%v\n", version)
+		os.Exit(0)
 	}
 
-	return os.Args[1]
+	if len(flag.Args()) == 0 {
+		flag.Usage()
+		os.Exit(1)
+	}
+
+	if len(flag.Args()) > 1 {
+		return strings.Join(flag.Args(), " ")
+	}
+
+	return flag.Args()[0]
 }
 
 // Runs the appropriate cmp method for the provided condition.
@@ -100,7 +117,7 @@ func containsAny(exclusions []string, path string) bool {
 }
 
 func main() {
-	input := readInput()
+	input := readFlags()
 
 	q, err := query.RunParser(input)
 	if err != nil {

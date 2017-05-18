@@ -25,7 +25,7 @@ Requires Go to be [installed](https://golang.org/doc/install) and [configured](h
 Install with `go get`:
 
 ```console
-$ go get -v github.com/kshvmdn/fsql/...
+$ go get -u -v github.com/kshvmdn/fsql/...
 $ which fsql
 $GOPATH/bin/fsql
 ```
@@ -41,7 +41,14 @@ $ ./fsql
 
 ## Usage
 
-fsql expects the query as a command line argument.
+Pass your query to fsql via command line argument. View the usage dialogue with the `-help` flag.
+
+```sh
+$ fsql -help
+usage: fsql [options] query
+  -version
+      print version and exit
+```
 
 ### Query syntax
 
@@ -53,7 +60,7 @@ SELECT attribute, ... FROM source, ... WHERE condition
 
 You may omit the `SELECT` clause, as well as the `WHERE` clause.
 
-Quotes are **not** required, however you'll have to escape reserved characters (e.g. `<`, `>`, etc).
+Quotes are **not** required, however you'll have to escape reserved characters (e.g. `*`, `<`, `>`, etc).
 
 #### Attribute
 
