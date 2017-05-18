@@ -137,44 +137,12 @@ func (t *Tokenizer) All() []Token {
 	for tok := t.Next(); tok != nil; tok = t.Next() {
 		tokens = append(tokens, *tok)
 	}
-
 	return tokens
 }
 
-// Set the supplied token's Previous to the t's previous and set t's previous
-// to token.
-func (t *Tokenizer) setAndReturnToken(token *Token) *Token {
-	token.Previous, t.previous = t.previous, token
-	return token
-}
-
-// Read input, starting at startWord, until reaching a rune in chars.
-func (t *Tokenizer) readUntil(start *string, chars ...rune) {
-	in := func(c rune) bool {
-		for _, char := range chars {
-			if c == char {
-				return true
-			}
-		}
-		return false
-	}
-
-	for !in(t.current()) {
-		for unicode.IsSpace(t.current()) {
-			t.input = t.input[1:]
-		}
-
-		*start = fmt.Sprintf("%s %s", *start, t.readWord())
-	}
-}
-
-// Next gets the next Token in this Tokenizer.
+// Next finds and returns the next Token in the input string.
 func (t *Tokenizer) Next() *Token {
-	for {
-		if !unicode.IsSpace(t.current()) {
-			break
-		}
-
+	for unicode.IsSpace(t.current()) {
 		t.input = t.input[1:]
 	}
 
@@ -186,50 +154,49 @@ func (t *Tokenizer) Next() *Token {
 	switch current {
 	case '(':
 		t.input = t.input[1:]
-		return t.setAndReturnToken(&Token{Type: OpenParen, Raw: "("})
+		return t.setNextToken(&Token{Type: OpenParen, Raw: "("})
 
 	case ')':
 		t.input = t.input[1:]
-		return t.setAndReturnToken(&Token{Type: CloseParen, Raw: ")"})
+		return t.setNextToken(&Token{Type: CloseParen, Raw: ")"})
 
 	case ',':
 		t.input = t.input[1:]
-		return t.setAndReturnToken(&Token{Type: Comma, Raw: ","})
+		return t.setNextToken(&Token{Type: Comma, Raw: ","})
 
 	case '-':
 		t.input = t.input[1:]
-		return t.setAndReturnToken(&Token{Type: Minus, Raw: "-"})
+		return t.setNextToken(&Token{Type: Minus, Raw: "-"})
 
 	case '=':
 		t.input = t.input[1:]
-		return t.setAndReturnToken(&Token{Type: Equals, Raw: "="})
+		return t.setNextToken(&Token{Type: Equals, Raw: "="})
 
 	case '>':
-		if t.nextRune() == '=' {
+		if t.getRuneAtIndex(1) == '=' {
 			t.input = t.input[2:]
-			return t.setAndReturnToken(&Token{Type: GreaterThanEquals, Raw: ">="})
+			return t.setNextToken(&Token{Type: GreaterThanEquals, Raw: ">="})
 		}
 
 		t.input = t.input[1:]
-		return t.setAndReturnToken(&Token{Type: GreaterThan, Raw: ">"})
+		return t.setNextToken(&Token{Type: GreaterThan, Raw: ">"})
 
 	case '<':
-		if t.nextRune() == '=' {
+		if t.getRuneAtIndex(1) == '=' {
 			t.input = t.input[2:]
-			return t.setAndReturnToken(&Token{Type: LessThanEquals, Raw: ">="})
+			return t.setNextToken(&Token{Type: LessThanEquals, Raw: ">="})
 		}
 
-		if t.nextRune() == '>' {
+		if t.getRuneAtIndex(1) == '>' {
 			t.input = t.input[2:]
-			return t.setAndReturnToken(&Token{Type: NotEquals, Raw: "<>"})
+			return t.setNextToken(&Token{Type: NotEquals, Raw: "<>"})
 		}
 
 		t.input = t.input[1:]
-		return t.setAndReturnToken(&Token{Type: LessThan, Raw: "<"})
+		return t.setNextToken(&Token{Type: LessThan, Raw: "<"})
 	}
 
-	if !(current == -1 || current == '`' || current == '\'' || current == '"' ||
-		current == ',' || current == '(' || current == ')') {
+	if !t.currentIs(-1, ',', '\'', '"', '`', '(', ')') {
 		word := t.readWord()
 		tok := &Token{Raw: word}
 
@@ -260,69 +227,115 @@ func (t *Tokenizer) Next() *Token {
 
 		// If the previous token was a `(`, and the one before was IN, then
 		// this must be a subquery. Keep reading until we reach a `)`.
-		//
-		// FIXME: We aren't counting parens, so as soon as we we reach a closing
-		// paren, we stop. This breaks when the subquery also has parens in it.
 		if t.previous != nil && t.previous.Type == OpenParen &&
 			t.previous.Previous != nil && t.previous.Previous.Type == In {
-			t.input = t.input[1:]
-			t.readUntil(&word, ')')
 			tok.Type = Subquery
-			tok.Raw = word
+			tok.Raw = t.readQuery(word)
 		}
 
-		return t.setAndReturnToken(tok)
+		return t.setNextToken(tok)
 	}
 
-	t.input = t.input[1:]
+	tok := &Token{Type: Unknown, Raw: string(current)}
 
 	// If the current rune is a single/double quote or backtick, we want to keep
 	// reading until we reach the closing symbol.
-	//
-	// FIXME: This doesn't actually check that the closing symbol matches the
-	// opening one (i.e. <single-quote> ... <double-quote> works fine, which
-	// is wrong!).
-	if current == '\'' || current == '`' || current == '"' {
-		word := t.readWord()
-		t.readUntil(&word, '\'', '`', '"')
+	if t.currentIs('\'', '"', '`') {
 		t.input = t.input[1:]
-		return t.setAndReturnToken(&Token{Type: Identifier, Raw: word})
+		tok.Raw = t.readUntil(t.readWord(), current)
+		tok.Type = Identifier
 	}
 
-	return t.setAndReturnToken(&Token{
-		Type: Unknown,
-		Raw:  string([]rune{current})},
-	)
+	t.input = t.input[1:]
+	return t.setNextToken(tok)
 }
 
+// Return the rune at the ith index of the input.
+func (t *Tokenizer) getRuneAtIndex(i int) rune {
+	if len(t.input) == i {
+		return -1
+	}
+
+	return t.input[i]
+}
+
+// Return the rune at the 0th index of the input.
 func (t *Tokenizer) current() rune {
-	if len(t.input) == 0 {
-		return -1
-	}
-
-	return t.input[0]
+	return t.getRuneAtIndex(0)
 }
 
-func (t *Tokenizer) nextRune() rune {
-	if len(t.input) == 1 {
-		return -1
+// Returns true iff the input's current rune (at index 0) is in rs.
+func (t *Tokenizer) currentIs(rs ...rune) bool {
+	for _, r := range rs {
+		if r == t.current() {
+			return true
+		}
 	}
-
-	return t.input[1]
+	return false
 }
 
+// Update the previous Token for both the Tokenizer and the supplied Token.
+func (t *Tokenizer) setNextToken(token *Token) *Token {
+	token.Previous, t.previous = t.previous, token
+	return token
+}
+
+// Read a single word from the input. Returns when the next rune is any
+// of: -1, " ", comma, single/double quote, backtick, or parenthesis.
 func (t *Tokenizer) readWord() string {
 	word := []rune{}
 
 	for {
-		r := t.current()
-
-		if r == -1 || unicode.IsSpace(r) || r == '`' || r == '\'' ||
-			r == '"' || r == ',' || r == '(' || r == ')' {
+		if unicode.IsSpace(t.current()) ||
+			t.currentIs(-1, ',', '\'', '"', '`', '(', ')') {
 			return string(word)
 		}
 
-		word = append(word, r)
+		word = append(word, t.current())
 		t.input = t.input[1:]
 	}
+}
+
+// Read a full string until we reaching a closing parentheses. Maintains a
+// count of opening parens to ensure we don't return early.
+func (t *Tokenizer) readQuery(start string) string {
+	query := fmt.Sprintf("%s ", start)
+
+	var count = 1
+	for count > 0 {
+		for unicode.IsSpace(t.current()) {
+			t.input = t.input[1:]
+		}
+
+		word := fmt.Sprintf("%s ", t.readWord())
+
+		if t.current() == '(' {
+			count++
+			word = "("
+		} else if t.current() == ')' {
+			count--
+			word = ")"
+		}
+
+		if t.current() == -1 || count <= 0 {
+			break
+		}
+
+		query += word
+		t.input = t.input[1:]
+	}
+
+	return query
+}
+
+// Read the input starting at start, until reaching a rune in runes.
+func (t *Tokenizer) readUntil(start string, runes ...rune) string {
+	word := start
+	for !t.currentIs(runes...) {
+		for unicode.IsSpace(t.current()) {
+			t.input = t.input[1:]
+		}
+		word = fmt.Sprintf("%s %s", word, t.readWord())
+	}
+	return word
 }
