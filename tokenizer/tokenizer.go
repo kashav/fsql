@@ -1,135 +1,10 @@
-package query
+package tokenizer
 
 import (
 	"fmt"
 	"strings"
 	"unicode"
 )
-
-// TokenType represents a Token's type.
-type TokenType int8
-
-const (
-	// Unknown represents an unknown Token type.
-	Unknown TokenType = iota
-	// Subquery represents a subquery in this query string
-	Subquery
-	// Select represents the SELECT clause.
-	Select
-	// From represents the FROM clause.
-	From
-	// Where represents the WHERE clause.
-	Where
-	// Or represents the OR keyword for conditional disjunction.
-	Or
-	// And represents the AND keyword for conditonal conjunction.
-	And
-	// Not represents the NOT keyword for conditional negation.
-	Not
-	// In represents the IN keyword for list-based comparisons.
-	In
-	// Is represents the IS keyword for file type comparisons.
-	Is
-	// Like represents the LIKE keyword for string comparisons.
-	Like
-	// RLike represents the RLIKE keyword for string regexp comparisons.
-	RLike
-	// Identifier represents the value for each Query.
-	Identifier
-	// OpenParen represents an open parenthesis.
-	OpenParen
-	// CloseParen represents a closed parenthesis.
-	CloseParen
-	// Comma represents a comma.
-	Comma
-	// Minus represents the `-` operator for directory exclusion.
-	Minus
-	// Equals represents the `=` comparator for string/numeric comparisons.
-	Equals
-	// NotEquals represents the `<>` comparator for string/numeric comparisons.
-	NotEquals
-	// GreaterThanEquals represents the `>=` comparator for numeric comparisons.
-	GreaterThanEquals
-	// GreaterThan represents the `>` comparator for numeric comparisons.
-	GreaterThan
-	// LessThanEquals represents the `<=` comparator for numeric comparisons.
-	LessThanEquals
-	// LessThan represents the `<` comparator for numeric comparisons.
-	LessThan
-)
-
-func (t TokenType) String() string {
-	switch t {
-	case Subquery:
-		return "subquery"
-	case Select:
-		return "select"
-	case From:
-		return "from"
-	case Where:
-		return "where"
-	case Or:
-		return "or"
-	case And:
-		return "and"
-	case Not:
-		return "not"
-	case In:
-		return "in"
-	case Is:
-		return "is"
-	case Like:
-		return "like"
-	case RLike:
-		return "RLike"
-	case Identifier:
-		return "identifier"
-	case OpenParen:
-		return "open-parentheses"
-	case CloseParen:
-		return "close-parentheses"
-	case Comma:
-		return "comma"
-	case Minus:
-		return "minus"
-	case Equals:
-		return "equal"
-	case NotEquals:
-		return "not-equal"
-	case GreaterThanEquals:
-		return "greater-than-or-equal"
-	case GreaterThan:
-		return "greater-than"
-	case LessThanEquals:
-		return "less-than-or-equal"
-	case LessThan:
-		return "less-than"
-	default:
-		return "unknown"
-	}
-}
-
-// Token represents a single token.
-type Token struct {
-	Type     TokenType
-	Raw      string
-	Previous *Token
-}
-
-func (t Token) String() string {
-	return fmt.Sprintf("{type: %s, raw: \"%s\"}", t.Type.String(), t.Raw)
-}
-
-// Tokenizer represents a token worker.
-type Tokenizer struct {
-	input    []rune
-	previous *Token
-}
-
-// NewTokenizer initializes a new Tokenizer.
-func NewTokenizer(input string) *Tokenizer {
-	return &Tokenizer{input: []rune(input), previous: nil}
-}
 
 // All parses all tokens for this Tokenizer.
 func (t *Tokenizer) All() []Token {
@@ -155,48 +30,39 @@ func (t *Tokenizer) Next() *Token {
 	case '(':
 		t.input = t.input[1:]
 		return t.setNextToken(&Token{Type: OpenParen, Raw: "("})
-
 	case ')':
 		t.input = t.input[1:]
 		return t.setNextToken(&Token{Type: CloseParen, Raw: ")"})
-
 	case ',':
 		t.input = t.input[1:]
 		return t.setNextToken(&Token{Type: Comma, Raw: ","})
-
 	case '-':
 		t.input = t.input[1:]
-		return t.setNextToken(&Token{Type: Minus, Raw: "-"})
-
+		return t.setNextToken(&Token{Type: Hyphen, Raw: "-"})
 	case '=':
 		t.input = t.input[1:]
 		return t.setNextToken(&Token{Type: Equals, Raw: "="})
-
 	case '>':
-		if t.getRuneAtIndex(1) == '=' {
+		if t.getRuneAt(1) == '=' {
 			t.input = t.input[2:]
 			return t.setNextToken(&Token{Type: GreaterThanEquals, Raw: ">="})
 		}
-
 		t.input = t.input[1:]
 		return t.setNextToken(&Token{Type: GreaterThan, Raw: ">"})
-
 	case '<':
-		if t.getRuneAtIndex(1) == '=' {
+		if t.getRuneAt(1) == '=' {
 			t.input = t.input[2:]
-			return t.setNextToken(&Token{Type: LessThanEquals, Raw: ">="})
+			return t.setNextToken(&Token{Type: LessThanEquals, Raw: "<="})
 		}
-
-		if t.getRuneAtIndex(1) == '>' {
+		if t.getRuneAt(1) == '>' {
 			t.input = t.input[2:]
 			return t.setNextToken(&Token{Type: NotEquals, Raw: "<>"})
 		}
-
 		t.input = t.input[1:]
 		return t.setNextToken(&Token{Type: LessThan, Raw: "<"})
 	}
 
-	if !t.currentIs(-1, ',', '\'', '"', '`', '(', ')') {
+	if !t.currentIs(-1, ',', '\'', '"', '`', '(', ')', '[', ']') {
 		word := t.readWord()
 		tok := &Token{Raw: word}
 
@@ -207,6 +73,8 @@ func (t *Tokenizer) Next() *Token {
 			tok.Type = From
 		case "WHERE":
 			tok.Type = Where
+		case "AS":
+			tok.Type = As
 		case "OR":
 			tok.Type = Or
 		case "AND":
@@ -225,12 +93,11 @@ func (t *Tokenizer) Next() *Token {
 			tok.Type = Identifier
 		}
 
-		// If the previous token was a `(`, and the one before was IN, then
-		// this must be a subquery. Keep reading until we reach a `)`.
 		if t.previous != nil && t.previous.Type == OpenParen &&
 			t.previous.Previous != nil && t.previous.Previous.Type == In {
+			// The two previous tokens were: `IN` and `(`, so we're at a subquery.
 			tok.Type = Subquery
-			tok.Raw = word + t.readQuery()
+			tok.Raw = fmt.Sprintf("%s %s", word, t.readQuery())
 		}
 
 		return t.setNextToken(tok)
@@ -239,10 +106,18 @@ func (t *Tokenizer) Next() *Token {
 	tok := &Token{Type: Unknown, Raw: string(current)}
 
 	// If the current rune is a single/double quote or backtick, we want to keep
-	// reading until we reach the closing symbol.
+	// reading until we reach the matching closing symbol.
 	if t.currentIs('\'', '"', '`') {
 		t.input = t.input[1:]
 		tok.Raw = t.readWord() + t.readUntil(current)
+		tok.Type = Identifier
+	}
+
+	// If the current rune is an opening bracket, we want to keep reading until
+	// we reach the closing bracket.
+	if t.currentIs('[') && t.previous != nil && t.previous.Type == In {
+		t.input = t.input[1:]
+		tok.Raw = t.readList()
 		tok.Type = Identifier
 	}
 
@@ -251,7 +126,7 @@ func (t *Tokenizer) Next() *Token {
 }
 
 // Return the rune at the ith index of the input.
-func (t *Tokenizer) getRuneAtIndex(i int) rune {
+func (t *Tokenizer) getRuneAt(i int) rune {
 	if len(t.input) == i {
 		return -1
 	}
@@ -261,7 +136,7 @@ func (t *Tokenizer) getRuneAtIndex(i int) rune {
 
 // Return the rune at the 0th index of the input.
 func (t *Tokenizer) current() rune {
-	return t.getRuneAtIndex(0)
+	return t.getRuneAt(0)
 }
 
 // Returns true iff the input's current rune (at index 0) is in rs.
@@ -287,7 +162,7 @@ func (t *Tokenizer) readWord() string {
 
 	for {
 		if unicode.IsSpace(t.current()) ||
-			t.currentIs(-1, ',', '\'', '"', '`', '(', ')') {
+			t.currentIs(-1, ',', '\'', '"', '`', '(', ')', '[', ']') {
 			return string(word)
 		}
 
@@ -307,7 +182,7 @@ func (t *Tokenizer) readQuery() string {
 			t.input = t.input[1:]
 		}
 
-		word := fmt.Sprintf(" %s", t.readWord())
+		word := fmt.Sprintf("%s", t.readWord())
 
 		if t.current() == -1 {
 			break
@@ -323,6 +198,10 @@ func (t *Tokenizer) readQuery() string {
 				break
 			}
 			word = ")"
+		} else if t.currentIs('\'', '`') {
+			word += string(t.current())
+		} else {
+			word += " "
 		}
 
 		query += word
@@ -330,6 +209,25 @@ func (t *Tokenizer) readQuery() string {
 	}
 
 	return query
+}
+
+func (t *Tokenizer) readList() string {
+	var list []string
+
+	for {
+		for unicode.IsSpace(t.current()) {
+			t.input = t.input[1:]
+		}
+
+		list = append(list, t.readWord())
+		if t.currentIs(']') {
+			break
+		}
+
+		t.input = t.input[1:]
+	}
+
+	return strings.Join(list, ",")
 }
 
 // Read the input starting at start, until reaching a rune in runes.
