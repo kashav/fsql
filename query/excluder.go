@@ -1,6 +1,7 @@
 package query
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 )
@@ -13,18 +14,23 @@ type Excluder interface {
 type RegexpExclude struct {
 	recursive  bool
 	exclusions []string
+	regex      string
 }
 
 //ShouldExclude will return a boolean denoting whether or not the path should be excluded based on the user input
-func (r RegexpExclude) ShouldExclude(path string) bool {
-	regex := r.buildRegex()
-	if b, ok := regexp.MatchString(regex, path); ok == nil {
+func (r *RegexpExclude) ShouldExclude(path string) bool {
+	if r.regex == "" {
+		r.buildRegex()
+		fmt.Println(r.regex)
+	}
+
+	if b, ok := regexp.MatchString(r.regex, path); ok == nil {
 		return b
 	}
 	return false
 }
 
-func (r RegexpExclude) buildRegex() string {
+func (r *RegexpExclude) buildRegex() {
 	var regex string
 	var prev string
 	var curr string
@@ -37,11 +43,11 @@ func (r RegexpExclude) buildRegex() string {
 		} else {
 			curr =
 				or(mustEnd(mustBegin(escape(exclusion))),
-					mustEnd(mustBegin(escape(exclusion+"/"))))
+					mustEnd(mustBegin(escape(exclusion)+"/.*")))
 		}
 		regex = or(prev, curr)
 	}
-	return regex
+	r.regex = regex
 }
 
 func or(p1, p2 string) string {

@@ -35,4 +35,6 @@ vendor/
 
 # Compiled executables
 fsql
+debug
+main
 build/
