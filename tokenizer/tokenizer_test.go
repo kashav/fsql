@@ -93,9 +93,6 @@ func TestTokenizerAllSimple(t *testing.T) {
 		{Type: Identifier, Raw: "name"},
 		{Type: Like, Raw: "LIKE"},
 		{Type: Identifier, Raw: "%go"},
-		{Type: Or, Raw: "OR"},
-		{Type: Identifier, Raw: "name"},
-		{Type: In, Raw: "In"},
 	}
 
 	for i := range expected {
@@ -136,7 +133,7 @@ func TestTokenizerAllSubquery(t *testing.T) {
 		{Type: Identifier, Raw: "%go"},
 		{Type: Or, Raw: "OR"},
 		{Type: Identifier, Raw: "name"},
-		{Type: In, Raw: "In"},
+		{Type: In, Raw: "IN"},
 		{Type: OpenParen, Raw: "("},
 		{Type: Subquery, Raw: "SELECT name FROM $GOPATH/src/github.com WHERE name RLIKE .*_test\\.go"},
 		{Type: CloseParen, Raw: ")"},

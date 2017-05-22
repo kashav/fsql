@@ -140,5 +140,4 @@ func TestCmpFile(t *testing.T) {
 				c.input.comp, c.input.file, c.input.fileType, c.expected, actual)
 		}
 	}
-
 }

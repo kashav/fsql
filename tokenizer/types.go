@@ -93,23 +93,25 @@ func (t TokenType) String() string {
 
 // Token represents a single token.
 type Token struct {
-	Type     TokenType
-	Raw      string
-	Previous *Token
+	Type TokenType
+	Raw  string
 }
 
-func (t Token) String() string {
-	return fmt.Sprintf("{type: %s, raw: \"%s\", previous: %s}",
-		t.Type.String(), t.Raw, t.Previous.String())
+func (t *Token) String() string {
+	return fmt.Sprintf("{type: %s, raw: \"%s\"}",
+		t.Type.String(), t.Raw)
 }
 
 // Tokenizer represents a token worker.
 type Tokenizer struct {
-	input    []rune
-	previous *Token
+	input  []rune
+	tokens []*Token
 }
 
 // NewTokenizer initializes a new Tokenizer.
 func NewTokenizer(input string) *Tokenizer {
-	return &Tokenizer{input: []rune(input), previous: nil}
+	return &Tokenizer{
+		input:  []rune(input),
+		tokens: make([]*Token, 0),
+	}
 }

@@ -29,37 +29,37 @@ func (t *Tokenizer) Next() *Token {
 	switch current {
 	case '(':
 		t.input = t.input[1:]
-		return t.setNextToken(&Token{Type: OpenParen, Raw: "("})
+		return t.setToken(&Token{Type: OpenParen, Raw: "("})
 	case ')':
 		t.input = t.input[1:]
-		return t.setNextToken(&Token{Type: CloseParen, Raw: ")"})
+		return t.setToken(&Token{Type: CloseParen, Raw: ")"})
 	case ',':
 		t.input = t.input[1:]
-		return t.setNextToken(&Token{Type: Comma, Raw: ","})
+		return t.setToken(&Token{Type: Comma, Raw: ","})
 	case '-':
 		t.input = t.input[1:]
-		return t.setNextToken(&Token{Type: Hyphen, Raw: "-"})
+		return t.setToken(&Token{Type: Hyphen, Raw: "-"})
 	case '=':
 		t.input = t.input[1:]
-		return t.setNextToken(&Token{Type: Equals, Raw: "="})
+		return t.setToken(&Token{Type: Equals, Raw: "="})
 	case '>':
 		if t.getRuneAt(1) == '=' {
 			t.input = t.input[2:]
-			return t.setNextToken(&Token{Type: GreaterThanEquals, Raw: ">="})
+			return t.setToken(&Token{Type: GreaterThanEquals, Raw: ">="})
 		}
 		t.input = t.input[1:]
-		return t.setNextToken(&Token{Type: GreaterThan, Raw: ">"})
+		return t.setToken(&Token{Type: GreaterThan, Raw: ">"})
 	case '<':
 		if t.getRuneAt(1) == '=' {
 			t.input = t.input[2:]
-			return t.setNextToken(&Token{Type: LessThanEquals, Raw: "<="})
+			return t.setToken(&Token{Type: LessThanEquals, Raw: "<="})
 		}
 		if t.getRuneAt(1) == '>' {
 			t.input = t.input[2:]
-			return t.setNextToken(&Token{Type: NotEquals, Raw: "<>"})
+			return t.setToken(&Token{Type: NotEquals, Raw: "<>"})
 		}
 		t.input = t.input[1:]
-		return t.setNextToken(&Token{Type: LessThan, Raw: "<"})
+		return t.setToken(&Token{Type: LessThan, Raw: "<"})
 	}
 
 	if !t.currentIs(-1, ',', '\'', '"', '`', '(', ')', '[', ']') {
@@ -93,14 +93,14 @@ func (t *Tokenizer) Next() *Token {
 			tok.Type = Identifier
 		}
 
-		if t.previous != nil && t.previous.Type == OpenParen &&
-			t.previous.Previous != nil && t.previous.Previous.Type == In {
+		if t.getPreviousToken() != nil && t.getPreviousToken().Type == OpenParen &&
+			t.getTokenAt(1) != nil && t.getTokenAt(1).Type == In {
 			// The two previous tokens were: `IN` and `(`, so we're at a subquery.
 			tok.Type = Subquery
 			tok.Raw = fmt.Sprintf("%s %s", word, t.readQuery())
 		}
 
-		return t.setNextToken(tok)
+		return t.setToken(tok)
 	}
 
 	tok := &Token{Type: Unknown, Raw: string(current)}
@@ -115,14 +115,31 @@ func (t *Tokenizer) Next() *Token {
 
 	// If the current rune is an opening bracket, we want to keep reading until
 	// we reach the closing bracket.
-	if t.currentIs('[') && t.previous != nil && t.previous.Type == In {
+	if t.currentIs('[') && t.getPreviousToken() != nil &&
+		t.getPreviousToken().Type == In {
 		t.input = t.input[1:]
 		tok.Raw = t.readList()
 		tok.Type = Identifier
 	}
 
 	t.input = t.input[1:]
-	return t.setNextToken(tok)
+	return t.setToken(tok)
+}
+
+// Return the previous token, i.e. the token that was just added.
+func (t *Tokenizer) getPreviousToken() *Token {
+	return t.getTokenAt(0)
+}
+
+// Return the ith-previous token (i.e. the token at index i from the end of
+// the list).
+func (t *Tokenizer) getTokenAt(i int) *Token {
+	j := len(t.tokens) - 1 - i
+	if j < 0 {
+		return nil
+	}
+
+	return t.tokens[j]
 }
 
 // Return the rune at the ith index of the input.
@@ -149,9 +166,9 @@ func (t *Tokenizer) currentIs(rs ...rune) bool {
 	return false
 }
 
-// Update the previous Token for both the Tokenizer and the supplied Token.
-func (t *Tokenizer) setNextToken(token *Token) *Token {
-	token.Previous, t.previous = t.previous, token
+// Add token to the list of tokens.
+func (t *Tokenizer) setToken(token *Token) *Token {
+	t.tokens = append(t.tokens, token)
 	return token
 }
 
