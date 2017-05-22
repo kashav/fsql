@@ -1,6 +1,7 @@
 package query
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 )
@@ -19,14 +20,17 @@ type RegexpExclude struct {
 
 //ShouldExclude will return a boolean denoting whether or not the path should be excluded based on the given slice of exclusions
 func (r *RegexpExclude) ShouldExclude(path string) bool {
+	var b bool
+	var ok error
 	if r.regex == "" {
 		r.buildRegex()
 	}
 
-	if b, ok := regexp.MatchString(r.regex, path); ok == nil {
-		return b
+	if b, ok = regexp.MatchString(r.regex, path); not(ok) {
+		fmt.Printf("regexp failed: %s \n" + ok.Error())
+		return false
 	}
-	return false
+	return b
 }
 
 func (r *RegexpExclude) buildRegex() {
@@ -83,4 +87,8 @@ func escape(expression string) string {
 	}
 
 	return str
+}
+
+func not(ok error) bool {
+	return ok != nil
 }
