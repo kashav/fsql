@@ -1,27 +1,26 @@
 package query
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 )
 
+//Excluder allows us to support different methods of excluding in the future
 type Excluder interface {
 	ShouldExclude(path string) bool
 }
 
-//RegexpExclude is a struct that will decide if exclusions should be excluded
+//RegexpExclude uses regular expressions to tell if a file/path should be excluded
 type RegexpExclude struct {
 	recursive  bool
 	exclusions []string
 	regex      string
 }
 
-//ShouldExclude will return a boolean denoting whether or not the path should be excluded based on the user input
+//ShouldExclude will return a boolean denoting whether or not the path should be excluded based on the given slice of exclusions
 func (r *RegexpExclude) ShouldExclude(path string) bool {
 	if r.regex == "" {
 		r.buildRegex()
-		fmt.Println(r.regex)
 	}
 
 	if b, ok := regexp.MatchString(r.regex, path); ok == nil {
@@ -50,6 +49,7 @@ func (r *RegexpExclude) buildRegex() {
 	r.regex = regex
 }
 
+//or will generate 'p1 | p2', or if either are empty just p1, p2
 func or(p1, p2 string) string {
 	if p1 == "" {
 		return p2
@@ -72,6 +72,7 @@ func group(expression string) string {
 	return "(" + expression + ")"
 }
 
+//escape characters. just '.' for now
 func escape(expression string) string {
 	var str string
 	for _, r := range expression {

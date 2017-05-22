@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jonesbrianc26/fsql/parser"
+	"github.com/kshvmdn/fsql/parser"
 )
 
 // Read the command line arguments for the query.

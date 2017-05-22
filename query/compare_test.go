@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jonesbrianc26/fsql/tokenizer"
+	"github.com/kshvmdn/fsql/tokenizer"
 )
 
 type Input struct {
