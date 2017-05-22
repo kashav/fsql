@@ -3,7 +3,7 @@
 >Search through your file system with SQL-esque queries.
 
 - [Demo](#demo)
-- [Installation](#setup-installation)
+- [Installation](#setup--installation)
 - [Usage](#usage)
   + [Query](#query-syntax)
     * [Attribute](#attribute)
