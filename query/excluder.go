@@ -41,7 +41,7 @@ func (r *RegexpExclude) buildRegex() {
 		prev = curr
 		if strings.HasSuffix(exclusion, "/") {
 			curr =
-				or(mustEnd(mustBegin(escape(exclusion))),
+				or(mustEnd(mustBegin(escape(exclusion)+"/.*")),
 					mustEnd(mustBegin(escape(exclusion[:len(exclusion)-1]))))
 		} else {
 			curr =
