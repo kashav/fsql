@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	cmp "github.com/kshvmdn/fsql/compare"
-	"github.com/kshvmdn/fsql/query"
+	cmp "./compare"
+	"./query"
 )
 
 const (
@@ -126,7 +126,7 @@ func main() {
 		}
 		log.Fatal(err)
 	}
-
+	q.PrintTransformations()
 	for _, src := range q.Sources["include"] {
 		filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
 			if path == "." || path == ".." || err != nil {

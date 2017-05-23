@@ -3,13 +3,39 @@ package query
 import (
 	"fmt"
 	"os"
+	"bytes"
 )
+
+type Function struct {
+	Name string
+	Arguments []string
+}
+
 
 // Query represents an input query.
 type Query struct {
 	Attributes    map[string]bool
 	Sources       map[string][]string
 	ConditionTree *ConditionNode // Root node of this query's condition tree.
+	Transformations map[string][]Function
+}
+
+
+func (q *Query) PrintTransformations() {
+	for _, functions := range q.Transformations{
+		for _, function := range functions{
+			fmt.Println(function.String())
+		}
+	}
+}
+
+func (f *Function) String() string{
+	var buffer bytes.Buffer
+	buffer.WriteString(f.Name)
+	for _,v := range f.Arguments{
+		buffer.WriteString(fmt.Sprintf(", %s",v))
+	}
+	return buffer.String()
 }
 
 // HasAttribute checks if the query's attribute map contains the provided
