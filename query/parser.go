@@ -59,6 +59,7 @@ func (p *parser) showAllAttributes() (bool, error) {
 func (p *parser) parse(input string) (*Query, error) {
 	p.tokenizer = NewTokenizer(input)
 	q := new(Query)
+	q.Transformations = make(map[string][]Function)
 
 	all, err := p.showAllAttributes()
 	if err != nil {
@@ -68,7 +69,7 @@ func (p *parser) parse(input string) (*Query, error) {
 		q.Attributes = allAttributes
 	} else {
 		q.Attributes = make(map[string]bool)
-		err := p.parseAttributes(&q.Attributes)
+		err := p.parseAttributes(&q.Attributes,&q.Transformations)
 		if err != nil {
 			return nil, err
 		}
@@ -123,24 +124,67 @@ func (p *parser) parse(input string) (*Query, error) {
 }
 
 // Parse the list of attributes provided to the SELECT clause.
-func (p *parser) parseAttributes(attributes *map[string]bool) error {
+func (p *parser) parseAttributes(attributes *map[string]bool, transformations *map[string][]Function) error {
 	attribute := p.expect(Identifier)
 	if attribute == nil {
 		return p.currentError()
 	}
 	if attribute.Raw == "*" || attribute.Raw == "all" {
 		*attributes = allAttributes
-	} else if _, ok := allAttributes[attribute.Raw]; !ok {
-		return &ErrUnknownToken{attribute.Raw}
-	} else {
+	} else{
+		p.current = attribute
+		attribute, err := p.parseAttribute(transformations)
+		if err != nil{
+			return err
+		}
+		if _, ok := allAttributes[attribute.Raw]; !ok {
+			return &ErrUnknownToken{attribute.Raw}
+		}
 		(*attributes)[attribute.Raw] = true
+
 	}
 
 	if p.expect(Comma) == nil {
 		return nil
 	}
 
-	return p.parseAttributes(attributes)
+	return p.parseAttributes(attributes, transformations)
+}
+
+// Parses all the transformation applied to given attribute recursively 
+func (p *parser) parseAttribute(  transformations *map[string][]Function) (*Token,error) {
+	identifier := p.expect(Identifier)
+	var currFunction Function
+	if identifier != nil {
+		if p.expect(OpenParen) != nil {
+			currFunction = Function{Name: identifier.Raw, Arguments: make([]string,0)}
+			attribute,err := p.parseAttribute( transformations )
+			if attribute == nil{
+				return attribute,err
+			}
+			for{
+				if token := p.expect(Identifier); token != nil{
+					currFunction.Arguments = append(currFunction.Arguments,token.Raw)
+					continue
+				}   else if token := p.expect(Comma); token != nil{
+					continue
+				} else if token := p.expect(CloseParen); token != nil{
+					if _,ok := (*transformations)[attribute.Raw]; !ok{
+						(*transformations)[attribute.Raw] = make([]Function,0)
+					}
+					(*transformations)[attribute.Raw] = append((*transformations)[attribute.Raw], currFunction)
+					return attribute,err
+				}
+				return nil, p.currentError()
+			}
+		} else{
+			if _,ok := allAttributes[identifier.Raw]; !ok{
+				return nil, &ErrUnknownToken{identifier.Raw}
+			}
+			return identifier,nil
+		}
+	}
+	return nil, p.currentError()
 }
 
 // Parse the list of directories passed to the FROM clause. Expects that
