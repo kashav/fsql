@@ -1,6 +1,7 @@
 package query
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 )
@@ -31,61 +32,17 @@ func (r *RegexpExclude) ShouldExclude(path string) bool {
 }
 
 func (r *RegexpExclude) buildRegex() {
-	var regex string
-	var prev string
-	var curr string
-	for _, exclusion := range r.exclusions {
-		prev = curr
+	numExclusion := len(r.exclusions)
+	tmpExclusions := make([]string, numExclusion, numExclusion)
+	for i, exclusion := range r.exclusions {
 		if strings.HasSuffix(exclusion, "/") {
-			curr =
-				or(mustEnd(mustBegin(escape(exclusion)+"/.*")),
-					mustEnd(mustBegin(escape(exclusion[:len(exclusion)-1]))))
+			tmpExclusions[i] = fmt.Sprintf(
+				strings.Replace("^"+strings.TrimRight(exclusion, "/"), ".", "\\.", -1)) + "(/.*)?$"
 		} else {
-			curr =
-				or(mustEnd(mustBegin(escape(exclusion))),
-					mustEnd(mustBegin(escape(exclusion)+"/.*")))
+			tmpExclusions[i] = fmt.Sprintf(
+				strings.Replace("^"+exclusion, ".", "\\.", -1)) + "(/.*)?$"
 		}
-		regex = or(prev, curr)
 	}
-	r.regex = regexp.MustCompile(regex)
-}
-
-//or will generate 'p1 | p2', or if either are empty just p1, p2
-func or(p1, p2 string) string {
-	if p1 == "" {
-		return p2
-	}
-	if p2 == "" {
-		return p1
-	}
-	return p1 + "|" + p2
-}
-
-func mustEnd(p string) string {
-	return p + "$"
-}
-
-func mustBegin(p string) string {
-	return "^" + p
-}
-
-func group(expression string) string {
-	return "(" + expression + ")"
-}
-
-//escape characters. just '.' for now
-func escape(expression string) string {
-	var str string
-	for _, r := range expression {
-		if r == '.' {
-			str += "\\"
-		}
-		str += string(r)
-	}
-
-	return str
-}
-
-func not(ok error) bool {
-	return ok != nil
+	fmt.Println(strings.Join(tmpExclusions, "|"))
+	r.regex = regexp.MustCompile(strings.Join(tmpExclusions, "|"))
 }
