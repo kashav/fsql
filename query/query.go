@@ -3,7 +3,6 @@ package query
 import (
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 const (
@@ -48,18 +47,8 @@ func (q *Query) HasAttribute(attributes ...string) bool {
 // evaluating the condition tree for each file. This method calls workFunc on
 // each "successful" file.
 func (q *Query) Execute(workFunc interface{}) {
-	containsAny := func(path string) bool {
-		for _, exclusion := range q.Sources["exclude"] {
-			if strings.Contains(path, exclusion) {
-				return true
-			}
-		}
-
-		return false
-	}
-
 	seen := make(map[string]bool)
-
+	excluder := &RegexpExclude{exclusions: q.Sources["exclude"]}
 	for _, src := range q.Sources["include"] {
 		filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
 			if path == "." || path == ".." || err != nil {
@@ -72,7 +61,7 @@ func (q *Query) Execute(workFunc interface{}) {
 			}
 			seen[path] = true
 
-			if containsAny(path) || !q.ConditionTree.evaluateTree(path, info) {
+			if excluder.ShouldExclude(path) || !q.ConditionTree.evaluateTree(path, info) {
 				return nil
 			}
 

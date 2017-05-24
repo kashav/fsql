@@ -6,6 +6,7 @@
 # Folders
 _obj
 _test
+.vscode
 
 # Architecture specific extensions/prefixes
 *.[568vq]
@@ -34,4 +35,6 @@ vendor/
 
 # Compiled executables
 fsql
+debug
+main
 build/
