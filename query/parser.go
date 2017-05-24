@@ -139,9 +139,8 @@ func (p *parser) parseAttributes(attributes *map[string]bool, transformations *m
 		}
 		if _, ok := allAttributes[attribute.Raw]; !ok {
 			return &ErrUnknownToken{attribute.Raw}
-		} else {
-			(*attributes)[attribute.Raw] = true
 		}
+		(*attributes)[attribute.Raw] = true
 
 	}
 
@@ -152,6 +151,7 @@ func (p *parser) parseAttributes(attributes *map[string]bool, transformations *m
 	return p.parseAttributes(attributes, transformations)
 }
 
+// Parses all the transformation applied to given attribute recursively 
 func (p *parser) parseAttribute(  transformations *map[string][]Function) (*Token,error) {
 	identifier := p.expect(Identifier)
 	var currFunction Function
@@ -165,6 +165,7 @@ func (p *parser) parseAttribute(  transformations *map[string][]Function) (*Toke
 			for{
 				if token := p.expect(Identifier); token != nil{
 					currFunction.Arguments = append(currFunction.Arguments,token.Raw)
+					continue
 				}   else if token := p.expect(Comma); token != nil{
 					continue
 				} else if token := p.expect(CloseParen); token != nil{
@@ -173,16 +174,14 @@ func (p *parser) parseAttribute(  transformations *map[string][]Function) (*Toke
 					}
 					(*transformations)[attribute.Raw] = append((*transformations)[attribute.Raw], currFunction)
 					return attribute,err
-				} else{
-					return nil, p.currentError()
 				}
+				return nil, p.currentError()
 			}
 		} else{
 			if _,ok := allAttributes[identifier.Raw]; !ok{
 				return nil, &ErrUnknownToken{identifier.Raw}
-			} else{
-				return identifier,nil
 			}
+			return identifier,nil
 		}
 	}
 	return nil, p.currentError()

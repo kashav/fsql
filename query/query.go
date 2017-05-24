@@ -6,6 +6,7 @@ import (
 	"bytes"
 )
 
+// Function entity used for defining transformations on attributes
 type Function struct {
 	Name string
 	Arguments []string
@@ -20,7 +21,7 @@ type Query struct {
 	Transformations map[string][]Function
 }
 
-
+// PrintTransformations function prints all transformations parsed from given query
 func (q *Query) PrintTransformations() {
 	for _, functions := range q.Transformations{
 		for _, function := range functions{
@@ -29,6 +30,7 @@ func (q *Query) PrintTransformations() {
 	}
 }
 
+// Return string representation of a given function
 func (f *Function) String() string{
 	var buffer bytes.Buffer
 	buffer.WriteString(f.Name)
