@@ -2,38 +2,43 @@ package query
 
 import "testing"
 
+type ExcluderCase struct {
+	input    string
+	expected bool
+}
+
 func TestShouldExclude_ExpectAllExcluded(t *testing.T) {
 	exclusions := []string{".git", ".gitignore"}
 	excluder := RegexpExclude{exclusions: exclusions}
-
-	b := excluder.ShouldExclude(".git")
-	if b == false {
-		t.Fail()
+	cases := []ExcluderCase{
+		{".git", true},
+		{".git/", true},
+		{".git/some/other/file", true},
+		{".gitignore", true},
 	}
 
-	b = excluder.ShouldExclude(".git/")
-	if b == false {
-		t.Fail()
-	}
-
-	b = excluder.ShouldExclude(".git/some/other/file")
-	if b == false {
-		t.Fail()
-	}
-
-	b = excluder.ShouldExclude(".gitignore")
-	if b == false {
-		t.Fail()
+	for _, c := range cases {
+		actual := excluder.ShouldExclude(c.input)
+		if actual != c.expected {
+			t.Fatalf("\nExpected %v\n     Got %v", c.expected, actual)
+		}
 	}
 }
 
 func TestShouldExclude_ExpectNotExcluded(t *testing.T) {
 	exclusions := []string{".git"}
 	excluder := RegexpExclude{exclusions: exclusions}
+	cases := []ExcluderCase{
+		{".git", true},
+		{".git/", true},
+		{".git/some/other/file", true},
+		{".gitignore", false},
+	}
 
-	b := excluder.ShouldExclude(".gitignore")
-
-	if b == true {
-		t.Fail()
+	for _, c := range cases {
+		actual := excluder.ShouldExclude(c.input)
+		if actual != c.expected {
+			t.Fatalf("\nExpected %v\n     Got %v", c.expected, actual)
+		}
 	}
 }
