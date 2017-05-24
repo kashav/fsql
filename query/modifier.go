@@ -3,7 +3,6 @@ package query
 import (
 	"fmt"
 	"os"
-	_ "path/filepath"
 	"strings"
 	"time"
 )
@@ -102,9 +101,9 @@ func defaultValue(key, path string, info os.FileInfo) interface{} {
 }
 
 var modifierFns = map[string]func(*modifierParams) (interface{}, error){
-	"format":   format,
-	"upper":    upper,
-	"fullpath": fullpath,
+	"FORMAT":   format,
+	"UPPER":    upper,
+	"FULLPATH": fullpath,
 }
 
 // ApplyModifiers iterates through each SELECT attribute for this query
@@ -128,7 +127,6 @@ func (q *Query) ApplyModifiers(path string, info os.FileInfo) map[string]interfa
 					strings.ToUpper(m.Name))
 				os.Exit(1)
 			}
-
 			var err error
 			value, err = fn(&modifierParams{k, value, path, info, m.Arguments})
 			if err != nil {

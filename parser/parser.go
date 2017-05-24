@@ -138,7 +138,7 @@ func (p *parser) parseSingleAttr(modifiers *map[string][]query.Modifier) (*token
 	}
 
 	current = query.Modifier{
-		Name:      ident.Raw,
+		Name:      strings.ToUpper(ident.Raw),
 		Arguments: make([]string, 0),
 	}
 
