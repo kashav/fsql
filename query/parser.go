@@ -69,7 +69,7 @@ func (p *parser) parse(input string) (*Query, error) {
 		q.Attributes = allAttributes
 	} else {
 		q.Attributes = make(map[string]bool)
-		err := p.parseAttributes(&q.Attributes,&q.Transformations)
+		err := p.parseAttributes(&q.Attributes, &q.Transformations)
 		if err != nil {
 			return nil, err
 		}
@@ -131,10 +131,10 @@ func (p *parser) parseAttributes(attributes *map[string]bool, transformations *m
 	}
 	if attribute.Raw == "*" || attribute.Raw == "all" {
 		*attributes = allAttributes
-	} else{
+	} else {
 		p.current = attribute
 		attribute, err := p.parseAttribute(transformations)
-		if err != nil{
+		if err != nil {
 			return err
 		}
 		if _, ok := allAttributes[attribute.Raw]; !ok {
@@ -151,37 +151,37 @@ func (p *parser) parseAttributes(attributes *map[string]bool, transformations *m
 	return p.parseAttributes(attributes, transformations)
 }
 
-// Parses all the transformation applied to given attribute recursively 
-func (p *parser) parseAttribute(  transformations *map[string][]Function) (*Token,error) {
+// Parses all the transformation applied to given attribute recursively
+func (p *parser) parseAttribute(transformations *map[string][]Function) (*Token, error) {
 	identifier := p.expect(Identifier)
 	var currFunction Function
 	if identifier != nil {
 		if p.expect(OpenParen) != nil {
-			currFunction = Function{Name: identifier.Raw, Arguments: make([]string,0)}
-			attribute,err := p.parseAttribute( transformations )
-			if attribute == nil{
-				return attribute,err
+			currFunction = Function{Name: identifier.Raw, Arguments: make([]string, 0)}
+			attribute, err := p.parseAttribute(transformations)
+			if attribute == nil {
+				return attribute, err
 			}
-			for{
-				if token := p.expect(Identifier); token != nil{
-					currFunction.Arguments = append(currFunction.Arguments,token.Raw)
+			for {
+				if token := p.expect(Identifier); token != nil {
+					currFunction.Arguments = append(currFunction.Arguments, token.Raw)
 					continue
-				}   else if token := p.expect(Comma); token != nil{
+				} else if token := p.expect(Comma); token != nil {
 					continue
-				} else if token := p.expect(CloseParen); token != nil{
-					if _,ok := (*transformations)[attribute.Raw]; !ok{
-						(*transformations)[attribute.Raw] = make([]Function,0)
+				} else if token := p.expect(CloseParen); token != nil {
+					if _, ok := (*transformations)[attribute.Raw]; !ok {
+						(*transformations)[attribute.Raw] = make([]Function, 0)
 					}
 					(*transformations)[attribute.Raw] = append((*transformations)[attribute.Raw], currFunction)
-					return attribute,err
+					return attribute, err
 				}
 				return nil, p.currentError()
 			}
-		} else{
-			if _,ok := allAttributes[identifier.Raw]; !ok{
+		} else {
+			if _, ok := allAttributes[identifier.Raw]; !ok {
 				return nil, &ErrUnknownToken{identifier.Raw}
 			}
-			return identifier,nil
+			return identifier, nil
 		}
 	}
 	return nil, p.currentError()

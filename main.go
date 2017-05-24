@@ -145,21 +145,21 @@ func main() {
 			}
 
 			if q.HasAttribute("mode") {
-				fmt.Printf("%s", q.PerformTransformations("mode",info.Mode()))
+				fmt.Printf("%s", q.PerformTransformations("mode", info.Mode()))
 				if q.HasAttribute("size", "time", "name") {
 					fmt.Print("\t")
 				}
 			}
 
 			if q.HasAttribute("size") {
-				fmt.Printf("%s", q.PerformTransformations("size",info.Size()))
+				fmt.Printf("%s", q.PerformTransformations("size", info.Size()))
 				if q.HasAttribute("time", "name") {
 					fmt.Print("\t")
 				}
 			}
 
 			if q.HasAttribute("time") {
-				fmt.Printf("%s", q.PerformTransformations("time",info.ModTime().Format(time.Stamp)) )
+				fmt.Printf("%s", q.PerformTransformations("time", info.ModTime().Format(time.Stamp)))
 				if q.HasAttribute("name") {
 					fmt.Print("\t")
 				}
@@ -167,7 +167,7 @@ func main() {
 
 			if q.HasAttribute("name") {
 				// TODO: Only show file name, instead of the full path?
-				fmt.Printf("%s", q.PerformTransformations("name",path))
+				fmt.Printf("%s", q.PerformTransformations("name", path))
 			}
 
 			fmt.Printf("\n")
