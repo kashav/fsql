@@ -1,42 +1,16 @@
 package query
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 )
 
-// Function entity used for defining transformations on attributes
-type Function struct {
-	Name      string
-	Arguments []string
-}
-
 // Query represents an input query.
 type Query struct {
-	Attributes      map[string]bool
-	Sources         map[string][]string
-	ConditionTree   *ConditionNode // Root node of this query's condition tree.
-	Transformations map[string][]Function
-}
-
-// PrintTransformations function prints all transformations parsed from given query
-func (q *Query) PrintTransformations() {
-	for _, functions := range q.Transformations {
-		for _, function := range functions {
-			fmt.Println(function.String())
-		}
-	}
-}
-
-// Return string representation of a given function
-func (f *Function) String() string {
-	var buffer bytes.Buffer
-	buffer.WriteString(f.Name)
-	for _, v := range f.Arguments {
-		buffer.WriteString(fmt.Sprintf(", %s", v))
-	}
-	return buffer.String()
+	Attributes    map[string]bool
+	Sources       map[string][]string
+	ConditionTree *ConditionNode // Root node of this query's condition tree.
+	Modifiers     map[string][]Modifier
 }
 
 // HasAttribute checks if the query's attribute map contains the provided

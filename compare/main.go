@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"../query"
+	"github.com/kshvmdn/fsql/query"
 )
 
 // Alpha compares two strings a and b.

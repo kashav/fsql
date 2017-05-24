@@ -59,7 +59,7 @@ func (p *parser) showAllAttributes() (bool, error) {
 func (p *parser) parse(input string) (*Query, error) {
 	p.tokenizer = NewTokenizer(input)
 	q := new(Query)
-	q.Transformations = make(map[string][]Function)
+	q.Modifiers = make(map[string][]Modifier)
 
 	all, err := p.showAllAttributes()
 	if err != nil {
@@ -69,7 +69,7 @@ func (p *parser) parse(input string) (*Query, error) {
 		q.Attributes = allAttributes
 	} else {
 		q.Attributes = make(map[string]bool)
-		err := p.parseAttributes(&q.Attributes, &q.Transformations)
+		err := p.parseAttributes(&q.Attributes, &q.Modifiers)
 		if err != nil {
 			return nil, err
 		}
@@ -124,7 +124,7 @@ func (p *parser) parse(input string) (*Query, error) {
 }
 
 // Parse the list of attributes provided to the SELECT clause.
-func (p *parser) parseAttributes(attributes *map[string]bool, transformations *map[string][]Function) error {
+func (p *parser) parseAttributes(attributes *map[string]bool, modifiers *map[string][]Modifier) error {
 	attribute := p.expect(Identifier)
 	if attribute == nil {
 		return p.currentError()
@@ -133,7 +133,7 @@ func (p *parser) parseAttributes(attributes *map[string]bool, transformations *m
 		*attributes = allAttributes
 	} else {
 		p.current = attribute
-		attribute, err := p.parseAttribute(transformations)
+		attribute, err := p.parseAttribute(modifiers)
 		if err != nil {
 			return err
 		}
@@ -141,40 +141,46 @@ func (p *parser) parseAttributes(attributes *map[string]bool, transformations *m
 			return &ErrUnknownToken{attribute.Raw}
 		}
 		(*attributes)[attribute.Raw] = true
-
 	}
 
 	if p.expect(Comma) == nil {
 		return nil
 	}
 
-	return p.parseAttributes(attributes, transformations)
+	return p.parseAttributes(attributes, modifiers)
 }
 
-// Parses all the transformation applied to given attribute recursively
-func (p *parser) parseAttribute(transformations *map[string][]Function) (*Token, error) {
-	identifier := p.expect(Identifier)
-	var currFunction Function
-	if identifier != nil {
+// Parses all the modifiers applied to given attribute recursively.
+func (p *parser) parseAttribute(modifiers *map[string][]Modifier) (*Token, error) {
+	var current Modifier
+
+	if identifier := p.expect(Identifier); identifier != nil {
 		if p.expect(OpenParen) != nil {
-			currFunction = Function{Name: identifier.Raw, Arguments: make([]string, 0)}
-			attribute, err := p.parseAttribute(transformations)
-			if attribute == nil {
-				return attribute, err
+			current = Modifier{Name: identifier.Raw, Arguments: make([]string, 0)}
+
+			attribute, err := p.parseAttribute(modifiers)
+			if attribute == nil || err != nil {
+				return nil, err
 			}
+
 			for {
 				if token := p.expect(Identifier); token != nil {
-					currFunction.Arguments = append(currFunction.Arguments, token.Raw)
+					current.Arguments = append(current.Arguments, token.Raw)
 					continue
-				} else if token := p.expect(Comma); token != nil {
+				}
+
+				if token := p.expect(Comma); token != nil {
 					continue
-				} else if token := p.expect(CloseParen); token != nil {
-					if _, ok := (*transformations)[attribute.Raw]; !ok {
-						(*transformations)[attribute.Raw] = make([]Function, 0)
+				}
+
+				if token := p.expect(CloseParen); token != nil {
+					if _, ok := (*modifiers)[attribute.Raw]; !ok {
+						(*modifiers)[attribute.Raw] = make([]Modifier, 0)
 					}
-					(*transformations)[attribute.Raw] = append((*transformations)[attribute.Raw], currFunction)
+					(*modifiers)[attribute.Raw] = append((*modifiers)[attribute.Raw], current)
 					return attribute, err
 				}
+
 				return nil, p.currentError()
 			}
 		} else {

@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	cmp "./compare"
-	"./query"
+	cmp "github.com/kshvmdn/fsql/compare"
+	"github.com/kshvmdn/fsql/query"
 )
 
 const (
@@ -144,30 +144,31 @@ func main() {
 				return nil
 			}
 
+			results := q.ApplyModifiers(path, info)
+
 			if q.HasAttribute("mode") {
-				fmt.Printf("%s", q.PerformTransformations("mode", info.Mode()))
+				fmt.Printf("%s", results["mode"])
 				if q.HasAttribute("size", "time", "name") {
 					fmt.Print("\t")
 				}
 			}
 
 			if q.HasAttribute("size") {
-				fmt.Printf("%s", q.PerformTransformations("size", info.Size()))
+				fmt.Printf("%s", results["size"])
 				if q.HasAttribute("time", "name") {
 					fmt.Print("\t")
 				}
 			}
 
 			if q.HasAttribute("time") {
-				fmt.Printf("%s", q.PerformTransformations("time", info.ModTime().Format(time.Stamp)))
+				fmt.Printf("%s", results["time"])
 				if q.HasAttribute("name") {
 					fmt.Print("\t")
 				}
 			}
 
 			if q.HasAttribute("name") {
-				// TODO: Only show file name, instead of the full path?
-				fmt.Printf("%s", q.PerformTransformations("name", path))
+				fmt.Printf("%s", results["name"])
 			}
 
 			fmt.Printf("\n")
