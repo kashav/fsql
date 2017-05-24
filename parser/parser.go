@@ -85,8 +85,6 @@ func (p *parser) parseSelectClause(q *query.Query) error {
 		}
 	}
 
-	fmt.Println(q.Attributes)
-	fmt.Println(q.Modifiers)
 	return nil
 }
 
