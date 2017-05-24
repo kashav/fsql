@@ -6,13 +6,9 @@ import (
 	"io"
 	"log"
 	"os"
-	"path/filepath"
-	"strconv"
 	"strings"
-	"time"
 
-	cmp "github.com/kshvmdn/fsql/compare"
-	"github.com/kshvmdn/fsql/query"
+	"github.com/kshvmdn/fsql/parser"
 )
 
 const (
@@ -54,72 +50,10 @@ func readFlags() string {
 	return flag.Args()[0]
 }
 
-// Runs the appropriate cmp method for the provided condition.
-func compare(condition query.Condition, file os.FileInfo) bool {
-	var retval bool
-
-	switch condition.Attribute {
-	case "name":
-		retval = cmp.Alpha(condition.Comparator, file.Name(), condition.Value)
-
-	case "size":
-		mult := uBYTE
-
-		if len(condition.Value) > 2 {
-			unit := strings.ToLower(condition.Value[len(condition.Value)-2:])
-			switch unit {
-			case "kb":
-				mult = uKILOBYTE
-			case "mb":
-				mult = uMEGABYTE
-			case "gb":
-				mult = uGIGABYTE
-			}
-
-			if mult > 1 {
-				condition.Value = condition.Value[:len(condition.Value)-2]
-			}
-		}
-
-		size, err := strconv.ParseFloat(condition.Value, 64)
-		if err != nil {
-			return false
-		}
-		retval = cmp.Numeric(condition.Comparator, file.Size(), int64(size*mult))
-
-	case "time":
-		t, err := time.Parse("Jan 02 2006 15 04", condition.Value)
-		if err != nil {
-			return false
-		}
-		retval = cmp.Time(condition.Comparator, file.ModTime(), t)
-
-	case "file":
-		retval = cmp.File(condition.Comparator, file, condition.Value)
-	}
-
-	if condition.Negate {
-		return !retval
-	}
-
-	return retval
-}
-
-// Return true iff path contains a substring of any element of exclusions.
-func containsAny(exclusions []string, path string) bool {
-	for _, exclusion := range exclusions {
-		if strings.Contains(path, exclusion) {
-			return true
-		}
-	}
-
-	return false
-}
-
 func main() {
 	input := readFlags()
 
-	q, err := query.RunParser(input)
+	q, err := parser.Run(input)
 	if err != nil {
 		if err == io.ErrUnexpectedEOF {
 			log.Fatal("Unexpected end of line")
@@ -127,52 +61,33 @@ func main() {
 		log.Fatal(err)
 	}
 
-	for _, src := range q.Sources["include"] {
-		filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
-			if path == "." || path == ".." || err != nil {
-				return nil
+	q.Execute(func(path string, info os.FileInfo) {
+		results := q.ApplyModifiers(path, info)
+
+		if q.HasAttribute("mode") {
+			fmt.Printf("%s", results["mode"])
+			if q.HasAttribute("size", "time", "name") {
+				fmt.Print("\t")
 			}
+		}
 
-			if _, ok := seen[path]; ok {
-				return nil
+		if q.HasAttribute("size") {
+			fmt.Printf("%v", results["size"])
+			if q.HasAttribute("time", "name") {
+				fmt.Print("\t")
 			}
-			seen[path] = true
+		}
 
-			// If this path is excluded or the condition is false, return.
-			if containsAny(q.Sources["exclude"], path) ||
-				!q.ConditionTree.Evaluate(info, compare) {
-				return nil
-			}
-
-			results := q.ApplyModifiers(path, info)
-
-			if q.HasAttribute("mode") {
-				fmt.Printf("%s", results["mode"])
-				if q.HasAttribute("size", "time", "name") {
-					fmt.Print("\t")
-				}
-			}
-
-			if q.HasAttribute("size") {
-				fmt.Printf("%s", results["size"])
-				if q.HasAttribute("time", "name") {
-					fmt.Print("\t")
-				}
-			}
-
-			if q.HasAttribute("time") {
-				fmt.Printf("%s", results["time"])
-				if q.HasAttribute("name") {
-					fmt.Print("\t")
-				}
-			}
-
+		if q.HasAttribute("time") {
+			fmt.Printf("%s", results["time"])
 			if q.HasAttribute("name") {
-				fmt.Printf("%s", results["name"])
+				fmt.Print("\t")
 			}
+		}
 
-			fmt.Printf("\n")
-			return nil
-		})
-	}
+		if q.HasAttribute("name") {
+			fmt.Printf("%s", results["name"])
+		}
+		fmt.Printf("\n")
+	})
 }

@@ -18,13 +18,13 @@ clean:
 	rm -rf ./$(name) build/
 
 lint:
-	${GOPATH}/bin/golint . query compare
+	${GOPATH}/bin/golint . parser query tokenizer
 
 install:
 	go get -u -v
 
-test: fsql
-	go test
+test:
+	go test . ./parser ./query ./tokenizer
 
 ##### LINUX BUILDS #####
 linux: build/linux_arm.tar.gz build/linux_arm64.tar.gz build/linux_386.tar.gz build/linux_amd64.tar.gz
