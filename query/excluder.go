@@ -13,7 +13,6 @@ type Excluder interface {
 
 //RegexpExclude uses regular expressions to tell if a file/path should be excluded
 type RegexpExclude struct {
-	recursive  bool
 	exclusions []string
 	regex      *regexp.Regexp
 }
@@ -23,7 +22,6 @@ func (r *RegexpExclude) ShouldExclude(path string) bool {
 	if r.regex == nil {
 		r.buildRegex()
 	}
-
 	if r.regex.String() == "" {
 		return false
 	}
@@ -36,13 +34,14 @@ func (r *RegexpExclude) buildRegex() {
 	tmpExclusions := make([]string, numExclusion, numExclusion)
 	for i, exclusion := range r.exclusions {
 		if strings.HasSuffix(exclusion, "/") {
-			tmpExclusions[i] = fmt.Sprintf(
-				strings.Replace("^"+strings.TrimRight(exclusion, "/"), ".", "\\.", -1)) + "(/.*)?$"
+			tmpExclusions[i] = fmt.Sprintf("^%s(/.*)?$", escape(strings.TrimRight(exclusion, "/")))
 		} else {
-			tmpExclusions[i] = fmt.Sprintf(
-				strings.Replace("^"+exclusion, ".", "\\.", -1)) + "(/.*)?$"
+			tmpExclusions[i] = fmt.Sprintf("^%s(/.*)?$", escape(exclusion))
 		}
 	}
-	fmt.Println(strings.Join(tmpExclusions, "|"))
 	r.regex = regexp.MustCompile(strings.Join(tmpExclusions, "|"))
+}
+
+func escape(str string) string {
+	return strings.Replace(str, ".", "\\.", -1)
 }
