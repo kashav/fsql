@@ -87,7 +87,21 @@ $ fsql FROM ...
 
 Each source should be a relative or absolute path to some directory on your machine. You can also use environment variables (e.g. `$GOPATH`) or `~` (for your home directory).
 
-Use `-` to exclude a directory. For example, to exclude `.git`: `"... FROM ., -.git/ ..."`.
+Use a hypen (`-`) to exclude a directory. For example, to exclude `.git`:
+
+```sh
+$ fsql ... FROM ., -.git ...
+```
+
+If the directory begins with a hypen (e.g. `-foo`), use one of the following to select from it:
+
+```sh
+$ fsql ... FROM ./-foo ...
+```
+
+```sh
+$ fsql "... FROM '-foo' ..."
+```
 
 ##### Examples
 
