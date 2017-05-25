@@ -32,10 +32,11 @@ const (
 	LessThanEquals
 	LessThan
 
-	OpenParen
-	CloseParen
 	Comma
 	Hyphen
+	ExclamationMark
+	OpenParen
+	CloseParen
 	OpenBracket
 	CloseBracket
 )
@@ -80,14 +81,16 @@ func (t TokenType) String() string {
 		return "less-than-or-equal"
 	case LessThan:
 		return "less-than"
-	case OpenParen:
-		return "open-parentheses"
-	case CloseParen:
-		return "close-parentheses"
 	case Comma:
 		return "comma"
 	case Hyphen:
 		return "hyphen"
+	case ExclamationMark:
+		return "exclamation-mark"
+	case OpenParen:
+		return "open-parentheses"
+	case CloseParen:
+		return "close-parentheses"
 	case OpenBracket:
 		return "open-bracket"
 	case CloseBracket:

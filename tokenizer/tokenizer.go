@@ -45,6 +45,12 @@ func (t *Tokenizer) Next() *Token {
 	case '-':
 		t.input = t.input[1:]
 		return t.setToken(&Token{Type: Hyphen, Raw: "-"})
+	case '!':
+		if t.getRuneAt(1) == '=' {
+			t.input = t.input[2:]
+			return t.setToken(&Token{Type: NotEquals, Raw: "!="})
+		}
+		return t.setToken(&Token{Type: ExclamationMark, Raw: "!"})
 	case '=':
 		t.input = t.input[1:]
 		return t.setToken(&Token{Type: Equals, Raw: "="})
