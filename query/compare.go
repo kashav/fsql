@@ -9,8 +9,8 @@ import (
 	"github.com/kshvmdn/fsql/tokenizer"
 )
 
-// Perform alphabetic comparison on a and b.
-func evalAlpha(comp tokenizer.TokenType, a, b interface{}) bool {
+// cmpAlpha performs alphabetic comparison on a and b.
+func cmpAlpha(comp tokenizer.TokenType, a, b interface{}) bool {
 	switch comp {
 	case tokenizer.Equals:
 		return a.(string) == b.(string)
@@ -18,19 +18,15 @@ func evalAlpha(comp tokenizer.TokenType, a, b interface{}) bool {
 		return a.(string) != b.(string)
 	case tokenizer.Like:
 		aStr, bStr := a.(string), b.(string)
-
 		if bStr[0] == '%' && bStr[len(bStr)-1] == '%' {
 			return strings.Contains(aStr, bStr[1:len(bStr)-1])
 		}
-
 		if bStr[0] == '%' {
 			return strings.HasSuffix(aStr, bStr[1:])
 		}
-
 		if bStr[len(bStr)-1] == '%' {
 			return strings.HasPrefix(aStr, bStr[:len(bStr)-1])
 		}
-
 		return strings.Contains(aStr, bStr)
 	case tokenizer.RLike:
 		return regexp.MustCompile(b.(string)).MatchString(a.(string))
@@ -54,12 +50,11 @@ func evalAlpha(comp tokenizer.TokenType, a, b interface{}) bool {
 			}
 		}
 	}
-
 	return false
 }
 
-// Perform numeric comparison on a and b.
-func evalNumeric(comp tokenizer.TokenType, a, b interface{}) bool {
+// cmpNumeric performs numeric comparison on a and b.
+func cmpNumeric(comp tokenizer.TokenType, a, b interface{}) bool {
 	switch comp {
 	case tokenizer.Equals:
 		return a.(int64) == b.(int64)
@@ -81,8 +76,8 @@ func evalNumeric(comp tokenizer.TokenType, a, b interface{}) bool {
 	return false
 }
 
-// Perform time comparison on a and b.
-func evalTime(comp tokenizer.TokenType, a, b interface{}) bool {
+// cmpTime performs time comparison on a and b.
+func cmpTime(comp tokenizer.TokenType, a, b interface{}) bool {
 	switch comp {
 	case tokenizer.Equals:
 		return a.(time.Time).Equal(b.(time.Time))
@@ -104,16 +99,16 @@ func evalTime(comp tokenizer.TokenType, a, b interface{}) bool {
 	return false
 }
 
-// Perform file comparison on a and b.
-func evalFile(comp tokenizer.TokenType, file os.FileInfo, fileType interface{}) bool {
-	switch comp {
-	case tokenizer.Is:
-		switch fileType.(string) {
-		case "dir":
-			return file.Mode().IsDir()
-		case "reg":
-			return file.Mode().IsRegular()
-		}
+// cmpMode performs mode comparison with file and fileType.
+func cmpMode(comp tokenizer.TokenType, file os.FileInfo, fileType interface{}) bool {
+	if comp != tokenizer.Is {
+		return false
+	}
+	switch fileType.(string) {
+	case "dir":
+		return file.Mode().IsDir()
+	case "reg":
+		return file.Mode().IsRegular()
 	}
 	return false
 }

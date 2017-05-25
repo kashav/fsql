@@ -36,6 +36,8 @@ const (
 	CloseParen
 	Comma
 	Hyphen
+	OpenBracket
+	CloseBracket
 )
 
 func (t TokenType) String() string {
@@ -86,6 +88,10 @@ func (t TokenType) String() string {
 		return "comma"
 	case Hyphen:
 		return "hyphen"
+	case OpenBracket:
+		return "open-bracket"
+	case CloseBracket:
+		return "close-bracket"
 	default:
 		return "unknown"
 	}

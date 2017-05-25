@@ -183,23 +183,6 @@ func TestTokenizerReadQuery(t *testing.T) {
 	}
 }
 
-func TestTokenizerReadList(t *testing.T) {
-	type Case struct {
-		input    string
-		expected string
-	}
-
-	// TODO: Complete these cases.
-	cases := []Case{}
-
-	for _, c := range cases {
-		actual := NewTokenizer(c.input).readList()
-		if !reflect.DeepEqual(actual, c.expected) {
-			t.Fatalf("\nExpected: %v\n     Got: %v", c.expected, actual)
-		}
-	}
-}
-
 func TestTokenizerReadUntil(t *testing.T) {
 	type Case struct {
 		input    string

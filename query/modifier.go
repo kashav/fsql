@@ -19,7 +19,7 @@ func (m *Modifier) String() string {
 	return fmt.Sprintf("%s(%s)", m.Name, strings.Join(m.Arguments, ", "))
 }
 
-// ApplyModifiers iterates through each SELECT attribute for this query
+// applyModifiers iterates through each SELECT attribute for this query
 // and applies the associated modifier to the attribute's output value.
 func (q *Query) applyModifiers(path string, info os.FileInfo) map[string]interface{} {
 	results := make(map[string]interface{}, len(q.Attributes))

@@ -32,8 +32,9 @@ func (root *ConditionNode) String() string {
 		root.Right.String())
 }
 
-// Run pre-order traversal on the ConditionNode tree rooted at root and
-// evaluates each conditional along the path with the provided compare method.
+// evaluateTree runs pre-order traversal on the ConditionNode tree rooted at
+// root and evaluates each conditional along the path with the provided compare
+// method.
 func (root *ConditionNode) evaluateTree(path string, file os.FileInfo) bool {
 	if root == nil {
 		return true
@@ -42,12 +43,6 @@ func (root *ConditionNode) evaluateTree(path string, file os.FileInfo) bool {
 	if root.Condition != nil {
 		if root.Condition.IsSubquery {
 			// Unevaluated subquery.
-			// TODO: Handle this case.
-			return false
-		}
-
-		if _, ok := root.Condition.Value.(map[interface{}]bool); ok {
-			// Array of values, returned from evaluating a subquery.
 			// TODO: Handle this case.
 			return false
 		}
@@ -93,7 +88,6 @@ type Condition struct {
 // ApplyModifiers applies each modifier to the value of this Condition.
 func (c *Condition) applyModifiers() error {
 	value := c.Value
-
 	for _, m := range c.AttributeModifiers {
 		var err error
 		value, err = transform.Parse(&transform.ParseParams{
@@ -112,45 +106,19 @@ func (c *Condition) applyModifiers() error {
 	return nil
 }
 
-// Evaluate this Condition.
+// evaluate runs the respective evaluate function for this Condition.
 func (c *Condition) evaluate(path string, file os.FileInfo) bool {
 	var retval bool
 
 	switch c.Attribute {
 	case "name":
-		retval = evalAlpha(c.Comparator, file.Name(), c.Value.(string))
-
+		retval = c.evaluateName(path, file)
 	case "size":
-		var size int64
-
-		switch c.Value.(type) {
-		case float64:
-			size = int64(c.Value.(float64))
-		case string:
-			sizeFloat, err := strconv.ParseFloat(c.Value.(string), 10)
-			if err != nil {
-				log.Fatalln(err)
-			}
-			size = int64(sizeFloat)
-		}
-
-		retval = evalNumeric(c.Comparator, file.Size(), size)
-
+		retval = c.evaluateSize(path, file)
 	case "time":
-		switch c.Value.(type) {
-		case time.Time:
-		case string:
-			t, err := time.Parse("Jan 02 2006 15 04", c.Value.(string))
-			if err != nil {
-				log.Fatalln(err)
-			}
-			c.Value = t
-		}
-
-		retval = evalTime(c.Comparator, file.ModTime(), c.Value.(time.Time))
-
-	case "file":
-		retval = evalFile(c.Comparator, file, c.Value)
+		retval = c.evaluateTime(path, file)
+	case "mode":
+		retval = c.evaluateMode(path, file)
 	}
 
 	if c.Negate {
@@ -158,4 +126,66 @@ func (c *Condition) evaluate(path string, file os.FileInfo) bool {
 	}
 
 	return retval
+}
+
+// evaluateName evaluates a Condition with attribute `name`.
+func (c *Condition) evaluateName(path string, file os.FileInfo) bool {
+	switch c.Value.(type) {
+	case string:
+		return cmpAlpha(c.Comparator, file.Name(), c.Value.(string))
+
+	case []string:
+		return cmpAlpha(c.Comparator, file.Name(), c.Value.([]string))
+
+	case map[interface{}]bool:
+		return cmpAlpha(c.Comparator, file.Name(), c.Value.(map[interface{}]bool))
+	}
+
+	return false
+}
+
+// evaluateSize evaluates a Condition with attribute `size`.
+func (c *Condition) evaluateSize(path string, file os.FileInfo) bool {
+	switch c.Value.(type) {
+	case float64:
+		return cmpNumeric(c.Comparator, file.Size(), int64(c.Value.(float64)))
+
+	case string:
+		size, err := strconv.ParseFloat(c.Value.(string), 10)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		return cmpNumeric(c.Comparator, file.Size(), int64(size))
+
+	case map[interface{}]bool:
+		return cmpNumeric(c.Comparator, file.Size(), c.Value.(map[interface{}]bool))
+	}
+
+	return false
+}
+
+// evaluateTime evaluates a Condition with attribute `time`.
+func (c *Condition) evaluateTime(path string, file os.FileInfo) bool {
+	switch c.Value.(type) {
+	case string:
+		t, err := time.Parse("Jan 02 2006 15 04", c.Value.(string))
+		if err != nil {
+			log.Fatalln(err)
+		}
+		return cmpTime(c.Comparator, file.ModTime(), t)
+
+	case time.Time:
+		return cmpTime(c.Comparator, file.ModTime(), c.Value.(time.Time))
+
+	case map[interface{}]bool:
+		return cmpTime(c.Comparator, file.ModTime(), c.Value.(map[interface{}]bool))
+	}
+
+	return false
+}
+
+// evaluateMode evaluates a Condition with attribute `mode`.
+func (c *Condition) evaluateMode(path string, file os.FileInfo) bool {
+	return cmpMode(c.Comparator, file, c.Value)
 }

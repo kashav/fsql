@@ -33,6 +33,12 @@ func (t *Tokenizer) Next() *Token {
 	case ')':
 		t.input = t.input[1:]
 		return t.setToken(&Token{Type: CloseParen, Raw: ")"})
+	case '[':
+		t.input = t.input[1:]
+		return t.setToken(&Token{Type: OpenBracket, Raw: "["})
+	case ']':
+		t.input = t.input[1:]
+		return t.setToken(&Token{Type: CloseBracket, Raw: "]"})
 	case ',':
 		t.input = t.input[1:]
 		return t.setToken(&Token{Type: Comma, Raw: ","})
@@ -113,26 +119,22 @@ func (t *Tokenizer) Next() *Token {
 		tok.Type = Identifier
 	}
 
-	// If the current rune is an opening bracket, we want to keep reading until
-	// we reach the closing bracket.
-	if t.currentIs('[') && t.getPreviousToken() != nil &&
-		t.getPreviousToken().Type == In {
-		t.input = t.input[1:]
-		tok.Raw = t.readList()
-		tok.Type = Identifier
-	}
-
 	t.input = t.input[1:]
 	return t.setToken(tok)
 }
 
-// Return the previous token, i.e. the token that was just added.
+// setToken adds token to the list of this Tokenizer's tokens.
+func (t *Tokenizer) setToken(token *Token) *Token {
+	t.tokens = append(t.tokens, token)
+	return token
+}
+
+// getPreviousToken returns the token that was most-recently read.
 func (t *Tokenizer) getPreviousToken() *Token {
 	return t.getTokenAt(0)
 }
 
-// Return the ith-previous token (i.e. the token at index i from the end of
-// the list).
+// getTokenAt returns the token at index i from the end of the tokens slice.
 func (t *Tokenizer) getTokenAt(i int) *Token {
 	j := len(t.tokens) - 1 - i
 	if j < 0 {
@@ -142,7 +144,12 @@ func (t *Tokenizer) getTokenAt(i int) *Token {
 	return t.tokens[j]
 }
 
-// Return the rune at the ith index of the input.
+// current returns the run at the 0th index of the input.
+func (t *Tokenizer) current() rune {
+	return t.getRuneAt(0)
+}
+
+// getRuneAt returns the rune at the ith index of the input.
 func (t *Tokenizer) getRuneAt(i int) rune {
 	if len(t.input) == i {
 		return -1
@@ -151,14 +158,9 @@ func (t *Tokenizer) getRuneAt(i int) rune {
 	return t.input[i]
 }
 
-// Return the rune at the 0th index of the input.
-func (t *Tokenizer) current() rune {
-	return t.getRuneAt(0)
-}
-
-// Returns true iff the input's current rune (at index 0) is in rs.
-func (t *Tokenizer) currentIs(rs ...rune) bool {
-	for _, r := range rs {
+// currentIs returns true iff the input's current rune (at index 0) is in runes.
+func (t *Tokenizer) currentIs(runes ...rune) bool {
+	for _, r := range runes {
 		if r == t.current() {
 			return true
 		}
@@ -166,14 +168,9 @@ func (t *Tokenizer) currentIs(rs ...rune) bool {
 	return false
 }
 
-// Add token to the list of tokens.
-func (t *Tokenizer) setToken(token *Token) *Token {
-	t.tokens = append(t.tokens, token)
-	return token
-}
-
-// Read a single word from the input. Returns when the next rune is any
-// of: -1, " ", comma, single/double quote, backtick, or parenthesis.
+// readWord reads a single word from the input. Returns when the next rune is
+// any of: nil (-1), empty space, comma, single/double quote, backtick,
+// or opening/closing parenthesis/bracket.
 func (t *Tokenizer) readWord() string {
 	word := []rune{}
 
@@ -188,8 +185,8 @@ func (t *Tokenizer) readWord() string {
 	}
 }
 
-// Read a full string until we reaching a closing parentheses. Maintains a
-// count of opening parens to ensure we don't return early.
+// readQuery reads a full string until reaching a closing parentheses. Counts
+// opening parens to ensure that balance is maintained.
 func (t *Tokenizer) readQuery() string {
 	var query string
 
@@ -228,26 +225,7 @@ func (t *Tokenizer) readQuery() string {
 	return query
 }
 
-func (t *Tokenizer) readList() string {
-	var list []string
-
-	for {
-		for unicode.IsSpace(t.current()) {
-			t.input = t.input[1:]
-		}
-
-		list = append(list, t.readWord())
-		if t.currentIs(']') {
-			break
-		}
-
-		t.input = t.input[1:]
-	}
-
-	return strings.Join(list, ",")
-}
-
-// Read the input starting at start, until reaching a rune in runes.
+// readUnitl reads the input starting at start, until reaching a rune in runes.
 func (t *Tokenizer) readUntil(runes ...rune) string {
 	var word string
 	for !t.currentIs(runes...) {

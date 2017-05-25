@@ -10,32 +10,35 @@ import (
 	"github.com/kshvmdn/fsql/tokenizer"
 )
 
-// ParseConditionTree parses the condition tree passed to the WHERE clause.
+// parseConditionTree parses the condition tree passed to the WHERE clause.
 func (p *parser) parseConditionTree() (*query.ConditionNode, error) {
 	stack := lane.NewStack()
 	errFailedToParse := errors.New("Failed to parse conditions")
 
 	for {
-		p.current = p.tokenizer.Next()
-		if p.current == nil {
+		if p.current = p.tokenizer.Next(); p.current == nil {
 			break
 		}
 
 		switch p.current.Type {
 		case tokenizer.Not:
 			fallthrough
+
 		case tokenizer.Identifier:
 			condition, err := p.parseNextCond()
 			if err != nil {
 				return nil, p.currentError()
 			}
+
 			if condition.IsSubquery {
-				if err := p.parseSubquery(condition); err != nil {
+				if p.parseSubquery(condition) != nil {
 					return nil, errFailedToParse
 				}
 			}
 
 			leaf := query.ConditionNode{Condition: condition}
+			// If type assert fails, we assume the previous node was nil (i.e. not
+			// a ConditionNode).
 			if prev, ok := stack.Pop().(*query.ConditionNode); !ok {
 				stack.Push(&leaf)
 			} else {
@@ -44,8 +47,10 @@ func (p *parser) parseConditionTree() (*query.ConditionNode, error) {
 				}
 				stack.Push(prev)
 			}
+
 		case tokenizer.And:
 			fallthrough
+
 		case tokenizer.Or:
 			left, ok := stack.Pop().(*query.ConditionNode)
 			if !ok {
@@ -57,8 +62,10 @@ func (p *parser) parseConditionTree() (*query.ConditionNode, error) {
 				Left: left,
 			}
 			stack.Push(&node)
+
 		case tokenizer.OpenParen:
 			stack.Push(nil)
+
 		case tokenizer.CloseParen:
 			right, ok := stack.Pop().(*query.ConditionNode)
 			if !ok {
@@ -89,11 +96,13 @@ func (p *parser) parseConditionTree() (*query.ConditionNode, error) {
 	return node, nil
 }
 
-// ParseNextCond parses the next condition of the query.
+// parseNextCond parses the next condition of the query.
 func (p *parser) parseNextCond() (*query.Condition, error) {
-	negate := false
+	cond := &query.Condition{}
+
+	// Parse the NOT keyword.
 	if p.expect(tokenizer.Not) != nil {
-		negate = true
+		cond.Negate = true
 	}
 
 	ident := p.expect(tokenizer.Identifier)
@@ -110,53 +119,66 @@ func (p *parser) parseNextCond() (*query.Condition, error) {
 	if attr == nil {
 		return nil, p.currentError()
 	}
+	cond.Attribute = attr.Raw
+	cond.AttributeModifiers = modifiers
 
-	// If this condition has modifiers, then p.current has been unset in the
-	// modifier parsing process, se we get the next token manually.
+	// If this condition has modifiers, then p.current was unset while parsing
+	// the modifier, se we set the current token manually.
 	if len(modifiers) > 0 {
 		p.current = p.tokenizer.Next()
 	}
 	if p.current == nil {
 		return nil, p.currentError()
 	}
-	comp := p.current.Type
+	cond.Comparator = p.current.Type
 	p.current = nil
 
-	var value *tokenizer.Token
-	var subquery bool
+	// Parse subquery of format `(...)`.
 	if p.expect(tokenizer.OpenParen) != nil {
-		value = p.expect(tokenizer.Subquery)
-		subquery = true
+		token := p.expect(tokenizer.Subquery)
+		if token == nil {
+			return nil, p.currentError()
+		}
+		cond.IsSubquery = true
+		cond.Value = token.Raw
+		if p.expect(tokenizer.CloseParen) == nil {
+			return nil, p.currentError()
+		}
+		return cond, nil
+	}
+
+	// Parse list of values of format `[...]`.
+	if p.expect(tokenizer.OpenBracket) != nil {
+		values := make([]string, 0)
+		for {
+			if token := p.expect(tokenizer.Identifier); token != nil {
+				values = append(values, token.Raw)
+			}
+			if p.expect(tokenizer.Comma) != nil {
+				continue
+			}
+			if p.expect(tokenizer.CloseBracket) != nil {
+				break
+			}
+		}
+		cond.Value = values
+		return cond, nil
+	}
+
+	// Not a list nor a subquery -> plain identifier!
+	if token := p.expect(tokenizer.Identifier); token != nil {
+		cond.Value = token.Raw
 	} else {
-		value = p.expect(tokenizer.Identifier)
-	}
-
-	if value == nil {
 		return nil, p.currentError()
 	}
 
-	// We check for a closing paren AFTER checking that value is non-nil to
-	// prevent the current error from being overwritten.
-	if subquery && p.expect(tokenizer.CloseParen) == nil {
-		return nil, p.currentError()
-	}
-
-	return &query.Condition{
-		Attribute:          attr.Raw,
-		AttributeModifiers: modifiers,
-		Comparator:         comp,
-		Value:              value.Raw,
-		Negate:             negate,
-		IsSubquery:         subquery,
-		Subquery:           nil,
-	}, nil
+	return cond, nil
 }
 
-// ParseSubquery parses a subquery by recursively evaluating it's condition(s).
+// parseSubquery parses a subquery by recursively evaluating it's condition(s).
 // If the subquery contains references to aliases from the superquery, it's
-// Subquery attribute is set. Otherwise, it's subquery is evaluated, it's Value
-// attribute is set to the returned result list, and it's IsSubquery attribute
-// is made false.
+// Subquery attribute is set. Otherwise, we evaluate it's Subquery and set
+// it's Value to the result.
 func (p *parser) parseSubquery(condition *query.Condition) error {
 	q, err := Run(condition.Value.(string))
 	if err != nil {

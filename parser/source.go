@@ -4,7 +4,7 @@ import (
 	"github.com/kshvmdn/fsql/tokenizer"
 )
 
-// ParseSourceList parses the list of directories passed to the FROM clause. If
+// parseSourceList parses the list of directories passed to the FROM clause. If
 // a source is followed by the AS keyword, the following word is registered as
 // an alias.
 func (p *parser) parseSourceList(sources *map[string][]string,

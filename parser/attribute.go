@@ -14,7 +14,7 @@ var allAttributes = map[string]bool{
 	"time": true,
 }
 
-// ParseAttrList parses the list of attributes passed to the SELECT clause.
+// parseAttrList parses the list of attributes passed to the SELECT clause.
 func (p *parser) parseAttrList(attributes *map[string]bool,
 	modifiers *map[string][]query.Modifier) error {
 	attribute := p.expect(tokenizer.Identifier)
@@ -51,7 +51,7 @@ func (p *parser) parseAttrList(attributes *map[string]bool,
 	return nil
 }
 
-// ParseAttrModifiers parses an attribute's associated modifiers and
+// parseAttrModifiers parses an attribute's associated modifiers and
 // returns the attribute.
 func (p *parser) parseAttrModifiers(modifiers *[]query.Modifier) (*tokenizer.Token, error) {
 	ident := p.expect(tokenizer.Identifier)

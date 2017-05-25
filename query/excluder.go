@@ -30,14 +30,14 @@ func (r *RegexpExclude) ShouldExclude(path string) bool {
 	return r.regex.MatchString(path)
 }
 
+// buildRegex builds the regular expression for this RegexpExclude.
 func (r *RegexpExclude) buildRegex() {
-	numExclusion := len(r.exclusions)
-	tmpExclusions := make([]string, numExclusion, numExclusion)
+	exclusions := make([]string, len(r.exclusions))
 	for i, exclusion := range r.exclusions {
-		// Wrap exclusion in ^ and (/.*)?$ AFTER replacing trailing forward
-		// slash and replacing all dots with `\\.`
-		tmpExclusions[i] = fmt.Sprintf("^%s(/.*)?$",
+		// Wrap exclusion in ^ and (/.*)?$ AFTER trimming trailing slashes and
+		// escaping all dots.
+		exclusions[i] = fmt.Sprintf("^%s(/.*)?$",
 			strings.Replace(strings.TrimRight(exclusion, "/"), ".", "\\.", -1))
 	}
-	r.regex = regexp.MustCompile(strings.Join(tmpExclusions, "|"))
+	r.regex = regexp.MustCompile(strings.Join(exclusions, "|"))
 }

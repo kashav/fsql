@@ -1,6 +1,7 @@
 package transform
 
 import (
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -16,7 +17,41 @@ type ParseParams struct {
 }
 
 // Parse runs the associated modifier function for the provided parameters.
+// Depending on the type of p.Value, we may recursively run this method
+// on every element of the structure.
+//
+// We're using reflect _quite_ heavily for this, meaning it's kind of unsafe,
+// it'd be great if we could find another solution while keeping it as
+// abstract as it is.
 func Parse(p *ParseParams) (val interface{}, err error) {
+	kind := reflect.TypeOf(p.Value).Kind()
+	// If we have a slice/array, recursively run Parse on each element.
+	if kind == reflect.Slice || kind == reflect.Array {
+		s := reflect.ValueOf(p.Value)
+		for i := 0; i < s.Len(); i++ {
+			p.Value = s.Index(i).Interface()
+			if val, err = Parse(p); err != nil {
+				return nil, err
+			}
+			s.Index(i).Set(reflect.ValueOf(val))
+		}
+		return s.Interface(), nil
+	}
+
+	// If we have a map, recursively run Parse on each KEY and create a new
+	// map out of the return values.
+	if kind == reflect.Map {
+		result := reflect.MakeMap(reflect.TypeOf(p.Value))
+		for _, key := range reflect.ValueOf(p.Value).MapKeys() {
+			p.Value = key.Interface()
+			if val, err = Parse(p); err != nil {
+				return nil, err
+			}
+			result.SetMapIndex(reflect.ValueOf(val), reflect.ValueOf(true))
+		}
+		return result.Interface(), nil
+	}
+
 	switch strings.ToUpper(p.Name) {
 	case "FORMAT":
 		val, err = pFormat(p)

@@ -21,7 +21,7 @@ type parser struct {
 	expected  tokenizer.TokenType
 }
 
-// Parse runs the respective parser function on each clause of the query.
+// parse runs the respective parser function on each clause of the query.
 func (p *parser) parse(input string) (*query.Query, error) {
 	p.tokenizer = tokenizer.NewTokenizer(input)
 	q := query.NewQuery()
@@ -41,7 +41,7 @@ func (p *parser) parse(input string) (*query.Query, error) {
 	return q, nil
 }
 
-// ParseSelectClause parses the SELECT clause of the query.
+// parseSelectClause parses the SELECT clause of the query.
 func (p *parser) parseSelectClause(q *query.Query) error {
 	// Determine if we should show all attributes. This is only true when
 	// no attributes are provided (regardless of if the SELECT keyword is
@@ -76,7 +76,7 @@ func (p *parser) parseSelectClause(q *query.Query) error {
 	return nil
 }
 
-// ParseFromClause parses the FROM clause of the query.
+// parseFromClause parses the FROM clause of the query.
 func (p *parser) parseFromClause(q *query.Query) error {
 	if p.expect(tokenizer.From) == nil {
 		err := p.currentError()
@@ -112,7 +112,7 @@ func (p *parser) parseFromClause(q *query.Query) error {
 	return nil
 }
 
-// ParseWhereClause parses the WHERE clause of the query.
+// parseWhereClause parses the WHERE clause of the query.
 func (p *parser) parseWhereClause(q *query.Query) error {
 	if p.expect(tokenizer.Where) == nil {
 		err := p.currentError()
@@ -130,7 +130,7 @@ func (p *parser) parseWhereClause(q *query.Query) error {
 	return nil
 }
 
-// Expect returns the next token if it matches the expectation t, and
+// expect returns the next token if it matches the expectation t, and
 // nil otherwise.
 func (p *parser) expect(t tokenizer.TokenType) *tokenizer.Token {
 	p.expected = t
@@ -148,7 +148,7 @@ func (p *parser) expect(t tokenizer.TokenType) *tokenizer.Token {
 	return nil
 }
 
-// CurrentError returns the current error, based on the parser's current Token
+// currentError returns the current error, based on the parser's current Token
 // and the previously expected TokenType (set in parser.expect).
 func (p *parser) currentError() error {
 	if p.current == nil {
