@@ -52,7 +52,7 @@ func (q *Query) Execute(workFunc interface{}) {
 	seen := make(map[string]bool)
 	excluder := &RegexpExclude{exclusions: q.Sources["exclude"]}
 	for _, src := range q.Sources["include"] {
-		filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+		filepath.Walk(filepath.Clean(src), func(path string, info os.FileInfo, err error) error {
 			if path == "." || path == ".." || err != nil {
 				return nil
 			}
