@@ -61,9 +61,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	q.Execute(func(path string, info os.FileInfo) {
-		results := q.ApplyModifiers(path, info)
-
+	q.Execute(func(path string, info os.FileInfo, results map[string]interface{}) {
 		if q.HasAttribute("mode") {
 			fmt.Printf("%s", results["mode"])
 			if q.HasAttribute("size", "time", "name") {

@@ -2,12 +2,13 @@ package query
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/kshvmdn/fsql/tokenizer"
+	"github.com/kshvmdn/fsql/transform"
 )
 
 // ConditionNode represents a single node of a query's WHERE clause tree.
@@ -24,7 +25,7 @@ func (root *ConditionNode) String() string {
 	}
 
 	if root.Condition != nil {
-		return fmt.Sprintf("(%v)", root.Condition.String())
+		return fmt.Sprintf("(%v)", root.Condition)
 	}
 
 	return fmt.Sprintf("(%s (%s, %s))", root.Type, root.Left.String(),
@@ -39,6 +40,24 @@ func (root *ConditionNode) evaluateTree(path string, file os.FileInfo) bool {
 	}
 
 	if root.Condition != nil {
+		if root.Condition.IsSubquery {
+			// Unevaluated subquery.
+			// TODO: Handle this case.
+			return false
+		}
+
+		if _, ok := root.Condition.Value.(map[interface{}]bool); ok {
+			// Array of values, returned from evaluating a subquery.
+			// TODO: Handle this case.
+			return false
+		}
+
+		if !root.Condition.Parsed {
+			if err := root.Condition.applyModifiers(); err != nil {
+				log.Fatal(err.Error())
+			}
+		}
+
 		return root.Condition.evaluate(path, file)
 	}
 
@@ -59,75 +78,79 @@ func (root *ConditionNode) evaluateTree(path string, file os.FileInfo) bool {
 
 // Condition represents a WHERE condition.
 type Condition struct {
-	Attribute  string
+	Attribute          string
+	AttributeModifiers []Modifier
+	Parsed             bool
+
 	Comparator tokenizer.TokenType
 	Value      interface{}
 	Negate     bool
+
 	Subquery   *Query
 	IsSubquery bool
 }
 
-func (c *Condition) String() string {
-	return fmt.Sprintf(
-		"{attribute: %s, comparator: %s, value: %v, negate: %t, subquery: %t}",
-		c.Attribute, c.Comparator, c.Value, c.Negate, c.IsSubquery)
+// ApplyModifiers applies each modifier to the value of this Condition.
+func (c *Condition) applyModifiers() error {
+	value := c.Value
+
+	for _, m := range c.AttributeModifiers {
+		var err error
+		value, err = transform.Parse(&transform.ParseParams{
+			Attribute: c.Attribute,
+			Value:     c.Value,
+			Name:      m.Name,
+			Args:      m.Arguments,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	c.Value = value
+	c.Parsed = true
+	return nil
 }
 
-// Evaluate this single condition.
+// Evaluate this Condition.
 func (c *Condition) evaluate(path string, file os.FileInfo) bool {
 	var retval bool
 
 	switch c.Attribute {
 	case "name":
-		if !c.IsSubquery {
-			retval = cmpAlpha(c.Comparator, file.Name(), c.Value)
-		}
-	case "path":
-		if !c.IsSubquery {
-			retval = cmpAlpha(c.Comparator, path, c.Value)
-		}
+		retval = evalAlpha(c.Comparator, file.Name(), c.Value.(string))
+
 	case "size":
-		if _, ok := c.Value.(map[interface{}]bool); !ok {
-			sizeStr := c.Value.(string)
+		var size int64
 
-			var multiplier float64
-			if len(sizeStr) > 2 {
-				switch strings.ToLower(sizeStr[len(sizeStr)-2:]) {
-				case "kb":
-					multiplier = uKILOBYTE
-				case "mb":
-					multiplier = uMEGABYTE
-				case "gb":
-					multiplier = uGIGABYTE
-				default:
-					multiplier = uBYTE
-				}
-
-				if multiplier != uBYTE {
-					sizeStr = sizeStr[:len(sizeStr)-2]
-				}
-			}
-
-			size, err := strconv.ParseFloat(sizeStr, 64)
+		switch c.Value.(type) {
+		case float64:
+			size = int64(c.Value.(float64))
+		case string:
+			sizeFloat, err := strconv.ParseFloat(c.Value.(string), 10)
 			if err != nil {
-				return false
+				log.Fatalln(err)
 			}
-			retval = cmpNumeric(c.Comparator, file.Size(), int64(size*multiplier))
-		} else {
-			retval = cmpNumeric(c.Comparator, file.Size(), c.Value)
+			size = int64(sizeFloat)
 		}
+
+		retval = evalNumeric(c.Comparator, file.Size(), size)
+
 	case "time":
-		if _, ok := c.Value.(map[interface{}]bool); !ok {
+		switch c.Value.(type) {
+		case time.Time:
+		case string:
 			t, err := time.Parse("Jan 02 2006 15 04", c.Value.(string))
 			if err != nil {
-				return false
+				log.Fatalln(err)
 			}
-			retval = cmpTime(c.Comparator, file.ModTime(), t)
-		} else {
-			retval = cmpTime(c.Comparator, file.ModTime(), c.Value)
+			c.Value = t
 		}
+
+		retval = evalTime(c.Comparator, file.ModTime(), c.Value.(time.Time))
+
 	case "file":
-		retval = cmpFile(c.Comparator, file, c.Value)
+		retval = evalFile(c.Comparator, file, c.Value)
 	}
 
 	if c.Negate {

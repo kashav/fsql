@@ -18,13 +18,13 @@ clean:
 	rm -rf ./$(name) build/
 
 lint:
-	${GOPATH}/bin/golint . parser query tokenizer
+	${GOPATH}/bin/golint ./...
 
 install:
-	go get -u -v
+	go get -u -v ./...
 
 test:
-	go test . ./parser ./query ./tokenizer
+	go test ./...
 
 ##### LINUX BUILDS #####
 linux: build/linux_arm.tar.gz build/linux_arm64.tar.gz build/linux_386.tar.gz build/linux_amd64.tar.gz

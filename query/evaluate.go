@@ -10,7 +10,7 @@ import (
 )
 
 // Perform alphabetic comparison on a and b.
-func cmpAlpha(comp tokenizer.TokenType, a, b interface{}) bool {
+func evalAlpha(comp tokenizer.TokenType, a, b interface{}) bool {
 	switch comp {
 	case tokenizer.Equals:
 		return a.(string) == b.(string)
@@ -59,7 +59,7 @@ func cmpAlpha(comp tokenizer.TokenType, a, b interface{}) bool {
 }
 
 // Perform numeric comparison on a and b.
-func cmpNumeric(comp tokenizer.TokenType, a, b interface{}) bool {
+func evalNumeric(comp tokenizer.TokenType, a, b interface{}) bool {
 	switch comp {
 	case tokenizer.Equals:
 		return a.(int64) == b.(int64)
@@ -82,7 +82,7 @@ func cmpNumeric(comp tokenizer.TokenType, a, b interface{}) bool {
 }
 
 // Perform time comparison on a and b.
-func cmpTime(comp tokenizer.TokenType, a, b interface{}) bool {
+func evalTime(comp tokenizer.TokenType, a, b interface{}) bool {
 	switch comp {
 	case tokenizer.Equals:
 		return a.(time.Time).Equal(b.(time.Time))
@@ -105,7 +105,7 @@ func cmpTime(comp tokenizer.TokenType, a, b interface{}) bool {
 }
 
 // Perform file comparison on a and b.
-func cmpFile(comp tokenizer.TokenType, file os.FileInfo, fileType interface{}) bool {
+func evalFile(comp tokenizer.TokenType, file os.FileInfo, fileType interface{}) bool {
 	switch comp {
 	case tokenizer.Is:
 		switch fileType.(string) {

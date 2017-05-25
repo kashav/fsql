@@ -63,11 +63,16 @@ func (q *Query) Execute(workFunc interface{}) {
 			}
 			seen[path] = true
 
-			if excluder.ShouldExclude(path) || !q.ConditionTree.evaluateTree(path, info) {
+			if excluder.ShouldExclude(path) {
 				return nil
 			}
 
-			workFunc.(func(string, os.FileInfo))(path, info)
+			if !q.ConditionTree.evaluateTree(path, info) {
+				return nil
+			}
+
+			results := q.applyModifiers(path, info)
+			workFunc.(func(string, os.FileInfo, map[string]interface{}))(path, info, results)
 			return nil
 		})
 	}
