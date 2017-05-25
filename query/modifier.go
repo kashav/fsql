@@ -2,6 +2,7 @@ package query
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -42,8 +43,7 @@ func (q *Query) applyModifiers(path string, info os.FileInfo) map[string]interfa
 				Args:      m.Arguments,
 			})
 			if err != nil {
-				fmt.Fprintln(os.Stderr, err.Error())
-				os.Exit(1)
+				log.Fatalln(err.Error())
 			}
 		}
 
