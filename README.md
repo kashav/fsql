@@ -30,7 +30,15 @@ $ which fsql
 $GOPATH/bin/fsql
 ```
 
-Or, install directly via source:
+Install with [Homebrew](https://brew.sh/):
+
+```console
+$ brew install fsql
+$ which fsql
+/usr/local/bin/fsql
+```
+
+Install directly via source:
 
 ```console
 $ git clone https://github.com/kshvmdn/fsql.git $GOPATH/src/github.com/kshvmdn/fsql
