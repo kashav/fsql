@@ -25,6 +25,7 @@ type ParseParams struct {
 // abstract as it is.
 func Parse(p *ParseParams) (val interface{}, err error) {
 	kind := reflect.TypeOf(p.Value).Kind()
+
 	// If we have a slice/array, recursively run Parse on each element.
 	if kind == reflect.Slice || kind == reflect.Array {
 		s := reflect.ValueOf(p.Value)
@@ -103,7 +104,7 @@ func pFormatSize(p *ParseParams) (interface{}, error) {
 	case "MB":
 		size *= 1 << 20
 	case "GB":
-		size *= 1 << 20
+		size *= 1 << 30
 	default:
 		return nil, nil
 	}
