@@ -5,7 +5,7 @@ build = GOOS=$(1) GOARCH=$(2) go build -o build/$(name)$(3)
 tar = cd build && tar -cvzf $(1)_$(2).tar.gz $(name)$(3) && rm $(name)$(3)
 zip = cd build && zip $(1)_$(2).zip $(name)$(3) && rm $(name)$(3)
 
-.PHONY: clean install lint test
+.PHONY: clean install lint test vet
 
 all: fsql
 
@@ -25,6 +25,9 @@ install:
 
 test:
 	go test -v ./...
+
+vet:
+	go vet -v ./...
 
 ##### LINUX BUILDS #####
 linux: build/linux_arm.tar.gz build/linux_arm64.tar.gz build/linux_386.tar.gz build/linux_amd64.tar.gz

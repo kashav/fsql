@@ -187,22 +187,22 @@ func TestParser_Expect(t *testing.T) {
 	p := &parser{tokenizer: tokenizer.NewTokenizer(input)}
 
 	cases := []Case{
-		{tokenizer.Select, &tokenizer.Token{tokenizer.Select, "SELECT"}},
+		{tokenizer.Select, &tokenizer.Token{Type: tokenizer.Select, Raw: "SELECT"}},
 		{tokenizer.From, nil},
-		{tokenizer.Identifier, &tokenizer.Token{tokenizer.Identifier, "all"}},
+		{tokenizer.Identifier, &tokenizer.Token{Type: tokenizer.Identifier, Raw: "all"}},
 		{tokenizer.Identifier, nil},
-		{tokenizer.From, &tokenizer.Token{tokenizer.From, "FROM"}},
-		{tokenizer.Identifier, &tokenizer.Token{tokenizer.Identifier, "."}},
+		{tokenizer.From, &tokenizer.Token{Type: tokenizer.From, Raw: "FROM"}},
+		{tokenizer.Identifier, &tokenizer.Token{Type: tokenizer.Identifier, Raw: "."}},
 		{tokenizer.Identifier, nil},
-		{tokenizer.Where, &tokenizer.Token{tokenizer.Where, "WHERE"}},
-		{tokenizer.Identifier, &tokenizer.Token{tokenizer.Identifier, "name"}},
-		{tokenizer.Equals, &tokenizer.Token{tokenizer.Equals, "="}},
-		{tokenizer.Identifier, &tokenizer.Token{tokenizer.Identifier, "foo"}},
-		{tokenizer.Or, &tokenizer.Token{tokenizer.Or, "OR"}},
-		{tokenizer.Identifier, &tokenizer.Token{tokenizer.Identifier, "size"}},
+		{tokenizer.Where, &tokenizer.Token{Type: tokenizer.Where, Raw: "WHERE"}},
+		{tokenizer.Identifier, &tokenizer.Token{Type: tokenizer.Identifier, Raw: "name"}},
+		{tokenizer.Equals, &tokenizer.Token{Type: tokenizer.Equals, Raw: "="}},
+		{tokenizer.Identifier, &tokenizer.Token{Type: tokenizer.Identifier, Raw: "foo"}},
+		{tokenizer.Or, &tokenizer.Token{Type: tokenizer.Or, Raw: "OR"}},
+		{tokenizer.Identifier, &tokenizer.Token{Type: tokenizer.Identifier, Raw: "size"}},
 		{tokenizer.Identifier, nil},
-		{tokenizer.NotEquals, &tokenizer.Token{tokenizer.NotEquals, "<>"}},
-		{tokenizer.Identifier, &tokenizer.Token{tokenizer.Identifier, "100"}},
+		{tokenizer.NotEquals, &tokenizer.Token{Type: tokenizer.NotEquals, Raw: "<>"}},
+		{tokenizer.Identifier, &tokenizer.Token{Type: tokenizer.Identifier, Raw: "100"}},
 	}
 
 	for _, c := range cases {

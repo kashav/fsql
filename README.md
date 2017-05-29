@@ -198,7 +198,13 @@ $ fsql "FROM $GOPATH WHERE name = main.go AND (size >= 10.5kb OR size < 100)"
 
 This project is completely open source, feel free to [open an issue](https://github.com/kshvmdn/fsql/issues) or [submit a pull request](https://github.com/kshvmdn/fsql/pulls).
 
-Before submitting code, please ensure your changes comply with [Golint](https://github.com/golang/lint). Use `make lint` to test this.
+Before submitting code, please ensure that the following commands run without error (you may have to install [Golint](https://github.com/golang/lint) for this). _If either of the 3 are giving you trouble, feel free to open the PR anyways._
+
+```sh
+$ make lint
+$ make vet
+$ make test
+```
 
 ## Credits
 

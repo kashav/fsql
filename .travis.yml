@@ -1,17 +1,12 @@
 language: go
 go:
   - 1.8
-  - tip
 os:
   - linux
   - osx
 matrix:
-  allow_failures:
-    - go: tip
   fast_finish: true
 install:
   - go get -u -v github.com/kshvmdn/fsql/...
-before_script:
-  - go vet -v ./...
 script:
   - go test -v ./...
