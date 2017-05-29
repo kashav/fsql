@@ -119,15 +119,15 @@ Note that wrapping parentheses with `NOT` is currently not supported. This can e
 
 ##### Condition Syntax
 
-A single condition is made up of 3 parts: attribute, comparator, and value.
+A single condition is made up of 3 parts: attribute, operator, and value.
 
 ###### attribute
 
 A valid attribute is any of the following: `name`, `size`, `file`, `time`.
 
-###### comparator
+###### operator
 
-Comparators depend on the attribute.
+Operators depend on the attribute.
 
 For `name`:
 
