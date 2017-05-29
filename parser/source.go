@@ -1,6 +1,9 @@
 package parser
 
 import (
+	"fmt"
+	"path/filepath"
+
 	"github.com/kshvmdn/fsql/tokenizer"
 )
 
@@ -9,6 +12,7 @@ import (
 // an alias.
 func (p *parser) parseSourceList(sources *map[string][]string,
 	aliases *map[string]string) error {
+	// If the next token is a hypen, exclude this directory.
 	sourceType := "include"
 	if p.expect(tokenizer.Hyphen) != nil {
 		sourceType = "exclude"
@@ -18,12 +22,18 @@ func (p *parser) parseSourceList(sources *map[string][]string,
 	if source == nil {
 		return p.currentError()
 	}
+
+	// Normalize directory path.
+	source.Raw = filepath.Clean(source.Raw)
 	(*sources)[sourceType] = append((*sources)[sourceType], source.Raw)
 
 	if p.expect(tokenizer.As) != nil {
 		alias := p.expect(tokenizer.Identifier)
 		if alias == nil {
 			return p.currentError()
+		}
+		if sourceType == "exclude" {
+			return fmt.Errorf("cannot alias excluded directory %s", source.Raw)
 		}
 		(*aliases)[alias.Raw] = source.Raw
 	}

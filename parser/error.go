@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/kshvmdn/fsql/tokenizer"
 )
@@ -24,4 +25,18 @@ type ErrUnknownToken struct {
 
 func (e *ErrUnknownToken) Error() string {
 	return fmt.Sprintf("unknown token: %s", e.Raw)
+}
+
+// currentError returns the current error, based on the parser's current Token
+// and the previously expected TokenType (set in parser.expect).
+func (p *parser) currentError() error {
+	if p.current == nil {
+		return io.ErrUnexpectedEOF
+	}
+
+	if p.current.Type == tokenizer.Unknown {
+		return &ErrUnknownToken{Raw: p.current.Raw}
+	}
+
+	return &ErrUnexpectedToken{Actual: p.current.Type, Expected: p.expected}
 }

@@ -15,7 +15,7 @@ type ParseCase struct {
 	expected ParseOutput
 }
 
-func TestParse(t *testing.T) {
+func TestTransform_Parse(t *testing.T) {
 	// TODO: Complete this.
 	cases := []ParseCase{}
 

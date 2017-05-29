@@ -2,7 +2,7 @@ package query
 
 import "testing"
 
-func TestModifierString(t *testing.T) {
+func TestModifier_String(t *testing.T) {
 	type Case struct {
 		input    Modifier
 		expected string
@@ -21,6 +21,6 @@ func TestModifierString(t *testing.T) {
 	}
 }
 
-func TestApplyModifiers(t *testing.T) {
+func TestModifier_Apply(t *testing.T) {
 	// TODO
 }

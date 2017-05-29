@@ -2,7 +2,7 @@ package transform
 
 import "testing"
 
-func TestErrNotImplemented(t *testing.T) {
+func TestTransform_ErrNotImplemented(t *testing.T) {
 	err := &ErrNotImplemented{"n", "a"}
 	expected := "function N is not implemented for attribute a"
 	actual := err.Error()
@@ -11,7 +11,7 @@ func TestErrNotImplemented(t *testing.T) {
 	}
 }
 
-func TestErrUnsupportedFormat(t *testing.T) {
+func TestTransform_ErrUnsupportedFormat(t *testing.T) {
 	err := &ErrUnsupportedFormat{"f", "a"}
 	expected := "unsupported format type f for attribute a"
 	actual := err.Error()

@@ -13,7 +13,7 @@ import (
 // parseConditionTree parses the condition tree passed to the WHERE clause.
 func (p *parser) parseConditionTree() (*query.ConditionNode, error) {
 	stack := lane.NewStack()
-	errFailedToParse := errors.New("Failed to parse conditions")
+	errFailedToParse := errors.New("failed to parse conditions")
 
 	for {
 		if p.current = p.tokenizer.Next(); p.current == nil {
@@ -37,7 +37,7 @@ func (p *parser) parseConditionTree() (*query.ConditionNode, error) {
 			}
 
 			leaf := query.ConditionNode{Condition: condition}
-			// If type assert fails, we assume the previous node was nil (i.e. not
+			// If type assertion fails, we assume the previous node was nil (i.e. not
 			// a ConditionNode).
 			if prev, ok := stack.Pop().(*query.ConditionNode); !ok {
 				stack.Push(&leaf)
@@ -58,7 +58,7 @@ func (p *parser) parseConditionTree() (*query.ConditionNode, error) {
 			}
 
 			node := query.ConditionNode{
-				Type: p.current.Type,
+				Type: &p.current.Type,
 				Left: left,
 			}
 			stack.Push(&node)
@@ -130,7 +130,7 @@ func (p *parser) parseNextCond() (*query.Condition, error) {
 	if p.current == nil {
 		return nil, p.currentError()
 	}
-	cond.Comparator = p.current.Type
+	cond.Operator = p.current.Type
 	p.current = nil
 
 	// Parse subquery of format `(...)`.

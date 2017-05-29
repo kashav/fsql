@@ -13,23 +13,19 @@ import (
 
 // ConditionNode represents a single node of a query's WHERE clause tree.
 type ConditionNode struct {
-	Type      tokenizer.TokenType
-	Condition *Condition
+	Type      *tokenizer.TokenType
 	Left      *ConditionNode
 	Right     *ConditionNode
+	Condition *Condition
 }
 
 func (root *ConditionNode) String() string {
 	if root == nil {
-		return "nil"
+		return "<nil>"
 	}
 
-	if root.Condition != nil {
-		return fmt.Sprintf("(%v)", root.Condition)
-	}
-
-	return fmt.Sprintf("(%s (%s, %s))", root.Type, root.Left.String(),
-		root.Right.String())
+	return fmt.Sprintf("{%v (%v %v) %v}", root.Type, root.Left, root.Right,
+		root.Condition)
 }
 
 // evaluateTree runs pre-order traversal on the ConditionNode tree rooted at
@@ -56,12 +52,12 @@ func (root *ConditionNode) evaluateTree(path string, file os.FileInfo) bool {
 		return root.Condition.evaluate(path, file)
 	}
 
-	if root.Type == tokenizer.And {
+	if *root.Type == tokenizer.And {
 		return root.Left.evaluateTree(path, file) &&
 			root.Right.evaluateTree(path, file)
 	}
 
-	if root.Type == tokenizer.Or {
+	if *root.Type == tokenizer.Or {
 		if root.Left.evaluateTree(path, file) {
 			return true
 		}
@@ -77,9 +73,9 @@ type Condition struct {
 	AttributeModifiers []Modifier
 	Parsed             bool
 
-	Comparator tokenizer.TokenType
-	Value      interface{}
-	Negate     bool
+	Operator tokenizer.TokenType
+	Value    interface{}
+	Negate   bool
 
 	Subquery   *Query
 	IsSubquery bool
@@ -132,13 +128,13 @@ func (c *Condition) evaluate(path string, file os.FileInfo) bool {
 func (c *Condition) evaluateName(path string, file os.FileInfo) bool {
 	switch c.Value.(type) {
 	case string:
-		return cmpAlpha(c.Comparator, file.Name(), c.Value.(string))
+		return cmpAlpha(c.Operator, file.Name(), c.Value.(string))
 
 	case []string:
-		return cmpAlpha(c.Comparator, file.Name(), c.Value.([]string))
+		return cmpAlpha(c.Operator, file.Name(), c.Value.([]string))
 
 	case map[interface{}]bool:
-		return cmpAlpha(c.Comparator, file.Name(), c.Value.(map[interface{}]bool))
+		return cmpAlpha(c.Operator, file.Name(), c.Value.(map[interface{}]bool))
 	}
 
 	return false
@@ -148,7 +144,7 @@ func (c *Condition) evaluateName(path string, file os.FileInfo) bool {
 func (c *Condition) evaluateSize(path string, file os.FileInfo) bool {
 	switch c.Value.(type) {
 	case float64:
-		return cmpNumeric(c.Comparator, file.Size(), int64(c.Value.(float64)))
+		return cmpNumeric(c.Operator, file.Size(), int64(c.Value.(float64)))
 
 	case string:
 		size, err := strconv.ParseFloat(c.Value.(string), 10)
@@ -156,10 +152,10 @@ func (c *Condition) evaluateSize(path string, file os.FileInfo) bool {
 			log.Fatalln(err)
 		}
 
-		return cmpNumeric(c.Comparator, file.Size(), int64(size))
+		return cmpNumeric(c.Operator, file.Size(), int64(size))
 
 	case map[interface{}]bool:
-		return cmpNumeric(c.Comparator, file.Size(), c.Value.(map[interface{}]bool))
+		return cmpNumeric(c.Operator, file.Size(), c.Value.(map[interface{}]bool))
 	}
 
 	return false
@@ -173,13 +169,13 @@ func (c *Condition) evaluateTime(path string, file os.FileInfo) bool {
 		if err != nil {
 			log.Fatalln(err)
 		}
-		return cmpTime(c.Comparator, file.ModTime(), t)
+		return cmpTime(c.Operator, file.ModTime(), t)
 
 	case time.Time:
-		return cmpTime(c.Comparator, file.ModTime(), c.Value.(time.Time))
+		return cmpTime(c.Operator, file.ModTime(), c.Value.(time.Time))
 
 	case map[interface{}]bool:
-		return cmpTime(c.Comparator, file.ModTime(), c.Value.(map[interface{}]bool))
+		return cmpTime(c.Operator, file.ModTime(), c.Value.(map[interface{}]bool))
 	}
 
 	return false
@@ -187,5 +183,5 @@ func (c *Condition) evaluateTime(path string, file os.FileInfo) bool {
 
 // evaluateMode evaluates a Condition with attribute `mode`.
 func (c *Condition) evaluateMode(path string, file os.FileInfo) bool {
-	return cmpMode(c.Comparator, file, c.Value)
+	return cmpMode(c.Operator, file, c.Value)
 }

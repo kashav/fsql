@@ -11,20 +11,10 @@ import (
 	"github.com/kshvmdn/fsql/parser"
 )
 
-const (
-	version = "0.1.0"
-
-	uBYTE     = 1.0
-	uKILOBYTE = 1024 * uBYTE
-	uMEGABYTE = 1024 * uKILOBYTE
-	uGIGABYTE = 1024 * uMEGABYTE
-)
-
-// Used to track which paths we've seen to avoid revisiting a directory.
-var seen = make(map[string]bool, 0)
+const version = "0.1.0"
 
 // Read the command line arguments for the query.
-func readFlags() string {
+func readInput() string {
 	flag.Usage = func() {
 		fmt.Printf("usage: %s [options] query\n", os.Args[0])
 		flag.PrintDefaults()
@@ -51,7 +41,7 @@ func readFlags() string {
 }
 
 func main() {
-	input := readFlags()
+	input := readInput()
 
 	q, err := parser.Run(input)
 	if err != nil {
@@ -86,6 +76,7 @@ func main() {
 		if q.HasAttribute("name") {
 			fmt.Printf("%s", results["name"])
 		}
+
 		fmt.Printf("\n")
 	})
 }

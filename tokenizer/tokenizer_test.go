@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestTokenizerNextTokenType(t *testing.T) {
+func TestTokenizer_NextTokenType(t *testing.T) {
 	type Case struct {
 		input    string
 		expected TokenType
@@ -45,7 +45,7 @@ func TestTokenizerNextTokenType(t *testing.T) {
 	}
 }
 
-func TestTokenizerNextRaw(t *testing.T) {
+func TestTokenizer_NextRaw(t *testing.T) {
 	type Case struct {
 		input    string
 		expected string
@@ -71,7 +71,7 @@ func TestTokenizerNextRaw(t *testing.T) {
 	}
 }
 
-func TestTokenizerAllSimple(t *testing.T) {
+func TestTokenizer_AllSimple(t *testing.T) {
 	input := `
     SELECT
       name, size
@@ -102,7 +102,7 @@ func TestTokenizerAllSimple(t *testing.T) {
 	}
 }
 
-func TestTokenizerAllSubquery(t *testing.T) {
+func TestTokenizer_AllSubquery(t *testing.T) {
 	input := `
   SELECT
     name, size
@@ -146,7 +146,7 @@ func TestTokenizerAllSubquery(t *testing.T) {
 	}
 }
 
-func TestTokenizerReadWord(t *testing.T) {
+func TestTokenizer_ReadWord(t *testing.T) {
 	type Case struct {
 		input    string
 		expected string
@@ -166,7 +166,7 @@ func TestTokenizerReadWord(t *testing.T) {
 	}
 }
 
-func TestTokenizerReadQuery(t *testing.T) {
+func TestTokenizer_ReadQuery(t *testing.T) {
 	type Case struct {
 		input    string
 		expected string
@@ -183,7 +183,7 @@ func TestTokenizerReadQuery(t *testing.T) {
 	}
 }
 
-func TestTokenizerReadUntil(t *testing.T) {
+func TestTokenizer_ReadUntil(t *testing.T) {
 	type Case struct {
 		input    string
 		until    []rune

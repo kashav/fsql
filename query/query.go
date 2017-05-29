@@ -5,33 +5,28 @@ import (
 	"path/filepath"
 )
 
-const (
-	uBYTE     = 1.0
-	uKILOBYTE = 1024 * uBYTE
-	uMEGABYTE = 1024 * uKILOBYTE
-	uGIGABYTE = 1024 * uMEGABYTE
-)
-
 // Query represents an input query.
 type Query struct {
-	Attributes    map[string]bool
+	Attributes map[string]bool
+	Modifiers  map[string][]Modifier
+
 	Sources       map[string][]string
-	ConditionTree *ConditionNode
 	SourceAliases map[string]string
-	Modifiers     map[string][]Modifier
+
+	ConditionTree *ConditionNode
 }
 
 // NewQuery returns a pointer to a Query.
 func NewQuery() *Query {
 	return &Query{
 		Attributes: make(map[string]bool, 0),
+		Modifiers:  make(map[string][]Modifier, 0),
 		Sources: map[string][]string{
 			"include": make([]string, 0),
 			"exclude": make([]string, 0),
 		},
-		ConditionTree: nil,
 		SourceAliases: make(map[string]string, 0),
-		Modifiers:     make(map[string][]Modifier, 0),
+		ConditionTree: nil,
 	}
 }
 
@@ -52,7 +47,7 @@ func (q *Query) Execute(workFunc interface{}) {
 	seen := make(map[string]bool)
 	excluder := &RegexpExclude{exclusions: q.Sources["exclude"]}
 	for _, src := range q.Sources["include"] {
-		filepath.Walk(filepath.Clean(src), func(path string, info os.FileInfo, err error) error {
+		filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
 			if path == "." || path == ".." || err != nil {
 				return nil
 			}

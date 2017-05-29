@@ -16,7 +16,7 @@ type FormatCase struct {
 	expected FormatOutput
 }
 
-func TestFormat(t *testing.T) {
+func TestTransform_Format(t *testing.T) {
 	// TODO: Add case with time format to unix/iso (might need a fixture for
 	// this).
 	cases := []FormatCase{

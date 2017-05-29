@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"io"
 	"os/user"
 	"path/filepath"
 	"strings"
@@ -146,18 +145,4 @@ func (p *parser) expect(t tokenizer.TokenType) *tokenizer.Token {
 	}
 
 	return nil
-}
-
-// currentError returns the current error, based on the parser's current Token
-// and the previously expected TokenType (set in parser.expect).
-func (p *parser) currentError() error {
-	if p.current == nil {
-		return io.ErrUnexpectedEOF
-	}
-
-	if p.current.Type == tokenizer.Unknown {
-		return &ErrUnknownToken{Raw: p.current.Raw}
-	}
-
-	return &ErrUnexpectedToken{Actual: p.current.Type, Expected: p.expected}
 }

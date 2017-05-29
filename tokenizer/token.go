@@ -52,7 +52,7 @@ func (t TokenType) String() string {
 	case From:
 		return "from"
 	case As:
-		return "As"
+		return "as"
 	case Where:
 		return "where"
 	case Or:

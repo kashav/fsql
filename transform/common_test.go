@@ -2,7 +2,7 @@ package transform
 
 import "testing"
 
-func TestFormatName(t *testing.T) {
+func TestCommon_FormatName(t *testing.T) {
 	type Case struct {
 		arg      string
 		name     string
@@ -24,7 +24,7 @@ func TestFormatName(t *testing.T) {
 	}
 }
 
-func TestUpper(t *testing.T) {
+func TestCommon_Upper(t *testing.T) {
 	type Case struct {
 		name     string
 		expected string
@@ -43,7 +43,7 @@ func TestUpper(t *testing.T) {
 	}
 }
 
-func TestLower(t *testing.T) {
+func TestCommon_Lower(t *testing.T) {
 	type Case struct {
 		name     string
 		expected string

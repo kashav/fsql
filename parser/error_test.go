@@ -6,7 +6,7 @@ import (
 	"github.com/kshvmdn/fsql/tokenizer"
 )
 
-func TestErrUnexpectedToken(t *testing.T) {
+func TestParser_ErrUnexpectedToken(t *testing.T) {
 	err := &ErrUnexpectedToken{
 		Actual:   tokenizer.Select,
 		Expected: tokenizer.Where,
@@ -18,7 +18,7 @@ func TestErrUnexpectedToken(t *testing.T) {
 	}
 }
 
-func TestErrUnknownTokent(t *testing.T) {
+func TestParser_ErrUnknownTokent(t *testing.T) {
 	err := &ErrUnknownToken{"r"}
 	expected := "unknown token: r"
 	actual := err.Error()
