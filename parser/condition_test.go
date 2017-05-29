@@ -36,12 +36,12 @@ func TestConditionParser_ExpectCorrectCondition(t *testing.T) {
 			Value:     "dir"}, nil}},
 		{"format(time, iso) >= 2017-05-28T16:37:18Z", Expected{&query.Condition{
 			Attribute:          "time",
-			AttributeModifiers: []query.Modifier{query.Modifier{"FORMAT", []string{"iso"}}},
+			AttributeModifiers: []query.Modifier{query.Modifier{Name: "FORMAT", Arguments: []string{"iso"}}},
 			Operator:           tokenizer.GreaterThanEquals,
 			Value:              "2017-05-28T16:37:18Z"}, nil}},
 		{"upper(name) != FOO", Expected{&query.Condition{
 			Attribute:          "name",
-			AttributeModifiers: []query.Modifier{query.Modifier{"UPPER", []string{}}},
+			AttributeModifiers: []query.Modifier{query.Modifier{Name: "UPPER", Arguments: []string{}}},
 			Operator:           tokenizer.NotEquals,
 			Value:              "FOO"}, nil}},
 		{"NOT name IN [foo,bar,baz]", Expected{&query.Condition{
@@ -114,7 +114,7 @@ func TestConditionParser_ExpectCorrectConditionTree(t *testing.T) {
 		{"upper(name) = MAIN", Expected{&query.ConditionNode{
 			Condition: &query.Condition{
 				Attribute:          "name",
-				AttributeModifiers: []query.Modifier{query.Modifier{"UPPER", []string{}}},
+				AttributeModifiers: []query.Modifier{query.Modifier{Name: "UPPER", Arguments: []string{}}},
 				Operator:           tokenizer.Equals,
 				Value:              "MAIN"}}, nil}},
 
@@ -163,7 +163,7 @@ func TestConditionParser_ExpectCorrectConditionTree(t *testing.T) {
 			Left: &query.ConditionNode{
 				Condition: &query.Condition{
 					Attribute:          "size",
-					AttributeModifiers: []query.Modifier{query.Modifier{"FORMAT", []string{"mb"}}},
+					AttributeModifiers: []query.Modifier{query.Modifier{Name: "FORMAT", Arguments: []string{"mb"}}},
 					Operator:           tokenizer.LessThanEquals,
 					Value:              "2"}},
 			Right: &query.ConditionNode{

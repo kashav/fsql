@@ -64,30 +64,36 @@ func TestAttributeParser_ExpectCorrectModifiers(t *testing.T) {
 	}
 
 	cases := []Case{
-		{"name", Expected{map[string][]query.Modifier{"name": []query.Modifier{}}, nil}},
-		{"upper(name)", Expected{map[string][]query.Modifier{
-			"name": []query.Modifier{query.Modifier{"UPPER", []string{}}}}, nil}},
-		{"format(time, iso)", Expected{map[string][]query.Modifier{
-			"time": []query.Modifier{query.Modifier{
-				"FORMAT", []string{"iso"}}}}, nil}},
-		{"format(time, \"iso\")", Expected{map[string][]query.Modifier{
-			"time": []query.Modifier{query.Modifier{
-				"FORMAT", []string{"iso"}}}}, nil}},
+		{"name", Expected{
+			map[string][]query.Modifier{
+				"name": []query.Modifier{}}, nil}},
+		{"upper(name)", Expected{
+			map[string][]query.Modifier{
+				"name": []query.Modifier{
+					query.Modifier{Name: "UPPER", Arguments: []string{}}}}, nil}},
+		{"format(time, iso)", Expected{
+			map[string][]query.Modifier{
+				"time": []query.Modifier{
+					query.Modifier{Name: "FORMAT", Arguments: []string{"iso"}}}}, nil}},
+		{"format(time, \"iso\")", Expected{
+			map[string][]query.Modifier{
+				"time": []query.Modifier{
+					query.Modifier{Name: "FORMAT", Arguments: []string{"iso"}}}}, nil}},
 		{"lower(name), format(size, mb)", Expected{map[string][]query.Modifier{
-			"name": []query.Modifier{query.Modifier{"LOWER", []string{}}},
-			"size": []query.Modifier{query.Modifier{"FORMAT", []string{"mb"}}}}, nil}},
+			"name": []query.Modifier{query.Modifier{Name: "LOWER", Arguments: []string{}}},
+			"size": []query.Modifier{query.Modifier{Name: "FORMAT", Arguments: []string{"mb"}}}}, nil}},
 		{"format(fullpath(name), lower)", Expected{map[string][]query.Modifier{
 			"name": []query.Modifier{
-				query.Modifier{"FULLPATH", []string{}},
-				query.Modifier{"FORMAT", []string{"lower"}}}}, nil}},
+				query.Modifier{Name: "FULLPATH", Arguments: []string{}},
+				query.Modifier{Name: "FORMAT", Arguments: []string{"lower"}}}}, nil}},
 
 		// No function/parameter validation yet!
 		{"foo(name)", Expected{map[string][]query.Modifier{
-			"name": []query.Modifier{query.Modifier{"FOO", []string{}}}}, nil}},
+			"name": []query.Modifier{query.Modifier{Name: "FOO", Arguments: []string{}}}}, nil}},
 		{"format(size, tb)", Expected{map[string][]query.Modifier{
-			"size": []query.Modifier{query.Modifier{"FORMAT", []string{"tb"}}}}, nil}},
+			"size": []query.Modifier{query.Modifier{Name: "FORMAT", Arguments: []string{"tb"}}}}, nil}},
 		{"format(size, kb, mb)", Expected{map[string][]query.Modifier{
-			"size": []query.Modifier{query.Modifier{"FORMAT", []string{"kb", "mb"}}}}, nil}},
+			"size": []query.Modifier{query.Modifier{Name: "FORMAT", Arguments: []string{"kb", "mb"}}}}, nil}},
 
 		{"", Expected{err: io.ErrUnexpectedEOF}},
 		{"lower(name),", Expected{err: io.ErrUnexpectedEOF}},

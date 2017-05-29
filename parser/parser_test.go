@@ -35,7 +35,7 @@ func TestParser_ParseSelect(t *testing.T) {
 		{"SELECT format(size, kb)", Expected{
 			map[string]bool{"size": true},
 			map[string][]query.Modifier{
-				"size": []query.Modifier{query.Modifier{"FORMAT", []string{"kb"}}}},
+				"size": []query.Modifier{query.Modifier{Name: "FORMAT", Arguments: []string{"kb"}}}},
 			nil}},
 
 		{"", Expected{err: io.ErrUnexpectedEOF}},
