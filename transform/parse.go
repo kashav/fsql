@@ -55,7 +55,7 @@ func Parse(p *ParseParams) (val interface{}, err error) {
 
 	switch strings.ToUpper(p.Name) {
 	case "FORMAT":
-		val, err = pFormat(p)
+		val, err = p.format()
 	case "UPPER":
 		val, err = upper(p.Value.(string)), nil
 	case "LOWER":
@@ -71,14 +71,15 @@ func Parse(p *ParseParams) (val interface{}, err error) {
 	return val, nil
 }
 
-func pFormat(p *ParseParams) (val interface{}, err error) {
+// format runs the correct format function based on the provided attribute.
+func (p *ParseParams) format() (val interface{}, err error) {
 	switch p.Attribute {
 	case "name":
 		val, err = formatName(p.Args[0], p.Value.(string)), nil
 	case "size":
-		val, err = pFormatSize(p)
+		val, err = p.formatSize()
 	case "time":
-		val, err = pFormatTime(p)
+		val, err = p.formatTime()
 	}
 
 	if err != nil {
@@ -90,7 +91,9 @@ func pFormat(p *ParseParams) (val interface{}, err error) {
 	return val, nil
 }
 
-func pFormatSize(p *ParseParams) (interface{}, error) {
+// formatSize formats the size attribute. Valid arguments include `B`, `KB`,
+// `MB`, and `GB` (case insensitive).
+func (p *ParseParams) formatSize() (interface{}, error) {
 	size, err := strconv.ParseFloat(p.Value.(string), 64)
 	if err != nil {
 		return nil, err
@@ -112,7 +115,9 @@ func pFormatSize(p *ParseParams) (interface{}, error) {
 	return size, nil
 }
 
-func pFormatTime(p *ParseParams) (interface{}, error) {
+// formatTime formats the time attribute. Valid arguments include `ISO` and
+// `UNIX` (case insensitive).
+func (p *ParseParams) formatTime() (interface{}, error) {
 	var t time.Time
 	var err error
 

@@ -22,13 +22,15 @@ type FormatParams struct {
 func Format(p *FormatParams) (val interface{}, err error) {
 	switch strings.ToUpper(p.Name) {
 	case "FORMAT":
-		val, err = fFormat(p)
+		val, err = p.format()
 	case "UPPER":
 		val, err = upper(p.Value.(string)), nil
 	case "LOWER":
 		val, err = lower(p.Value.(string)), nil
 	case "FULLPATH":
-		val, err = fFullPath(p)
+		val, err = p.fullPath()
+	case "SHORTPATH":
+		val, err = p.shortPath()
 	}
 
 	if err != nil {
@@ -40,14 +42,15 @@ func Format(p *FormatParams) (val interface{}, err error) {
 	return val, nil
 }
 
-func fFormat(p *FormatParams) (val interface{}, err error) {
+// format runs a format function based on the value of the provided attribute.
+func (p *FormatParams) format() (val interface{}, err error) {
 	switch p.Attribute {
 	case "name":
 		val, err = formatName(p.Args[0], p.Value.(string)), nil
 	case "size":
-		val, err = fFormatSize(p)
+		val, err = p.formatSize()
 	case "time":
-		val, err = fFormatTime(p)
+		val, err = p.formatTime()
 	}
 
 	if err != nil {
@@ -59,7 +62,9 @@ func fFormat(p *FormatParams) (val interface{}, err error) {
 	return val, nil
 }
 
-func fFormatSize(p *FormatParams) (interface{}, error) {
+// formatSize formats a size. Valid arguments include `KB`, `MB`, `GB` (case
+// insensitive).
+func (p *FormatParams) formatSize() (interface{}, error) {
 	size := p.Value.(int64)
 	switch strings.ToUpper(p.Args[0]) {
 	case "KB":
@@ -72,7 +77,9 @@ func fFormatSize(p *FormatParams) (interface{}, error) {
 	return nil, nil
 }
 
-func fFormatTime(p *FormatParams) (interface{}, error) {
+// formatTime formats a time. Valid arguments include `UNIX` and `ISO` (case
+// insensitive).
+func (p *FormatParams) formatTime() (interface{}, error) {
 	switch strings.ToUpper(p.Args[0]) {
 	case "ISO":
 		return p.Info.ModTime().Format(time.RFC3339), nil
@@ -82,13 +89,22 @@ func fFormatTime(p *FormatParams) (interface{}, error) {
 	return nil, nil
 }
 
-func fFullPath(p *FormatParams) (interface{}, error) {
+// fullPath returns the full path of the current file. Only supports the
+// `name` attribute.
+func (p *FormatParams) fullPath() (interface{}, error) {
 	if p.Attribute != "name" {
-		return nil,
-			fmt.Errorf("function FULLPATH not implemented for attribute %s",
-				p.Attribute)
+		return nil, nil
 	}
 	return p.Path, nil
+}
+
+// shortPath returns the short path of the current file. Only supports the
+// `name` attribute.
+func (p *FormatParams) shortPath() (interface{}, error) {
+	if p.Attribute != "name" {
+		return nil, nil
+	}
+	return p.Info.Name(), nil
 }
 
 // DefaultFormatValue returns the default format value for the provided
@@ -98,7 +114,7 @@ func DefaultFormatValue(attr, path string, info os.FileInfo) interface{} {
 	case "mode":
 		return info.Mode()
 	case "name":
-		return info.Name()
+		return path
 	case "size":
 		return info.Size()
 	case "time":
