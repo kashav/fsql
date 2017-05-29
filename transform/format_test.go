@@ -6,44 +6,29 @@ import (
 	"testing"
 )
 
-type FormatOutput struct {
-	val interface{}
-	err error
-}
-
-type FormatCase struct {
-	params   *FormatParams
-	expected FormatOutput
-}
-
 func TestTransform_Format(t *testing.T) {
-	// TODO: Add case with time format to unix/iso (might need a fixture for
-	// this).
-	cases := []FormatCase{
-		{
-			&FormatParams{"size", "path", nil, int64(300), "format", []string{"kb"}},
-			FormatOutput{fmt.Sprintf("%fkb", float64(300)/(1<<10)), nil},
-		},
-		{
-			&FormatParams{"size", "path", nil, int64(300), "format", []string{"kilobytes"}},
-			FormatOutput{nil, &ErrUnsupportedFormat{"kilobytes", "size"}},
-		},
-		{
-			&FormatParams{"time", "path", nil, nil, "format", []string{""}},
-			FormatOutput{nil, &ErrUnsupportedFormat{"", "time"}},
-		},
-		{
-			&FormatParams{"name", "path", nil, "VALUE", "format", []string{"lower"}},
-			FormatOutput{"value", nil},
-		},
-		{
-			&FormatParams{"name", "path", nil, "value", "upper", []string{}},
-			FormatOutput{"VALUE", nil},
-		},
-		{
-			&FormatParams{"name", "path", nil, "value", "fullpath", []string{}},
-			FormatOutput{"path", nil},
-		},
+	type Expected struct {
+		val interface{}
+		err error
+	}
+
+	type Case struct {
+		params   *FormatParams
+		expected Expected
+	}
+
+	// TODO: Add tests for the time attribute!
+	cases := []Case{
+		{&FormatParams{"size", "path", nil, int64(300), "format", []string{"kb"}},
+			Expected{fmt.Sprintf("%fkb", float64(300)/(1<<10)), nil}},
+		{&FormatParams{"size", "path", nil, int64(300), "format", []string{"kilobytes"}},
+			Expected{nil, &ErrUnsupportedFormat{"kilobytes", "size"}}},
+		{&FormatParams{"name", "path", nil, "VALUE", "format", []string{"lower"}},
+			Expected{"value", nil}},
+		{&FormatParams{"name", "path", nil, "value", "upper", []string{}},
+			Expected{"VALUE", nil}},
+		{&FormatParams{"name", "path", nil, "value", "fullpath", []string{}},
+			Expected{"path", nil}},
 	}
 
 	for _, c := range cases {

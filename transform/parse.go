@@ -115,8 +115,9 @@ func (p *ParseParams) formatSize() (interface{}, error) {
 	return size, nil
 }
 
-// formatTime formats the time attribute. Valid arguments include `ISO` and
-// `UNIX` (case insensitive).
+// formatTime formats the time attribute. Valid arguments include `ISO`,
+// `UNIX`, (case insensitive) or a custom layout. If a custom layout is
+// provided, it must be set according to 2006-01-02T15:04:05.999999-07:00.
 func (p *ParseParams) formatTime() (interface{}, error) {
 	var t time.Time
 	var err error
@@ -127,7 +128,7 @@ func (p *ParseParams) formatTime() (interface{}, error) {
 	case "UNIX":
 		t, err = time.Parse(time.UnixDate, p.Value.(string))
 	default:
-		t, err = time.Parse("Jan 02 2006 15 04", p.Value.(string))
+		t, err = time.Parse(p.Args[0], p.Value.(string))
 	}
 
 	if err != nil {

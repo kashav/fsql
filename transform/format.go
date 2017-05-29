@@ -78,15 +78,17 @@ func (p *FormatParams) formatSize() (interface{}, error) {
 }
 
 // formatTime formats a time. Valid arguments include `UNIX` and `ISO` (case
-// insensitive).
+// insensitive), or a custom layout layout. If a custom layout is provided, it
+// must be set according to 2006-01-02T15:04:05.999999-07:00.
 func (p *FormatParams) formatTime() (interface{}, error) {
 	switch strings.ToUpper(p.Args[0]) {
 	case "ISO":
 		return p.Info.ModTime().Format(time.RFC3339), nil
 	case "UNIX":
 		return p.Info.ModTime().Format(time.UnixDate), nil
+	default:
+		return p.Info.ModTime().Format(p.Args[0]), nil
 	}
-	return nil, nil
 }
 
 // fullPath returns the full path of the current file. Only supports the
