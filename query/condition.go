@@ -31,7 +31,7 @@ func (root *ConditionNode) String() string {
 // evaluateTree runs pre-order traversal on the ConditionNode tree rooted at
 // root and evaluates each conditional along the path with the provided compare
 // method.
-func (root *ConditionNode) evaluateTree(path string, file os.FileInfo) bool {
+func (root *ConditionNode) evaluateTree(path string, info os.FileInfo) bool {
 	if root == nil {
 		return true
 	}
@@ -49,19 +49,19 @@ func (root *ConditionNode) evaluateTree(path string, file os.FileInfo) bool {
 			}
 		}
 
-		return root.Condition.evaluate(path, file)
+		return root.Condition.evaluate(path, info)
 	}
 
 	if *root.Type == tokenizer.And {
-		return root.Left.evaluateTree(path, file) &&
-			root.Right.evaluateTree(path, file)
+		return root.Left.evaluateTree(path, info) &&
+			root.Right.evaluateTree(path, info)
 	}
 
 	if *root.Type == tokenizer.Or {
-		if root.Left.evaluateTree(path, file) {
+		if root.Left.evaluateTree(path, info) {
 			return true
 		}
-		return root.Right.evaluateTree(path, file)
+		return root.Right.evaluateTree(path, info)
 	}
 
 	return false
@@ -84,11 +84,12 @@ type Condition struct {
 // ApplyModifiers applies each modifier to the value of this Condition.
 func (c *Condition) applyModifiers() error {
 	value := c.Value
+
 	for _, m := range c.AttributeModifiers {
 		var err error
 		value, err = transform.Parse(&transform.ParseParams{
 			Attribute: c.Attribute,
-			Value:     c.Value,
+			Value:     value,
 			Name:      m.Name,
 			Args:      m.Arguments,
 		})
