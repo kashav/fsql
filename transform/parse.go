@@ -57,9 +57,9 @@ func Parse(p *ParseParams) (val interface{}, err error) {
 	case "FORMAT":
 		val, err = p.format()
 	case "UPPER":
-		val, err = upper(p.Value.(string)), nil
+		val = upper(p.Value.(string))
 	case "LOWER":
-		val, err = lower(p.Value.(string)), nil
+		val = lower(p.Value.(string))
 	}
 
 	if err != nil {
@@ -75,7 +75,7 @@ func Parse(p *ParseParams) (val interface{}, err error) {
 func (p *ParseParams) format() (val interface{}, err error) {
 	switch p.Attribute {
 	case "name":
-		val, err = formatName(p.Args[0], p.Value.(string)), nil
+		val = formatName(p.Args[0], p.Value.(string))
 	case "size":
 		val, err = p.formatSize()
 	case "time":

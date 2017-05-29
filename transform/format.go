@@ -24,9 +24,9 @@ func Format(p *FormatParams) (val interface{}, err error) {
 	case "FORMAT":
 		val, err = p.format()
 	case "UPPER":
-		val, err = upper(p.Value.(string)), nil
+		val = upper(p.Value.(string))
 	case "LOWER":
-		val, err = lower(p.Value.(string)), nil
+		val = lower(p.Value.(string))
 	case "FULLPATH":
 		val, err = p.fullPath()
 	case "SHORTPATH":
@@ -46,7 +46,7 @@ func Format(p *FormatParams) (val interface{}, err error) {
 func (p *FormatParams) format() (val interface{}, err error) {
 	switch p.Attribute {
 	case "name":
-		val, err = formatName(p.Args[0], p.Value.(string)), nil
+		val = formatName(p.Args[0], p.Value.(string))
 	case "size":
 		val, err = p.formatSize()
 	case "time":
@@ -114,7 +114,7 @@ func DefaultFormatValue(attr, path string, info os.FileInfo) interface{} {
 	case "mode":
 		return info.Mode()
 	case "name":
-		return path
+		return info.Name()
 	case "size":
 		return info.Size()
 	case "time":
