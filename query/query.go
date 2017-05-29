@@ -43,12 +43,17 @@ func (q *Query) HasAttribute(attributes ...string) bool {
 // Execute runs the query by walking the full path of each source and
 // evaluating the condition tree for each file. This method calls workFunc on
 // each "successful" file.
-func (q *Query) Execute(workFunc interface{}) {
+func (q *Query) Execute(workFunc interface{}) error {
 	seen := make(map[string]bool)
 	excluder := &RegexpExclude{exclusions: q.Sources["exclude"]}
+
 	for _, src := range q.Sources["include"] {
-		filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
-			if path == "." || path == ".." || err != nil {
+		err := filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+
+			if path == "." {
 				return nil
 			}
 
@@ -70,5 +75,11 @@ func (q *Query) Execute(workFunc interface{}) {
 			workFunc.(func(string, os.FileInfo, map[string]interface{}))(path, info, results)
 			return nil
 		})
+
+		if err != nil {
+			return err
+		}
 	}
+
+	return nil
 }

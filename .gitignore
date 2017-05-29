@@ -38,3 +38,6 @@ fsql
 debug
 main
 build/
+
+# Allow fsql directory
+!cmd/fsql

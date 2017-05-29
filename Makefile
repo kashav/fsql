@@ -12,16 +12,16 @@ all: fsql
 build: darwin linux windows
 
 fsql: $(sources)
-	go build -o ./$(name) -v .
+	go build -o ./$(name) -v ./cmd/fsql
 
 clean:
 	rm -rf ./$(name) build/
 
-lint:
-	${GOPATH}/bin/golint ./...
-
 install:
 	go get -u -v ./...
+
+lint:
+	${GOPATH}/bin/golint ./...
 
 test:
 	go test -v ./...
