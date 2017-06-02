@@ -191,19 +191,17 @@ func (p *parser) parseSubquery(condition *query.Condition) error {
 	}
 
 	value := make(map[interface{}]bool, 0)
-
-	q.Execute(func(path string, info os.FileInfo,
-		results map[string]interface{}) {
-		if q.HasAttribute("name") {
-			value[results["name"]] = true
-		} else if q.HasAttribute("size") {
-			value[results["size"]] = true
-		} else if q.HasAttribute("time") {
-			value[results["time"]] = true
-		} else if q.HasAttribute("mode") {
-			value[results["mode"]] = true
+	err = q.Execute(func(_ string, _ os.FileInfo, res map[string]interface{}) {
+		for _, attr := range [4]string{"name", "size", "time", "mode"} {
+			if q.HasAttribute(attr) {
+				value[res[attr]] = true
+				return
+			}
 		}
 	})
+	if err != nil {
+		return err
+	}
 
 	condition.Value = value
 	condition.IsSubquery = false

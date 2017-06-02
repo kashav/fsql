@@ -24,6 +24,8 @@ func parseLine(line []byte) bool {
 		query = fmt.Sprintf("%s %s", query, string(line))
 	}
 
+	// If we reach a semicolon, strip the last character of query and return
+	// true (this query is done).
 	if line[len(line)-1] == 59 {
 		query = query[:len(query)-1]
 		return true
@@ -33,7 +35,7 @@ func parseLine(line []byte) bool {
 }
 
 // readInput continually reads stdin for input.
-func readInput(sendCh, quitCh chan<- bool) {
+func readInput(doneCh, quitCh chan<- bool) {
 	go func() {
 		reader := bufio.NewReader(os.Stdin)
 		for {
@@ -51,7 +53,7 @@ func readInput(sendCh, quitCh chan<- bool) {
 			}
 
 			if done := parseLine(line); done {
-				sendCh <- true
+				doneCh <- true
 				status = 0
 				break
 			}
@@ -62,20 +64,23 @@ func readInput(sendCh, quitCh chan<- bool) {
 
 // Run reads input via stdin and returns the string upon reading a semicolon.
 func Run() *string {
-	sendCh := make(chan bool)
+	doneCh := make(chan bool)
 	quitCh := make(chan bool)
 
+LOOP:
 	for {
-		readInput(sendCh, quitCh)
+		readInput(doneCh, quitCh)
 
 		select {
-		case <-sendCh:
-			var temp string
-			temp, query = query, ""
+		case <-doneCh:
+			temp := query
+			query = ""
 			return &temp
 		case <-quitCh:
-			fmt.Println("bye")
-			return nil
+			fmt.Println("\nbye")
+			break LOOP
 		}
 	}
+
+	return nil
 }
