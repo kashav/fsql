@@ -104,7 +104,7 @@ Source paths may include environment variables (e.g. `$GOPATH`) or tildes (`~`).
 In the case that a directory begins with a hypgen (e.g. `-foo`), use the following to include it as a source:
 
 ```console
-$ >>> ... FROM ./-foo ...
+>>> ... FROM ./-foo ...
 ```
 
 **Examples**:
