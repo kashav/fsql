@@ -1,0 +1,14 @@
+language: go
+go:
+  - 1.8
+os:
+  - linux
+  - osx
+matrix:
+  fast_finish: true
+install:
+  - go get -u -v github.com/kshvmdn/fsql/...
+before_script:
+  - go vet -v ./...
+script:
+  - go test -v ./...

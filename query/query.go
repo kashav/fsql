@@ -1,19 +1,36 @@
 package query
 
 import (
-	"fmt"
 	"os"
+	"path/filepath"
 )
 
 // Query represents an input query.
 type Query struct {
-	Attributes    map[string]bool
+	Attributes map[string]bool
+	Modifiers  map[string][]Modifier
+
 	Sources       map[string][]string
-	ConditionTree *ConditionNode // Root node of this query's condition tree.
+	SourceAliases map[string]string
+
+	ConditionTree *ConditionNode
 }
 
-// HasAttribute checks if the query's attribute map contains the provided
-// attribute.
+// NewQuery returns a pointer to a Query.
+func NewQuery() *Query {
+	return &Query{
+		Attributes: make(map[string]bool, 0),
+		Modifiers:  make(map[string][]Modifier, 0),
+		Sources: map[string][]string{
+			"include": make([]string, 0),
+			"exclude": make([]string, 0),
+		},
+		SourceAliases: make(map[string]string, 0),
+		ConditionTree: nil,
+	}
+}
+
+// HasAttribute checks if this query contains any of the provided attributes.
 func (q *Query) HasAttribute(attributes ...string) bool {
 	for _, attribute := range attributes {
 		if _, found := q.Attributes[attribute]; found {
@@ -23,63 +40,46 @@ func (q *Query) HasAttribute(attributes ...string) bool {
 	return false
 }
 
-// ConditionNode represents a single node of a query's WHERE clause tree.
-type ConditionNode struct {
-	Type      TokenType
-	Condition *Condition
-	Left      *ConditionNode
-	Right     *ConditionNode
-}
+// Execute runs the query by walking the full path of each source and
+// evaluating the condition tree for each file. This method calls workFunc on
+// each "successful" file.
+func (q *Query) Execute(workFunc interface{}) error {
+	seen := make(map[string]bool)
+	excluder := &RegexpExclude{exclusions: q.Sources["exclude"]}
 
-func (root *ConditionNode) String() string {
-	if root == nil {
-		return "(nil)"
-	}
+	for _, src := range q.Sources["include"] {
+		err := filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
 
-	if root.Condition != nil {
-		return fmt.Sprintf("(%s)", (*root).Condition.String())
-	}
+			if path == "." {
+				return nil
+			}
 
-	return fmt.Sprintf("(%s (%s, %s))", root.Type, root.Left.String(),
-		root.Right.String())
-}
+			// Avoid walking a single directory more than once.
+			if _, ok := seen[path]; ok {
+				return nil
+			}
+			seen[path] = true
 
-// Evaluate runs pre-order traversal on the ConditionNode tree rooted at root
-// and evaluates each conditional along the path.
-func (root *ConditionNode) Evaluate(file os.FileInfo, compareFn interface{}) bool {
-	if root == nil {
-		return true
-	}
+			if excluder.ShouldExclude(path) {
+				return nil
+			}
 
-	if root.Condition != nil {
-		return compareFn.(func(Condition, os.FileInfo) bool)(*root.Condition, file)
-	}
+			if !q.ConditionTree.evaluateTree(path, info) {
+				return nil
+			}
 
-	if root.Type == And {
-		return root.Left.Evaluate(file, compareFn) &&
-			root.Right.Evaluate(file, compareFn)
-	}
+			results := q.applyModifiers(path, info)
+			workFunc.(func(string, os.FileInfo, map[string]interface{}))(path, info, results)
+			return nil
+		})
 
-	if root.Type == Or {
-		if root.Left.Evaluate(file, compareFn) {
-			return true
+		if err != nil {
+			return err
 		}
-		return root.Right.Evaluate(file, compareFn)
 	}
 
-	return false
-}
-
-// Condition represents a WHERE condition.
-type Condition struct {
-	Attribute  string
-	Comparator TokenType
-	Value      string
-	Negate     bool
-}
-
-func (c *Condition) String() string {
-	return fmt.Sprintf(
-		"{attribute: %s, comparator: %s, value: \"%s\", negate: %t}",
-		c.Attribute, c.Comparator, c.Value, c.Negate)
+	return nil
 }

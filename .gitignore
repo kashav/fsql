@@ -32,6 +32,14 @@ vendor/
 # Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
 .glide/
 
-# Compiled executables
+# Compiled binaries
 fsql
+debug
+main
 build/
+
+# Allow cmd/fsql
+!cmd/fsql
+
+# Editor workspace directories
+.vscode

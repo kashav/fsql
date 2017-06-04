@@ -1,17 +1,15 @@
-# fsql
+# fsql [![Build Status](https://travis-ci.org/kshvmdn/fsql.svg?branch=master)](https://travis-ci.org/kshvmdn/fsql)
 
->Search through your file system with SQL-esque queries.
+>Search through your filesystem with SQL-esque queries.
+
+## Contents
 
 - [Demo](#demo)
 - [Installation](#setup--installation)
 - [Usage](#usage)
-  + [Query](#query-syntax)
-    * [Attribute](#attribute)
-    * [Source](#source)
-    * [Conditon](#condition)
-  + [Examples](#examples-3)
+- [Query Syntax](#query-syntax)
+- [Examples](#usage-examples)
 - [Contribute](#contribute)
-- [Credits](#credits)
 - [License](#license)
 
 ## Demo
@@ -20,11 +18,11 @@
 
 ## Setup / installation
 
-Requires Go to be [installed](https://golang.org/doc/install) and [configured](https://golang.org/doc/install#testing).
+Assumes that Go is [installed](https://golang.org/doc/install) and [setup](https://golang.org/doc/install#testing).
 
 Install with `go get`:
 
-```console
+```sh
 $ go get -u -v github.com/kshvmdn/fsql/...
 $ which fsql
 $GOPATH/bin/fsql
@@ -40,7 +38,7 @@ $ which fsql
 
 Install directly via source:
 
-```console
+```sh
 $ git clone https://github.com/kshvmdn/fsql.git $GOPATH/src/github.com/kshvmdn/fsql
 $ cd $_ # $GOPATH/src/github.com/kshvmdn/fsql
 $ make install && make
@@ -49,182 +47,279 @@ $ ./fsql
 
 ## Usage
 
-Pass your query to fsql via command line argument. View the usage dialogue with the `-help` flag.
+fsql expects a single query via stdin.
+
+You may also choose to use fsql in interactive mode. Note that this mode is currently a work-in-progress, so many common shell features are not implemented yet (e.g. arrow key support, autocomplete, history, etc).
+
+View the usage dialogue with the `-help` flag.
 
 ```sh
 $ fsql -help
 usage: fsql [options] query
+  -interactive
+      run in interactive mode (Ctrl+D to exit)
   -version
       print version and exit
 ```
 
-### Query syntax
+## Query syntax
 
-In general, each query requires a `SELECT` clause (to specify which attributes should be shown), a `FROM` clause (to specify the directories to search in), and a `WHERE` clause (to specify conditions for the files).
+In general, each query requires a `SELECT` clause (to specify which attributes will be shown), a `FROM` clause (to specify which directories to search), and a `WHERE` clause (to specify conditions to test against).
 
-```sql
-SELECT attribute, ... FROM source, ... WHERE condition
+```console
+>>> SELECT attribute, ... FROM source, ... WHERE condition;
 ```
 
-You may omit the `SELECT` clause, as well as the `WHERE` clause.
+You may choose to omit the `SELECT` and `WHERE` clause.
 
-Quotes are **not** required, however you'll have to escape reserved characters (e.g. `*`, `<`, `>`, etc).
+If you're providing your query via stdin, quotes are **not** required, however you'll have to escape _reserved_ characters (e.g. `*`, `<`, `>`, etc).
 
-#### Attribute
+### Attribute
 
-Currently supported attributes include `name`, `size`, `mode`, `time`, or `all` / `*`.
+Currently supported attributes include `name`, `size`, `mode`, `time`, and `all`.
 
 If no attribute is provided, `all` is chosen by default.
 
-##### Examples
+**Examples**:
 
 Each group features a set of equivalent clauses.
 
-```sh
-$ fsql SELECT name, size, time FROM ...
-$ fsql name, size, time FROM ...
+```console
+>>> SELECT name, size, time ...
+>>> name, size, time ...
 ```
 
-```sh
-$ fsql SELECT all FROM ...
-$ fsql all FROM ...
-$ fsql FROM ...
+```console
+>>> SELECT all FROM ...
+>>> all FROM ...
+>>> FROM ...
 ```
 
-#### Source
+### Source
 
-Each source should be a relative or absolute path to some directory on your machine. You can also use environment variables (e.g. `$GOPATH`) or `~` (for your home directory).
+Each source should be a relative or absolute path to a directory on your machine.
 
-Use a hypen (`-`) to exclude a directory. For example, to exclude `.git`:
+Source paths may include environment variables (e.g. `$GOPATH`) or tildes (`~`). Use a hyphen (`-`) to exclude a directory.
 
-```sh
-$ fsql ... FROM ., -.git ...
+In the case that a directory begins with a hypgen (e.g. `-foo`), use the following to include it as a source:
+
+```console
+$ >>> ... FROM ./-foo ...
 ```
 
-If the directory begins with a hypen (e.g. `-foo`), use one of the following to select from it:
+**Examples**:
 
-```sh
-$ fsql ... FROM ./-foo ...
+```console
+>>> ... FROM . ...
 ```
 
-```sh
-$ fsql "... FROM '-foo' ..."
+```console
+>>> ... FROM ., ~/Desktop ...
 ```
 
-##### Examples
-
-```sh
-$ fsql ... FROM . WHERE ...
+```console
+>>> ... FROM ~/Desktop, $GOPATH, -.git/ ...
 ```
 
-```sh
-$ fsql ... FROM ~/Desktop WHERE ...
-```
+### Condition
 
-```sh
-$ fsql ... FROM ~/Desktop, $GOPATH WHERE ...
-```
+#### Condition syntax
 
-#### Condition
+A single condition is made up of 3 parts: an attribute, an operator, and a value.
 
-##### Conjunction/Disjunction
+- **Attribute**:
+
+  A valid attribute is any of the following: `name`, `size`, `mode`, `time`.
+
+- **Operator**:
+
+  Each attribute has a set of associated operators.
+
+  - `name`:
+
+    | Operator | Description |
+    | :---: | --- |
+    | `=` | String equality |
+    | `<>` / `!=` | Synonymous to using `"NOT ... = ..."` |
+    | `IN` | Basic list inclusion |
+    | `LIKE` |  Simple pattern matching. Use `%` to match zero, one, or multiple characters. Check that a string begins with a value: `<value>%`, ends with a value: `%<value>`, or contains a value: `%<value>%`. |
+    | `RLIKE` | Pattern matching with regular expressions. |
+
+  - `size` / `time`:
+
+    - All basic algebraic operators: `>`, `>=`, `<`, `<=`, `=`, and `<>` / `!=`.
+
+  - `mode`:
+
+    - `IS`
+
+- **Value**:
+
+  If the value contains spaces, wrap the value in quotes (either single or double) or backticks.
+
+  The default unit for `size` is bytes.
+
+  The default format for `time` is `MMM DD YYYY HH MM` (e.g. `"Jan 02 2006 15 04"`).
+
+  Use `mode` to test if a file is regular (`IS REG`) or if it's a directory (`IS DIR`).
+
+#### Conjunction / Disjunction
 
 Use `AND` / `OR` to join conditions. Note that precedence is assigned based on order of appearance.
 
-This means `WHERE a AND b OR c` is **not** the same as `WHERE c OR b AND a`. Use parentheses to get around this behaviour, `WHERE a AND b OR c` **is** the same as `WHERE c OR (b AND a)`.
+This means `WHERE a AND b OR c` is **not** the same as `WHERE c OR b AND a`. Use parentheses to get around this behaviour, i.e. `WHERE a AND b OR c` **is** the same as `WHERE c OR (b AND a)`.
 
-##### Negation
+**Examples**:
+
+```console
+>>> ... WHERE name = main.go OR size = 5 ...
+```
+
+```console
+>>> ... WHERE name = main.go AND size > 20 ...
+```
+
+#### Negation
 
 Use `NOT` to negate a condition. This keyword **must** precede the condition (e.g. `... WHERE NOT a ...`).
 
-Note that wrapping parentheses with `NOT` is currently not supported. This can easily be resolved with [De Morgan's laws](https://en.wikipedia.org/wiki/De_Morgan%27s_laws). For example, `... WHERE NOT (a AND b) ...` is the same as `... WHERE NOT a OR NOT b ...`.
+Note that negating parenthesized conditions is currently not supported. However, this can easily be resolved by applying [De Morgan's laws](https://en.wikipedia.org/wiki/De_Morgan%27s_laws) to your query. For example, `... WHERE NOT (a AND b) ...` is _logically equivalent_ to `... WHERE NOT a OR NOT b ...` (the latter is actually more optimal, due to [lazy evaluation](https://en.wikipedia.org/wiki/Lazy_evaluation)).
 
-##### Condition Syntax
-
-A single condition is made up of 3 parts: attribute, comparator, and value.
-
-###### attribute
-
-A valid attribute is any of the following: `name`, `size`, `file`, `time`.
-
-###### comparator
-
-Comparators depend on the attribute.
-
-For `name`:
-
-  - `=` - Strings that are an exact match.
-  - `<>` - Synonymous to using `WHERE NOT ... = ...`.
-  - `LIKE` - For simple pattern matching. Use `%` to match zero, one, or multiple characters. Check that a string begins with a value: `<value>%`, ends with a value: `%<value>`, or contains a value: `<value>`.
-  - `RLIKE` - For pattern matching with regular expressions.
-
-For `size` and `time`:
-
-  - `>`
-  - `>=`
-  - `<`
-  - `<=`
-  - `=`
-  - `<>`
-
-And, for `file`:
-
-  - `IS`
-
-###### value
-
-If the value contains spaces and/or escaped characters, wrap the value in quotes (either single or double) or backticks.
-
-The default unit for `size` is bytes. To use kilobytes / megabytes / gigabytes, append `kb` / `mb` / `gb` to the size value (e.g. `100kb` for 100 kilobytes).
-
-Attribute `file` only has 2 supported values: `dir` (to check that the file is a directory) and `reg` (to check that the file is regular).
-
-Use the following format for `time` values: `MMM DD YYYY HH MM` (eg. `Jan 02 2006 15 04`).
-
-##### Examples
-
-See the next section for examples.
-
-### Examples
-
-List the name of files & directories in Desktop and Downloads that contain `csc` in the name:
+**Examples**:
 
 ```console
-$ fsql SELECT name FROM ~/Desktop, ~/Downloads WHERE name LIKE %csc%
-$ # this is equivalent to:
-$ fsql SELECT name FROM ~/Desktop, ~/Downloads WHERE name RLIKE .*csc.*
+>>> ... WHERE NOT name = main.go ...
 ```
 
-List all attributes of each directory in your home directory (note the escaped `*`).
+### Attribute Modifiers
+
+Attribute modifiers are used to specify how input and output values should be processed. These functions are applied directly to attributes in the `SELECT` and `WHERE` clauses.
+
+The table below lists currently-supported modifiers. Note that the first parameter to `FORMAT` is always the attribute name.
+
+| Attribute | Modifier  | Supported in `SELECT` | Supported in `WHERE` |
+| :---: | --- | :---: | :---: |
+| `name` | `UPPER` (synonymous to `FORMAT(, UPPER)` | ✔️ | ✔️ |
+| | `LOWER` (synonymous to `FORMAT(, LOWER)` | ✔️ | ✔️ |
+| | `FULLPATH` | ✔️ |  |
+| | `SHORTPATH`  | ✔️ |  |
+| `size` | `FORMAT(, unit)` | ✔️ | ✔️ |
+| `time` | `FORMAT(, layout)` | ✔️ | ✔️ |
+
+
+Supported `unit` values: `B` (byte), `KB` (kilobyte), `MB` (megabyte), or `GB` (gigabyte).
+
+Supported `layout` values: [`ISO`](https://en.wikipedia.org/wiki/ISO_8601), [`UNIX`](https://en.wikipedia.org/wiki/Unix_time), or [custom](https://golang.org/pkg/time/#Time.Format). Custom layouts must be provided in reference to the following date: `Mon Jan 2 15:04:05 -0700 MST 2006`.
+
+**Examples**:
 
 ```console
-$ fsql SELECT \* FROM ~ WHERE file IS dir
-$ fsql SELECT all FROM ~ WHERE file IS dir
+>>> ... WHERE UPPER(name) LIKE %.go ...
 ```
 
-List the name, size, and modification time of JavaScript files in the current directory that were modified after April 1st 2017 (try running this on a `node_modules` directory, it's fast :sunglasses:).
-
-```sh
-$ fsql name, size, time FROM . WHERE name LIKE %.js AND time \> \'Apr 01 2017 00 00\'
-$ fsql "name, size, time FROM . WHERE name LIKE %.js AND time > 'Apr 01 2017 00 00'"
+```console
+>>> ... WHERE FORMAT(size, GB) > 2 ...
 ```
 
-List all files named `main.go` in `$GOPATH` which are larger than 10.5 kilobytes or smaller than 100 bytes (note the escaped parentheses and redirection symbols, to avoid this, wrap the query in quotes).
+```console
+>>> ... SELECT FORMAT(time, "Mon Jan 2 2006 15:04:05") ...
+```
 
-```sh
-$ fsql FROM $GOPATH WHERE name = main.go AND \(size \>= 10.5kb OR size \< 100\)
-$ fsql "FROM $GOPATH WHERE name = main.go AND (size >= 10.5kb OR size < 100)"
+### Subqueries
+
+Subqueries allow for more complex condition statements. These queries are recursively evaluated while parsing. SELECTing multiple attributes in a subquery is not currently supported; if more than one attribute (or `all`) is provided, only the first attribute is used.
+
+Support for referencing superqueries is not yet implemented, see [#4](https://github.com/kshvmdn/fsql/issues/4) if you'd like to help with this.
+
+**Examples**:
+
+```console
+>>> ... WHERE name IN (SELECT name FROM ../foo) ...
+```
+
+## Usage Examples
+
+List all attributes of each directory in your home directory (note the escaped `*`):
+
+```console
+$ fsql SELECT \* FROM ~ WHERE mode IS DIR
+```
+
+List the names of all files in the Desktop and Downloads directory that contain `csc` in the name:
+
+```console
+$ fsql "SELECT name FROM ~/Desktop, ~/Downloads WHERE name LIKE %csc%"
+```
+
+List all files in the current directory that are also present in some other directory:
+
+```console
+$ fsql -interactive
+>>> SELECT all FROM . WHERE name IN (
+...   SELECT name FROM ~/Desktop/files.bak/
+... );
+```
+
+Passing queries via stdin without quotes is a bit of a pain, hopefully the next examples highlight that, my suggestion is to use interactive mode or wrap the query in quotes if you're doing anything with subqueries or attribute modifiers.
+
+List all files named `main.go` in `$GOPATH` which are larger than 10.5 kilobytes or smaller than 100 bytes:
+
+```console
+$ fsql SELECT all FROM $GOPATH WHERE name = main.go AND \(FORMAT\(size, KB\) \>= 10.5 OR size \< 100\)
+$ fsql "SELECT all FROM $GOPATH WHERE name = main.go AND (FORMAT(size, KB) >= 10.5 OR size < 100)"
+$ fsql -interactive
+>>> SELECT
+...   all
+... FROM
+...   $GOPATH
+... WHERE
+...   name = main.go
+...   AND (
+...     FORMAT(size, KB) >= 10.5
+...     OR size < 100
+...   )
+... ;
+```
+
+List the name, size, and modification time of JavaScript files in the current directory that were modified after April 1st 2017:
+
+```console
+$ fsql SELECT UPPER\(name\), FORMAT\(size, KB\), FORMAT\(time, ISO\) FROM . WHERE name LIKE %.js AND time \> \'Apr 01 2017 00 00\'
+$ fsql "SELECT UPPER(name), FORMAT(size, KB), FORMAT(time, ISO) FROM . WHERE name LIKE %.js AND time > 'Apr 01 2017 00 00'"
+$ fsql -interactve
+>>> SELECT
+...   UPPER(name),
+...   FORMAT(size, KB),
+...   FORMAT(time, ISO)
+... FROM
+...   .
+... WHERE
+...   name LIKE %.js
+...   AND time > 'Apr 01 2017 00 00'
+... ;
 ```
 
 ## Contribute
 
 This project is completely open source, feel free to [open an issue](https://github.com/kshvmdn/fsql/issues) or [submit a pull request](https://github.com/kshvmdn/fsql/pulls).
 
-Before submitting code, please ensure your changes comply with [Golint](https://github.com/golang/lint). Use `make lint` to test this.
+Before submitting code, please ensure that tests are passing and the linter is happy. The following commands may be of use, refer to the [Makefile](./Makefile) to see what they do.
 
-## Credits
+```sh
+$ make fmt
+```
 
-Lexer & parser are based on the work of [JamesOwenHall](https://github.com/JamesOwenHall) ([json2](https://github.com/JamesOwenHall/json2), [timed](https://github.com/JamesOwenHall/timed)).
+```sh
+$ make lint
+```
+
+```sh
+$ make vet
+```
+
+```sh
+$ make test
+```
 
 ## License
 
