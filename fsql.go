@@ -10,7 +10,7 @@ import (
 )
 
 // Version holds the current version number.
-const Version = "0.1.0"
+const Version = "0.2.0"
 
 var q *query.Query
 var attrs = [4]string{"mode", "size", "time", "name"}

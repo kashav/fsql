@@ -1,4 +1,4 @@
-# fsql
+# fsql [![Build Status](https://travis-ci.org/kshvmdn/fsql.svg?branch=master)](https://travis-ci.org/kshvmdn/fsql)
 
 >Search through your filesystem with SQL-esque queries.
 
