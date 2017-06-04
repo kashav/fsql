@@ -2,14 +2,12 @@ package prompt
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"os"
 )
 
-var (
-	status int32
-	query  string
-)
+var query bytes.Buffer
 
 // parseLine appends line to query and returns true iff the last character
 // of line is a semicolon.
@@ -18,16 +16,15 @@ func parseLine(line []byte) bool {
 		return false
 	}
 
-	if len(query) == 0 {
-		query = string(line)
-	} else {
-		query = fmt.Sprintf("%s %s", query, string(line))
+	if !bytes.ContainsAny(query.Bytes(), "([") {
+		query.WriteString(" ")
 	}
+	query.WriteString(string(line))
 
 	// If we reach a semicolon, strip the last character of query and return
 	// true (this query is done).
-	if line[len(line)-1] == 59 {
-		query = query[:len(query)-1]
+	if line[len(line)-1] == ';' {
+		query.Truncate(query.Len() - 1)
 		return true
 	}
 
@@ -36,6 +33,8 @@ func parseLine(line []byte) bool {
 
 // readInput continually reads stdin for input.
 func readInput(doneCh, quitCh chan<- bool) {
+	var status int32
+
 	go func() {
 		reader := bufio.NewReader(os.Stdin)
 		for {
@@ -73,8 +72,8 @@ LOOP:
 
 		select {
 		case <-doneCh:
-			temp := query
-			query = ""
+			temp := query.String()
+			query.Reset()
 			return &temp
 		case <-quitCh:
 			fmt.Println("\nbye")
