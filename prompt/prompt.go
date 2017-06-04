@@ -7,6 +7,24 @@ import (
 	"os"
 )
 
+type state int8
+
+const (
+	initial state = iota
+	second
+)
+
+func (s state) String() string {
+	switch s {
+	case initial:
+		return ">>>"
+	case second:
+		return "..."
+	default:
+		return ""
+	}
+}
+
 var query bytes.Buffer
 
 // parseLine appends line to query and returns true iff the last character
@@ -16,7 +34,7 @@ func parseLine(line []byte) bool {
 		return false
 	}
 
-	if !bytes.ContainsAny(query.Bytes(), "([") {
+	if query.Len() > 0 && !bytes.ContainsAny(query.Bytes(), "([") {
 		query.WriteString(" ")
 	}
 	query.WriteString(string(line))
@@ -33,17 +51,12 @@ func parseLine(line []byte) bool {
 
 // readInput continually reads stdin for input.
 func readInput(doneCh, quitCh chan<- bool) {
-	var status int32
+	var s state
 
 	go func() {
 		reader := bufio.NewReader(os.Stdin)
 		for {
-			switch status {
-			case 0:
-				fmt.Print(">>> ")
-			case 1:
-				fmt.Print("... ")
-			}
+			fmt.Printf("%s ", s.String())
 
 			line, _, err := reader.ReadLine()
 			if err != nil {
@@ -53,10 +66,10 @@ func readInput(doneCh, quitCh chan<- bool) {
 
 			if done := parseLine(line); done {
 				doneCh <- true
-				status = 0
+				s = initial
 				break
 			}
-			status = 1
+			s = second
 		}
 	}()
 }
