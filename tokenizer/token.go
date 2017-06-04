@@ -5,7 +5,7 @@ import "fmt"
 // TokenType represents a Token's type.
 type TokenType int8
 
-// All TokenTypes.
+// All TokenType constants.
 const (
 	Unknown TokenType = iota
 
@@ -20,6 +20,7 @@ const (
 	Or
 	And
 	Not
+
 	In
 	Is
 	Like

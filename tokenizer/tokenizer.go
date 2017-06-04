@@ -99,7 +99,7 @@ func (t *Tokenizer) Next() *Token {
 			tok.Type = Is
 		case "LIKE":
 			tok.Type = Like
-		case "RLIKE":
+		case "REGEXP", "RLIKE":
 			tok.Type = RLike
 		default:
 			tok.Type = Identifier

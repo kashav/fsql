@@ -104,10 +104,10 @@ func cmpMode(comp tokenizer.TokenType, file os.FileInfo, fileType interface{}) b
 	if comp != tokenizer.Is {
 		return false
 	}
-	switch fileType.(string) {
-	case "dir":
+	switch strings.ToUpper(fileType.(string)) {
+	case "DIR":
 		return file.Mode().IsDir()
-	case "reg":
+	case "REG":
 		return file.Mode().IsRegular()
 	}
 	return false

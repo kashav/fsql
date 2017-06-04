@@ -15,8 +15,8 @@ const Version = "0.1.0"
 var q *query.Query
 var attrs = [4]string{"mode", "size", "time", "name"}
 
-// output prints the result value for each SELECTed attribute. The order of
-// print is based on the order the attributes appear in attrs.
+// output prints the result value for each SELECTed attribute. Order is based
+// on the order the attributes appear in attrs.
 func output(path string, info os.FileInfo, result map[string]interface{}) {
 	for i, attr := range attrs {
 		if q.HasAttribute(attr) {

@@ -22,6 +22,7 @@ func (p *parser) parseConditionTree() (*query.ConditionNode, error) {
 
 		switch p.current.Type {
 		case tokenizer.Not:
+			// TODO: Handle NOT (...)
 			fallthrough
 
 		case tokenizer.Identifier:
@@ -48,10 +49,7 @@ func (p *parser) parseConditionTree() (*query.ConditionNode, error) {
 				stack.Push(prev)
 			}
 
-		case tokenizer.And:
-			fallthrough
-
-		case tokenizer.Or:
+		case tokenizer.And, tokenizer.Or:
 			left, ok := stack.Pop().(*query.ConditionNode)
 			if !ok {
 				return nil, errFailedToParse
