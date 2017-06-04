@@ -28,7 +28,15 @@ $ which fsql
 $GOPATH/bin/fsql
 ```
 
-Or, install directly via source:
+Install with [Homebrew](https://brew.sh/):
+
+```console
+$ brew install fsql
+$ which fsql
+/usr/local/bin/fsql
+```
+
+Install directly via source:
 
 ```sh
 $ git clone https://github.com/kshvmdn/fsql.git $GOPATH/src/github.com/kshvmdn/fsql
@@ -91,7 +99,13 @@ Each group features a set of equivalent clauses.
 
 Each source should be a relative or absolute path to a directory on your machine.
 
-Source paths may include environment variables (e.g. `$GOPATH`) or tildes (`~`). Use a dash (`-`) to exclude a directory.
+Source paths may include environment variables (e.g. `$GOPATH`) or tildes (`~`). Use a hyphen (`-`) to exclude a directory.
+
+In the case that a directory begins with a hypgen (e.g. `-foo`), use the following to include it as a source:
+
+```console
+$ >>> ... FROM ./-foo ...
+```
 
 **Examples**:
 
