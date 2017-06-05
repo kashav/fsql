@@ -12,6 +12,7 @@ var allAttributes = map[string]bool{
 	"name": true,
 	"size": true,
 	"time": true,
+	"hash": true,
 }
 
 // parseAttrList parses the list of attributes passed to the SELECT clause.

@@ -1,7 +1,9 @@
 package transform
 
 import (
+	"crypto"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strings"
 	"time"
@@ -31,6 +33,8 @@ func Format(p *FormatParams) (val interface{}, err error) {
 		val, err = p.fullPath()
 	case "SHORTPATH":
 		val, err = p.shortPath()
+	case "SHA1":
+		val, err = p.hash(crypto.SHA1)
 	}
 
 	if err != nil {
@@ -107,6 +111,24 @@ func (p *FormatParams) shortPath() (interface{}, error) {
 		return nil, nil
 	}
 	return p.Info.Name(), nil
+}
+
+func (p *FormatParams) hash(hasher crypto.SignerOpts) (interface{}, error) {
+	var err error
+	if err != nil {
+		panic(err.Error())
+	}
+	f, err := os.Open(p.Path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	b, err := ioutil.ReadAll(f)
+	if err != nil {
+		return nil, err
+	}
+	sum := hasher.HashFunc().New().Sum(b)
+	return string(sum), nil
 }
 
 // DefaultFormatValue returns the default format value for the provided
