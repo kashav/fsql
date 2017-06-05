@@ -34,7 +34,7 @@ func parseLine(line []byte) bool {
 		return false
 	}
 
-	if query.Len() > 0 && !bytes.ContainsAny(query.Bytes(), "([") {
+	if query.Len() > 0 {
 		query.WriteString(" ")
 	}
 	query.WriteString(string(line))
