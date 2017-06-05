@@ -13,7 +13,9 @@ import (
 const Version = "0.2.0"
 
 var q *query.Query
-var attrs = [4]string{"mode", "size", "time", "name"}
+
+// Should be noted that this slice, is temporaly related to the order of printing
+var attrs = [5]string{"mode", "size", "time", "hash", "name"}
 
 // output prints the result value for each SELECTed attribute. Order is based
 // on the order the attributes appear in attrs.
