@@ -9,7 +9,7 @@ type ExcluderCase struct {
 
 func TestShouldExclude_ExpectAllExcluded(t *testing.T) {
 	exclusions := []string{".git", ".gitignore"}
-	excluder := RegexpExclude{exclusions: exclusions}
+	excluder := regexpExclude{exclusions: exclusions}
 	cases := []ExcluderCase{
 		{".git", true},
 		{".git/", true},
@@ -18,7 +18,7 @@ func TestShouldExclude_ExpectAllExcluded(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		actual := excluder.ShouldExclude(c.input)
+		actual := excluder.shouldExclude(c.input)
 		if actual != c.expected {
 			t.Fatalf("\nExpected %v\n     Got %v", c.expected, actual)
 		}
@@ -27,7 +27,7 @@ func TestShouldExclude_ExpectAllExcluded(t *testing.T) {
 
 func TestShouldExclude_ExpectNotExcluded(t *testing.T) {
 	exclusions := []string{".git"}
-	excluder := RegexpExclude{exclusions: exclusions}
+	excluder := regexpExclude{exclusions: exclusions}
 	cases := []ExcluderCase{
 		{".git", true},
 		{".git/", true},
@@ -36,7 +36,7 @@ func TestShouldExclude_ExpectNotExcluded(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		actual := excluder.ShouldExclude(c.input)
+		actual := excluder.shouldExclude(c.input)
 		if actual != c.expected {
 			t.Fatalf("\nExpected %v\n     Got %v", c.expected, actual)
 		}

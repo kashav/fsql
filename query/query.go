@@ -3,6 +3,7 @@ package query
 import (
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // Query represents an input query.
@@ -44,42 +45,68 @@ func (q *Query) HasAttribute(attributes ...string) bool {
 // evaluating the condition tree for each file. This method calls workFunc on
 // each "successful" file.
 func (q *Query) Execute(workFunc interface{}) error {
-	seen := make(map[string]bool)
-	excluder := &RegexpExclude{exclusions: q.Sources["exclude"]}
+	seen := map[string]bool{}
+	excluder := &regexpExclude{exclusions: q.Sources["exclude"]}
 
 	for _, src := range q.Sources["include"] {
-		err := filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+		// TODO: Improve our method of detecting if src is a glob pattern. This
+		// currently doesn't support usage of square brackets, since the tokenizer
+		// doesn't recognize these as part of a directory.
+		//
+		// Pattern reference: https://golang.org/pkg/path/filepath/#Match.
+		if strings.ContainsAny(src, "*?") {
+			// If src does _resemble_ a glob pattern, we find all matches and
+			// evaluate the condition tree against each.
+			matches, err := filepath.Glob(src)
 			if err != nil {
 				return err
 			}
 
-			if path == "." {
-				return nil
+			for _, match := range matches {
+				if err = filepath.Walk(match, q.walkFunc(seen, excluder, workFunc)); err != nil {
+					return err
+				}
 			}
+			continue
+		}
 
-			// Avoid walking a single directory more than once.
-			if _, ok := seen[path]; ok {
-				return nil
-			}
-			seen[path] = true
-
-			if excluder.ShouldExclude(path) {
-				return nil
-			}
-
-			if !q.ConditionTree.evaluateTree(path, info) {
-				return nil
-			}
-
-			results := q.applyModifiers(path, info)
-			workFunc.(func(string, os.FileInfo, map[string]interface{}))(path, info, results)
-			return nil
-		})
-
-		if err != nil {
+		if err := filepath.Walk(src, q.walkFunc(seen, excluder, workFunc)); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+// walkFunc returns a filepath.WalkFunc which evaluates the condition tree
+// against the given file.
+func (q *Query) walkFunc(seen map[string]bool, excluder Excluder,
+	workFunc interface{}) filepath.WalkFunc {
+	return func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if path == "." {
+			return nil
+		}
+
+		// Avoid walking a single directory more than once.
+		if _, ok := seen[path]; ok {
+			return nil
+		}
+		seen[path] = true
+
+		if excluder.shouldExclude(path) {
+			return nil
+		}
+
+		if !q.ConditionTree.evaluateTree(path, info) {
+			return nil
+		}
+
+		results := q.applyModifiers(path, info)
+		workFunc.(func(string, os.FileInfo, map[string]interface{}))(path, info, results)
+		return nil
+	}
 }

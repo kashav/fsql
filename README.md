@@ -99,7 +99,7 @@ Each group features a set of equivalent clauses.
 
 Each source should be a relative or absolute path to a directory on your machine.
 
-Source paths may include environment variables (e.g. `$GOPATH`) or tildes (`~`). Use a hyphen (`-`) to exclude a directory.
+Source paths may include environment variables (e.g. `$GOPATH`) or tildes (`~`). Use a hyphen (`-`) to exclude a directory. Source paths also support usage of [glob patterns](https://en.wikipedia.org/wiki/Glob_(programming)).
 
 In the case that a directory begins with a hypgen (e.g. `-foo`), use the following to include it as a source:
 
@@ -114,11 +114,11 @@ In the case that a directory begins with a hypgen (e.g. `-foo`), use the followi
 ```
 
 ```console
->>> ... FROM ., ~/Desktop ...
+>>> ... FROM ~/Desktop, ./*/**.go ...
 ```
 
 ```console
->>> ... FROM ~/Desktop, $GOPATH, -.git/ ...
+>>> ... FROM $GOPATH, -.git/ ...
 ```
 
 ### Condition
