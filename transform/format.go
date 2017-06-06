@@ -121,7 +121,7 @@ func (p *FormatParams) hash(hasher crypto.SignerOpts) (interface{}, error) {
 
 func hash(info os.FileInfo, path string, hasher crypto.SignerOpts) (interface{}, error) {
 	if info.IsDir() {
-		return "_DIR_", nil
+		return "----------------------------------------", nil
 	}
 
 	f, err := os.Open(path)

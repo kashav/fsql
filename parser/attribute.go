@@ -10,9 +10,9 @@ import (
 var allAttributes = map[string]bool{
 	"mode": true,
 	"name": true,
+	"hash": true,
 	"size": true,
 	"time": true,
-	"hash": true,
 }
 
 // parseAttrList parses the list of attributes passed to the SELECT clause.
