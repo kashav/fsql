@@ -116,13 +116,15 @@ func (p *FormatParams) shortPath() (interface{}, error) {
 }
 
 func (p *FormatParams) hash(hasher crypto.SignerOpts) (interface{}, error) {
-	var err error
+	return hash(p.Info, p.Path, hasher)
+}
 
-	if p.Info.IsDir() {
-		return "_Dir_", nil
+func hash(info os.FileInfo, path string, hasher crypto.SignerOpts) (interface{}, error) {
+	if info.IsDir() {
+		return "_DIR_", nil
 	}
 
-	f, err := os.Open(p.Path)
+	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
@@ -149,6 +151,9 @@ func DefaultFormatValue(attr, path string, info os.FileInfo) interface{} {
 		return info.Size()
 	case "time":
 		return info.ModTime().Format(time.Stamp)
+	case "hash":
+		v, _ := hash(info, path, crypto.SHA1)
+		return v
 	}
 	return nil
 }
