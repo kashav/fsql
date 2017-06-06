@@ -2,6 +2,8 @@ package transform
 
 import (
 	"crypto"
+	_ "crypto/sha1" //Import SHA-1 hashing function
+	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -115,9 +117,11 @@ func (p *FormatParams) shortPath() (interface{}, error) {
 
 func (p *FormatParams) hash(hasher crypto.SignerOpts) (interface{}, error) {
 	var err error
-	if err != nil {
-		panic(err.Error())
+
+	if p.Info.IsDir() {
+		return "_Dir_", nil
 	}
+
 	f, err := os.Open(p.Path)
 	if err != nil {
 		return nil, err
@@ -127,8 +131,10 @@ func (p *FormatParams) hash(hasher crypto.SignerOpts) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	sum := hasher.HashFunc().New().Sum(b)
-	return string(sum), nil
+
+	h := hasher.HashFunc().New()
+	h.Write(b)
+	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
 // DefaultFormatValue returns the default format value for the provided
