@@ -2,19 +2,20 @@ package query
 
 import "testing"
 
-type ExcluderCase struct {
-	input    string
-	expected bool
-}
-
 func TestShouldExclude_ExpectAllExcluded(t *testing.T) {
+	type Case struct {
+		input    string
+		expected bool
+	}
+
 	exclusions := []string{".git", ".gitignore"}
 	excluder := regexpExclude{exclusions: exclusions}
-	cases := []ExcluderCase{
-		{".git", true},
-		{".git/", true},
-		{".git/some/other/file", true},
-		{".gitignore", true},
+
+	cases := []Case{
+		Case{input: ".git", expected: true},
+		Case{input: ".git/", expected: true},
+		Case{input: ".git/some/other/file", expected: true},
+		Case{input: ".gitignore", expected: true},
 	}
 
 	for _, c := range cases {
@@ -26,13 +27,19 @@ func TestShouldExclude_ExpectAllExcluded(t *testing.T) {
 }
 
 func TestShouldExclude_ExpectNotExcluded(t *testing.T) {
+	type Case struct {
+		input    string
+		expected bool
+	}
+
 	exclusions := []string{".git"}
 	excluder := regexpExclude{exclusions: exclusions}
-	cases := []ExcluderCase{
-		{".git", true},
-		{".git/", true},
-		{".git/some/other/file", true},
-		{".gitignore", false},
+
+	cases := []Case{
+		Case{input: ".git", expected: true},
+		Case{input: ".git/", expected: true},
+		Case{input: ".git/some/other/file", expected: true},
+		Case{input: ".gitignore", expected: false},
 	}
 
 	for _, c := range cases {

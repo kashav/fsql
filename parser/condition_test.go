@@ -22,56 +22,143 @@ func TestConditionParser_ExpectCorrectCondition(t *testing.T) {
 	}
 
 	cases := []Case{
-		{"name LIKE foo%", Expected{&query.Condition{
-			Attribute: "name",
-			Operator:  tokenizer.Like,
-			Value:     "foo%"}, nil}},
-		{"size = 10", Expected{&query.Condition{
-			Attribute: "size",
-			Operator:  tokenizer.Equals,
-			Value:     "10"}, nil}},
-		{"mode IS dir", Expected{&query.Condition{
-			Attribute: "mode",
-			Operator:  tokenizer.Is,
-			Value:     "dir"}, nil}},
-		{"format(time, iso) >= 2017-05-28T16:37:18Z", Expected{&query.Condition{
-			Attribute:          "time",
-			AttributeModifiers: []query.Modifier{query.Modifier{Name: "FORMAT", Arguments: []string{"iso"}}},
-			Operator:           tokenizer.GreaterThanEquals,
-			Value:              "2017-05-28T16:37:18Z"}, nil}},
-		{"upper(name) != FOO", Expected{&query.Condition{
-			Attribute:          "name",
-			AttributeModifiers: []query.Modifier{query.Modifier{Name: "UPPER", Arguments: []string{}}},
-			Operator:           tokenizer.NotEquals,
-			Value:              "FOO"}, nil}},
-		{"NOT name IN [foo,bar,baz]", Expected{&query.Condition{
-			Attribute: "name",
-			Operator:  tokenizer.In,
-			Value:     []string{"foo", "bar", "baz"},
-			Negate:    true}, nil}},
+		Case{
+			input: "name LIKE foo%",
+			expected: Expected{
+				condition: &query.Condition{
+					Attribute: "name",
+					Operator:  tokenizer.Like,
+					Value:     "foo%",
+				},
+				err: nil,
+			},
+		},
 
-		// No attribute-operator validation yet (these should /eventually/ throw
+		Case{
+			input: "size = 10",
+			expected: Expected{
+				condition: &query.Condition{
+					Attribute: "size",
+					Operator:  tokenizer.Equals,
+					Value:     "10",
+				},
+				err: nil,
+			},
+		},
+
+		Case{
+			input: "mode IS dir",
+			expected: Expected{
+				condition: &query.Condition{
+					Attribute: "mode",
+					Operator:  tokenizer.Is,
+					Value:     "dir",
+				},
+				err: nil,
+			},
+		},
+
+		Case{
+			input: "format(time, iso) >= 2017-05-28T16:37:18Z",
+			expected: Expected{
+				condition: &query.Condition{
+					Attribute: "time",
+					AttributeModifiers: []query.Modifier{
+						query.Modifier{
+							Name:      "FORMAT",
+							Arguments: []string{"iso"},
+						},
+					},
+					Operator: tokenizer.GreaterThanEquals,
+					Value:    "2017-05-28T16:37:18Z",
+				},
+				err: nil,
+			},
+		},
+
+		Case{
+			input: "upper(name) != FOO",
+			expected: Expected{
+				condition: &query.Condition{
+					Attribute: "name",
+					AttributeModifiers: []query.Modifier{
+						query.Modifier{
+							Name:      "UPPER",
+							Arguments: []string{},
+						},
+					},
+					Operator: tokenizer.NotEquals,
+					Value:    "FOO",
+				},
+				err: nil,
+			},
+		},
+
+		Case{
+			input: "NOT name IN [foo,bar,baz]",
+			expected: Expected{
+				condition: &query.Condition{
+					Attribute: "name",
+					Operator:  tokenizer.In,
+					Value:     []string{"foo", "bar", "baz"},
+					Negate:    true,
+				},
+				err: nil,
+			},
+		},
+
+		// No attribute-operator validation yet (these 3 should /eventually/ throw
 		// some error)!
-		{"time RLIKE '.*'", Expected{&query.Condition{
-			Attribute: "time",
-			Operator:  tokenizer.RLike,
-			Value:     ".*"}, nil}},
-		{"size LIKE foo", Expected{&query.Condition{
-			Attribute: "size",
-			Operator:  tokenizer.Like,
-			Value:     "foo"}, nil}},
-		{"time <> now", Expected{&query.Condition{
-			Attribute: "time",
-			Operator:  tokenizer.NotEquals,
-			Value:     "now"}, nil}},
+		Case{
+			input: "time RLIKE '.*'",
+			expected: Expected{
+				condition: &query.Condition{
+					Attribute: "time",
+					Operator:  tokenizer.RLike,
+					Value:     ".*",
+				},
+				err: nil,
+			},
+		},
 
-		{"name =", Expected{err: io.ErrUnexpectedEOF}},
-		{"file IS dir", Expected{err: &ErrUnknownToken{"file"}}},
+		Case{
+			input: "size LIKE foo",
+			expected: Expected{
+				condition: &query.Condition{
+					Attribute: "size",
+					Operator:  tokenizer.Like,
+					Value:     "foo",
+				},
+				err: nil,
+			},
+		},
+
+		Case{
+			input: "time <> now",
+			expected: Expected{
+				condition: &query.Condition{
+					Attribute: "time",
+					Operator:  tokenizer.NotEquals,
+					Value:     "now",
+				},
+				err: nil,
+			},
+		},
+
+		Case{
+			input:    "name =",
+			expected: Expected{err: io.ErrUnexpectedEOF},
+		},
+
+		Case{
+			input:    "file IS dir",
+			expected: Expected{err: &ErrUnknownToken{"file"}},
+		},
 	}
 
 	for _, c := range cases {
-		actual, err := (&parser{
-			tokenizer: tokenizer.NewTokenizer(c.input)}).parseNextCond()
+		p := &parser{tokenizer: tokenizer.NewTokenizer(c.input)}
+		actual, err := p.parseNextCond()
 
 		if c.expected.err == nil {
 			if err != nil {
@@ -105,94 +192,176 @@ func TestConditionParser_ExpectCorrectConditionTree(t *testing.T) {
 	)
 
 	cases := []Case{
-		{"name LIKE foo%", Expected{&query.ConditionNode{
-			Condition: &query.Condition{
-				Attribute: "name",
-				Operator:  tokenizer.Like,
-				Value:     "foo%"}}, nil}},
-
-		{"upper(name) = MAIN", Expected{&query.ConditionNode{
-			Condition: &query.Condition{
-				Attribute:          "name",
-				AttributeModifiers: []query.Modifier{query.Modifier{Name: "UPPER", Arguments: []string{}}},
-				Operator:           tokenizer.Equals,
-				Value:              "MAIN"}}, nil}},
-
-		{"name LIKE %foo AND name <> bar.foo", Expected{&query.ConditionNode{
-			Type: &tmpAnd,
-			Left: &query.ConditionNode{
-				Condition: &query.Condition{
-					Attribute: "name",
-					Operator:  tokenizer.Like,
-					Value:     "%foo"}},
-			Right: &query.ConditionNode{
-				Condition: &query.Condition{
-					Attribute: "name",
-					Operator:  tokenizer.NotEquals,
-					Value:     "bar.foo"}}}, nil}},
-
-		{"size <= 10 OR NOT mode IS dir", Expected{&query.ConditionNode{
-			Type: &tmpOr,
-			Left: &query.ConditionNode{
-				Condition: &query.Condition{
-					Attribute: "size",
-					Operator:  tokenizer.LessThanEquals,
-					Value:     "10"}},
-			Right: &query.ConditionNode{
-				Condition: &query.Condition{
-					Attribute: "mode",
-					Operator:  tokenizer.Is,
-					Value:     "dir",
-					Negate:    true}}}, nil}},
-
-		{"size = 5 AND name = foo", Expected{&query.ConditionNode{
-			Type: &tmpAnd,
-			Left: &query.ConditionNode{
-				Condition: &query.Condition{
-					Attribute: "size",
-					Operator:  tokenizer.Equals,
-					Value:     "5"}},
-			Right: &query.ConditionNode{
-				Condition: &query.Condition{
-					Attribute: "name",
-					Operator:  tokenizer.Equals,
-					Value:     "foo"}}}, nil}},
-
-		{"format(size, mb) <= 2 AND (name = foo OR name = bar)", Expected{&query.ConditionNode{
-			Type: &tmpAnd,
-			Left: &query.ConditionNode{
-				Condition: &query.Condition{
-					Attribute:          "size",
-					AttributeModifiers: []query.Modifier{query.Modifier{Name: "FORMAT", Arguments: []string{"mb"}}},
-					Operator:           tokenizer.LessThanEquals,
-					Value:              "2"}},
-			Right: &query.ConditionNode{
-				Type: &tmpOr,
-				Left: &query.ConditionNode{
+		Case{
+			input: "name LIKE foo%",
+			expected: Expected{
+				node: &query.ConditionNode{
 					Condition: &query.Condition{
 						Attribute: "name",
-						Operator:  tokenizer.Equals,
-						Value:     "foo"}},
-				Right: &query.ConditionNode{
+						Operator:  tokenizer.Like,
+						Value:     "foo%",
+					},
+				},
+				err: nil,
+			},
+		},
+
+		Case{
+			input: "upper(name) = MAIN",
+			expected: Expected{
+				node: &query.ConditionNode{
 					Condition: &query.Condition{
 						Attribute: "name",
-						Operator:  tokenizer.Equals,
-						Value:     "bar"}}}}, nil}},
+						AttributeModifiers: []query.Modifier{
+							query.Modifier{
+								Name:      "UPPER",
+								Arguments: []string{},
+							},
+						},
+						Operator: tokenizer.Equals,
+						Value:    "MAIN",
+					},
+				},
+				err: nil,
+			},
+		},
 
-		{"name = foo AND NOT (name = bar OR name = baz)", Expected{
-			&query.ConditionNode{}, &ErrUnexpectedToken{
-				Expected: tokenizer.Identifier,
-				Actual:   tokenizer.OpenParen}}},
+		Case{
+			input: "name LIKE %foo AND name <> bar.foo",
+			expected: Expected{
+				node: &query.ConditionNode{
+					Type: &tmpAnd,
+					Left: &query.ConditionNode{
+						Condition: &query.Condition{
+							Attribute: "name",
+							Operator:  tokenizer.Like,
+							Value:     "%foo",
+						},
+					},
+					Right: &query.ConditionNode{
+						Condition: &query.Condition{
+							Attribute: "name",
+							Operator:  tokenizer.NotEquals,
+							Value:     "bar.foo",
+						},
+					},
+				},
+				err: nil,
+			},
+		},
 
-		{"size = 5 AND ()", Expected{err: errors.New("failed to parse conditions")}},
+		Case{
+			input: "size <= 10 OR NOT mode IS dir",
+			expected: Expected{
+				node: &query.ConditionNode{
+					Type: &tmpOr,
+					Left: &query.ConditionNode{
+						Condition: &query.Condition{
+							Attribute: "size",
+							Operator:  tokenizer.LessThanEquals,
+							Value:     "10",
+						},
+					},
+					Right: &query.ConditionNode{
+						Condition: &query.Condition{
+							Attribute: "mode",
+							Operator:  tokenizer.Is,
+							Value:     "dir",
+							Negate:    true,
+						},
+					},
+				},
+				err: nil,
+			},
+		},
+
+		Case{
+			input: "size = 5 AND name = foo",
+			expected: Expected{
+				node: &query.ConditionNode{
+					Type: &tmpAnd,
+					Left: &query.ConditionNode{
+						Condition: &query.Condition{
+							Attribute: "size",
+							Operator:  tokenizer.Equals,
+							Value:     "5",
+						},
+					},
+					Right: &query.ConditionNode{
+						Condition: &query.Condition{
+							Attribute: "name",
+							Operator:  tokenizer.Equals,
+							Value:     "foo",
+						},
+					},
+				},
+				err: nil,
+			},
+		},
+
+		Case{
+			input: "format(size, mb) <= 2 AND (name = foo OR name = bar)",
+			expected: Expected{
+				node: &query.ConditionNode{
+					Type: &tmpAnd,
+					Left: &query.ConditionNode{
+						Condition: &query.Condition{
+							Attribute: "size",
+							AttributeModifiers: []query.Modifier{
+								query.Modifier{
+									Name:      "FORMAT",
+									Arguments: []string{"mb"},
+								},
+							},
+							Operator: tokenizer.LessThanEquals,
+							Value:    "2",
+						},
+					},
+					Right: &query.ConditionNode{
+						Type: &tmpOr,
+						Left: &query.ConditionNode{
+							Condition: &query.Condition{
+								Attribute: "name",
+								Operator:  tokenizer.Equals,
+								Value:     "foo",
+							},
+						},
+						Right: &query.ConditionNode{
+							Condition: &query.Condition{
+								Attribute: "name",
+								Operator:  tokenizer.Equals,
+								Value:     "bar",
+							},
+						},
+					},
+				},
+				err: nil,
+			},
+		},
+
+		Case{
+			input: "name = foo AND NOT (name = bar OR name = baz)",
+			expected: Expected{
+				node: &query.ConditionNode{},
+				err: &ErrUnexpectedToken{
+					Expected: tokenizer.Identifier,
+					Actual:   tokenizer.OpenParen,
+				},
+			},
+		},
+
+		Case{
+			input:    "size = 5 AND ()",
+			expected: Expected{err: errors.New("failed to parse conditions")},
+		},
 
 		// FIXME: The following case /should/ throw EOF (it isn't right now).
-		// {"name = foo AND", Expected{err: io.ErrUnexpectedEOF}},
+		// Case{input: "name = foo AND", expected: Expected{err: io.ErrUnexpectedEOF}},
 	}
 
 	for _, c := range cases {
-		actual, err := (&parser{
-			tokenizer: tokenizer.NewTokenizer(c.input)}).parseConditionTree()
+		p := &parser{tokenizer: tokenizer.NewTokenizer(c.input)}
+		actual, err := p.parseConditionTree()
 
 		if c.expected.err == nil {
 			if err != nil {
