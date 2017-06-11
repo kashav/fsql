@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -23,10 +24,10 @@ type FormatParams struct {
 	Args []string
 }
 
-// Format runs the respective format function on the provided parameters.
-func Format(p *FormatParams) (val interface{}, err error) {
-	argAsInt := func(arg []string, index int) (interface{}, error) {
+func (p FormatParams) argAs(index int, kind reflect.Kind) (interface{}, error) {
+	asInt := func() (interface{}, error) {
 		var n int
+		var err error
 		if err == nil && len(p.Args) > 0 && p.Args[index] != "" {
 			if n, err = strconv.Atoi(p.Args[index]); err != nil {
 				return nil, err
@@ -34,6 +35,16 @@ func Format(p *FormatParams) (val interface{}, err error) {
 		}
 		return n, nil
 	}
+	switch kind {
+	case reflect.Int:
+		return asInt()
+	default:
+		return nil, &ErrNotImplemented{p.Name, p.Attribute}
+	}
+}
+
+// Format runs the respective format function on the provided parameters.
+func Format(p *FormatParams) (val interface{}, err error) {
 
 	switch strings.ToUpper(p.Name) {
 	case "FORMAT":
@@ -49,11 +60,11 @@ func Format(p *FormatParams) (val interface{}, err error) {
 	case "SHA1":
 		var hash interface{}
 		var n interface{}
-		n, err = argAsInt(p.Args, 0)
-		if err != nil {
+		n, err = p.argAs(0, reflect.Int)
+		if err == nil {
 			hash, err = p.hash(crypto.SHA1)
 		}
-		if err != nil {
+		if err == nil {
 			val = truncate(hash.(string), n.(int))
 		}
 	}
