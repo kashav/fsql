@@ -37,11 +37,12 @@ func Format(p *FormatParams) (val interface{}, err error) {
 	case "SHORTPATH":
 		val, err = p.shortPath()
 	case "SHA1":
-		var hash string
+		var hash interface{}
 		hash, err = p.hash(crypto.SHA1)
 		if err == nil && len(p.Args) > 0 && p.Args[0] != "" {
-			if n, err := strconv.Atoi(p.Args[0]); err == nil {
-				val = truncate(hash, n)
+			var n int
+			if n, err = strconv.Atoi(p.Args[0]); err == nil {
+				val = truncate(hash.(string), n)
 			}
 		}
 	}
@@ -122,18 +123,18 @@ func (p *FormatParams) shortPath() (interface{}, error) {
 	return p.Info.Name(), nil
 }
 
-func (p *FormatParams) hash(hasher crypto.SignerOpts) (string, error) {
+func (p *FormatParams) hash(hasher crypto.SignerOpts) (interface{}, error) {
 	return hash(p.Info, p.Path, hasher)
 }
 
-func hash(info os.FileInfo, path string, hasher crypto.SignerOpts) (string, error) {
+func hash(info os.FileInfo, path string, hasher crypto.SignerOpts) (interface{}, error) {
 	if info.IsDir() {
-		return "----------------------------------------", nil
+		return strings.Repeat("-", hasher.HashFunc().Size()), nil
 	}
 
 	f, err := os.Open(path)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer f.Close()
 	b, err := ioutil.ReadAll(f)
@@ -163,7 +164,7 @@ func DefaultFormatValue(attr, path string, info os.FileInfo) interface{} {
 		if err != nil {
 			panic(err.Error())
 		}
-		return truncate(v, 7)
+		return truncate(v.(string), 7)
 	}
 	return nil
 }
