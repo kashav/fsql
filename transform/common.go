@@ -24,3 +24,11 @@ func upper(name string) interface{} {
 func lower(name string) interface{} {
 	return strings.ToLower(name)
 }
+
+func truncate(str string, n int) string {
+	if len(str) < n || n > len(str) {
+		return str
+	}
+
+	return str[0:n]
+}

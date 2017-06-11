@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -36,7 +37,13 @@ func Format(p *FormatParams) (val interface{}, err error) {
 	case "SHORTPATH":
 		val, err = p.shortPath()
 	case "SHA1":
-		val, err = p.hash(crypto.SHA1)
+		var hash string
+		hash, err = p.hash(crypto.SHA1)
+		if err == nil && len(p.Args) > 0 && p.Args[0] != "" {
+			if n, err := strconv.Atoi(p.Args[0]); err == nil {
+				val = truncate(hash, n)
+			}
+		}
 	}
 
 	if err != nil {
@@ -115,23 +122,23 @@ func (p *FormatParams) shortPath() (interface{}, error) {
 	return p.Info.Name(), nil
 }
 
-func (p *FormatParams) hash(hasher crypto.SignerOpts) (interface{}, error) {
+func (p *FormatParams) hash(hasher crypto.SignerOpts) (string, error) {
 	return hash(p.Info, p.Path, hasher)
 }
 
-func hash(info os.FileInfo, path string, hasher crypto.SignerOpts) (interface{}, error) {
+func hash(info os.FileInfo, path string, hasher crypto.SignerOpts) (string, error) {
 	if info.IsDir() {
 		return "----------------------------------------", nil
 	}
 
 	f, err := os.Open(path)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	defer f.Close()
 	b, err := ioutil.ReadAll(f)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	h := hasher.HashFunc().New()
@@ -152,8 +159,11 @@ func DefaultFormatValue(attr, path string, info os.FileInfo) interface{} {
 	case "time":
 		return info.ModTime().Format(time.Stamp)
 	case "hash":
-		v, _ := hash(info, path, crypto.SHA1)
-		return v
+		v, err := hash(info, path, crypto.SHA1)
+		if err != nil {
+			panic(err.Error())
+		}
+		return truncate(v, 7)
 	}
 	return nil
 }
