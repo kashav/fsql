@@ -25,6 +25,8 @@ type FormatParams struct {
 }
 
 func (p FormatParams) argAs(index int, kind reflect.Kind) (interface{}, error) {
+
+	// return args as an int
 	asInt := func() (interface{}, error) {
 		var n int
 		var err error
