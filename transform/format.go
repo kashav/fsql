@@ -25,7 +25,6 @@ type FormatParams struct {
 }
 
 func (p FormatParams) argAs(index int, kind reflect.Kind) (interface{}, error) {
-
 	// return args as an int
 	asInt := func() (interface{}, error) {
 		var n int
@@ -47,7 +46,6 @@ func (p FormatParams) argAs(index int, kind reflect.Kind) (interface{}, error) {
 
 // Format runs the respective format function on the provided parameters.
 func Format(p *FormatParams) (val interface{}, err error) {
-
 	switch strings.ToUpper(p.Name) {
 	case "FORMAT":
 		val, err = p.format()
