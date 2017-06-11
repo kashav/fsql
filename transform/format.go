@@ -58,15 +58,7 @@ func Format(p *FormatParams) (val interface{}, err error) {
 	case "SHORTPATH":
 		val, err = p.shortPath()
 	case "SHA1":
-		var hash interface{}
-		var n interface{}
-		n, err = p.argAs(0, reflect.Int)
-		if err == nil {
-			hash, err = p.hash(crypto.SHA1)
-		}
-		if err == nil {
-			val = truncate(hash.(string), n.(int))
-		}
+		val, err = p.hash(crypto.SHA1)
 	}
 	if err != nil {
 		return nil, err
@@ -146,7 +138,16 @@ func (p *FormatParams) shortPath() (interface{}, error) {
 
 // hash will take the hash function, based on the hasher type supplied.
 func (p *FormatParams) hash(hasher crypto.SignerOpts) (interface{}, error) {
-	return hash(p.Info, p.Path, hasher)
+	var err error
+	var n interface{}
+	var h interface{}
+
+	n, err = p.argAs(0, reflect.Int)
+	if err != nil {
+		return nil, err
+	}
+	h, err = hash(p.Info, p.Path, hasher)
+	return truncate(h.(string), n.(int)), nil
 }
 
 func hash(info os.FileInfo, path string, hasher crypto.SignerOpts) (interface{}, error) {
