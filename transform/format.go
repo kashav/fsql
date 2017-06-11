@@ -25,6 +25,16 @@ type FormatParams struct {
 
 // Format runs the respective format function on the provided parameters.
 func Format(p *FormatParams) (val interface{}, err error) {
+	argAsInt := func(arg []string, index int) (interface{}, error) {
+		var n int
+		if err == nil && len(p.Args) > 0 && p.Args[index] != "" {
+			if n, err = strconv.Atoi(p.Args[index]); err != nil {
+				return nil, err
+			}
+		}
+		return n, nil
+	}
+
 	switch strings.ToUpper(p.Name) {
 	case "FORMAT":
 		val, err = p.format()
@@ -38,15 +48,15 @@ func Format(p *FormatParams) (val interface{}, err error) {
 		val, err = p.shortPath()
 	case "SHA1":
 		var hash interface{}
-		hash, err = p.hash(crypto.SHA1)
-		if err == nil && len(p.Args) > 0 && p.Args[0] != "" {
-			var n int
-			if n, err = strconv.Atoi(p.Args[0]); err == nil {
-				val = truncate(hash.(string), n)
-			}
+		var n interface{}
+		n, err = argAsInt(p.Args, 0)
+		if err != nil {
+			hash, err = p.hash(crypto.SHA1)
+		}
+		if err != nil {
+			val = truncate(hash.(string), n.(int))
 		}
 	}
-
 	if err != nil {
 		return nil, err
 	}
@@ -123,6 +133,7 @@ func (p *FormatParams) shortPath() (interface{}, error) {
 	return p.Info.Name(), nil
 }
 
+// hash will take the hash function, based on the hasher type supplied.
 func (p *FormatParams) hash(hasher crypto.SignerOpts) (interface{}, error) {
 	return hash(p.Info, p.Path, hasher)
 }

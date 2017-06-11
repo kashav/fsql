@@ -14,7 +14,7 @@ const Version = "0.2.0"
 
 var q *query.Query
 
-//Should be noted that this slice, is temporaly related to the order of printing
+// Should be noted that this slice, is temporaly related to the order of printing
 var attrs = [5]string{"mode", "size", "time", "hash", "name"}
 
 // output prints the result value for each SELECTed attribute. Order is based
