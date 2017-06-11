@@ -63,7 +63,7 @@ func TestAttributeParser_ExpectCorrectAttributes(t *testing.T) {
 		modifiers := make(map[string][]query.Modifier, 0)
 
 		p := &parser{tokenizer: tokenizer.NewTokenizer(c.input)}
-		err := p.parseAttrList(&attributes, &modifiers)
+		err := p.parseAttrs(&attributes, &modifiers)
 
 		if c.expected.err == nil {
 			if err != nil {
@@ -239,7 +239,7 @@ func TestAttributeParser_ExpectCorrectModifiers(t *testing.T) {
 		modifiers := make(map[string][]query.Modifier, 0)
 
 		p := &parser{tokenizer: tokenizer.NewTokenizer(c.input)}
-		err := p.parseAttrList(&attributes, &modifiers)
+		err := p.parseAttrs(&attributes, &modifiers)
 
 		if c.expected.err == nil {
 			if err != nil {

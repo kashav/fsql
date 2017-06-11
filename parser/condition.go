@@ -21,43 +21,46 @@ func (p *parser) parseConditionTree() (*query.ConditionNode, error) {
 		}
 
 		switch p.current.Type {
+
 		case tokenizer.Not:
-			// TODO: Handle NOT (...)
+			// TODO: Handle NOT (...), for the time being we proceed with the other
+			// tokens and handle the negation when parsing the condition.
 			fallthrough
 
 		case tokenizer.Identifier:
-			condition, err := p.parseNextCond()
+			condition, err := p.parseCondition()
 			if err != nil {
+				return nil, err
+			}
+			if condition == nil {
 				return nil, p.currentError()
 			}
 
 			if condition.IsSubquery {
-				if p.parseSubquery(condition) != nil {
-					return nil, errFailedToParse
+				if err := p.parseSubquery(condition); err != nil {
+					return nil, err
 				}
 			}
 
-			leaf := query.ConditionNode{Condition: condition}
-			// If type assertion fails, we assume the previous node was nil (i.e. not
-			// a ConditionNode).
-			if prev, ok := stack.Pop().(*query.ConditionNode); !ok {
-				stack.Push(&leaf)
+			leafNode := &query.ConditionNode{Condition: condition}
+			if prevNode, ok := stack.Pop().(*query.ConditionNode); !ok {
+				stack.Push(leafNode)
+			} else if prevNode.Condition == nil {
+				prevNode.Right = leafNode
+				stack.Push(prevNode)
 			} else {
-				if prev.Condition == nil {
-					prev.Right = &leaf
-				}
-				stack.Push(prev)
+				return nil, errFailedToParse
 			}
 
 		case tokenizer.And, tokenizer.Or:
-			left, ok := stack.Pop().(*query.ConditionNode)
+			leftNode, ok := stack.Pop().(*query.ConditionNode)
 			if !ok {
 				return nil, errFailedToParse
 			}
 
 			node := query.ConditionNode{
 				Type: &p.current.Type,
-				Left: left,
+				Left: leftNode,
 			}
 			stack.Push(&node)
 
@@ -65,17 +68,18 @@ func (p *parser) parseConditionTree() (*query.ConditionNode, error) {
 			stack.Push(nil)
 
 		case tokenizer.CloseParen:
-			right, ok := stack.Pop().(*query.ConditionNode)
+			rightNode, ok := stack.Pop().(*query.ConditionNode)
 			if !ok {
 				return nil, errFailedToParse
 			}
 
-			if root, ok := stack.Pop().(*query.ConditionNode); ok {
-				root.Right = right
-				stack.Push(root)
+			if rootNode, ok := stack.Pop().(*query.ConditionNode); !ok {
+				stack.Push(rightNode)
 			} else {
-				stack.Push(right)
+				rootNode.Right = rightNode
+				stack.Push(rootNode)
 			}
+
 		}
 	}
 
@@ -94,11 +98,11 @@ func (p *parser) parseConditionTree() (*query.ConditionNode, error) {
 	return node, nil
 }
 
-// parseNextCond parses the next condition of the query.
-func (p *parser) parseNextCond() (*query.Condition, error) {
+// parseCondition parses and returns the next condition.
+func (p *parser) parseCondition() (*query.Condition, error) {
 	cond := &query.Condition{}
 
-	// Parse the NOT keyword.
+	// If we find a NOT, negate the condition.
 	if p.expect(tokenizer.Not) != nil {
 		cond.Negate = true
 	}
@@ -110,12 +114,9 @@ func (p *parser) parseNextCond() (*query.Condition, error) {
 	p.current = ident
 
 	var modifiers []query.Modifier
-	attr, err := p.parseAttrModifiers(&modifiers)
+	attr, err := p.parseAttr(&modifiers)
 	if err != nil {
 		return nil, err
-	}
-	if attr == nil {
-		return nil, p.currentError()
 	}
 	cond.Attribute = attr.Raw
 	cond.AttributeModifiers = modifiers
@@ -164,12 +165,11 @@ func (p *parser) parseNextCond() (*query.Condition, error) {
 	}
 
 	// Not a list nor a subquery -> plain identifier!
-	if token := p.expect(tokenizer.Identifier); token != nil {
-		cond.Value = token.Raw
-	} else {
+	token := p.expect(tokenizer.Identifier)
+	if token == nil {
 		return nil, p.currentError()
 	}
-
+	cond.Value = token.Raw
 	return cond, nil
 }
 
@@ -183,21 +183,24 @@ func (p *parser) parseSubquery(condition *query.Condition) error {
 		return err
 	}
 
+	// If the subquery has aliases, we'll have to parse the subquery against
+	// each file, so we don't do anything here.
 	if len(q.SourceAliases) > 0 {
 		condition.Subquery = q
 		return nil
 	}
 
 	value := make(map[interface{}]bool, 0)
-	err = q.Execute(func(_ string, _ os.FileInfo, res map[string]interface{}) {
-		for _, attr := range [4]string{"name", "size", "time", "mode"} {
+	workFunc := func(path string, info os.FileInfo, res map[string]interface{}) {
+		for _, attr := range [...]string{"name", "size", "time", "mode"} {
 			if q.HasAttribute(attr) {
 				value[res[attr]] = true
 				return
 			}
 		}
-	})
-	if err != nil {
+	}
+
+	if err = q.Execute(workFunc); err != nil {
 		return err
 	}
 

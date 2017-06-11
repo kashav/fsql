@@ -158,7 +158,7 @@ func TestConditionParser_ExpectCorrectCondition(t *testing.T) {
 
 	for _, c := range cases {
 		p := &parser{tokenizer: tokenizer.NewTokenizer(c.input)}
-		actual, err := p.parseNextCond()
+		actual, err := p.parseCondition()
 
 		if c.expected.err == nil {
 			if err != nil {
@@ -355,7 +355,7 @@ func TestConditionParser_ExpectCorrectConditionTree(t *testing.T) {
 			expected: Expected{err: errors.New("failed to parse conditions")},
 		},
 
-		// FIXME: The following case /should/ throw EOF (it isn't right now).
+		// FIXME: The following case /should/ throw EOF (it doesn't right now).
 		// Case{input: "name = foo AND", expected: Expected{err: io.ErrUnexpectedEOF}},
 	}
 
