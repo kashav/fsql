@@ -53,8 +53,10 @@ func (root *ConditionNode) evaluateTree(path string, info os.FileInfo) bool {
 	}
 
 	if *root.Type == tokenizer.And {
-		return root.Left.evaluateTree(path, info) &&
-			root.Right.evaluateTree(path, info)
+		if !root.Left.evaluateTree(path, info) {
+			return false
+		}
+		return root.Right.evaluateTree(path, info)
 	}
 
 	if *root.Type == tokenizer.Or {
@@ -130,10 +132,8 @@ func (c *Condition) evaluateName(path string, file os.FileInfo) bool {
 	switch c.Value.(type) {
 	case string:
 		return cmpAlpha(c.Operator, file.Name(), c.Value.(string))
-
 	case []string:
 		return cmpAlpha(c.Operator, file.Name(), c.Value.([]string))
-
 	case map[interface{}]bool:
 		return cmpAlpha(c.Operator, file.Name(), c.Value.(map[interface{}]bool))
 	}
@@ -146,15 +146,12 @@ func (c *Condition) evaluateSize(path string, file os.FileInfo) bool {
 	switch c.Value.(type) {
 	case float64:
 		return cmpNumeric(c.Operator, file.Size(), int64(c.Value.(float64)))
-
 	case string:
 		size, err := strconv.ParseFloat(c.Value.(string), 10)
 		if err != nil {
-			log.Fatalln(err)
+			log.Fatal(err.Error())
 		}
-
 		return cmpNumeric(c.Operator, file.Size(), int64(size))
-
 	case map[interface{}]bool:
 		return cmpNumeric(c.Operator, file.Size(), c.Value.(map[interface{}]bool))
 	}
@@ -168,13 +165,11 @@ func (c *Condition) evaluateTime(path string, file os.FileInfo) bool {
 	case string:
 		t, err := time.Parse("Jan 02 2006 15 04", c.Value.(string))
 		if err != nil {
-			log.Fatalln(err)
+			log.Fatal(err.Error())
 		}
 		return cmpTime(c.Operator, file.ModTime(), t)
-
 	case time.Time:
 		return cmpTime(c.Operator, file.ModTime(), c.Value.(time.Time))
-
 	case map[interface{}]bool:
 		return cmpTime(c.Operator, file.ModTime(), c.Value.(map[interface{}]bool))
 	}
