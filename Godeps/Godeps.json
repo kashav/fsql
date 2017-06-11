@@ -1,0 +1,15 @@
+{
+	"ImportPath": "github.com/kshvmdn/fsql",
+	"GoVersion": "go1.8",
+	"GodepVersion": "v79",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "gopkg.in/oleiade/lane.v1",
+			"Comment": "v1.0.0",
+			"Rev": "28f7c3f09254f12b51e620fa4db136ba58804762"
+		}
+	]
+}

@@ -1,4 +1,4 @@
-# fsql [![Build Status](https://travis-ci.org/kshvmdn/fsql.svg?branch=master)](https://travis-ci.org/kshvmdn/fsql)
+# fsql [![Build Status](https://travis-ci.org/kshvmdn/fsql.svg?branch=master)](https://travis-ci.org/kshvmdn/fsql) [![Go Report Card](https://goreportcard.com/badge/github.com/kshvmdn/fsql)](https://goreportcard.com/report/github.com/kshvmdn/fsql)
 
 >Search through your filesystem with SQL-esque queries.
 
@@ -14,7 +14,7 @@
 
 ## Demo
 
-[![fsql.gif](./fsql.gif)](https://asciinema.org/a/120534)
+[![fsql.gif](./media/fsql.gif)](https://asciinema.org/a/120534)
 
 ## Setup / installation
 
@@ -99,9 +99,9 @@ Each group features a set of equivalent clauses.
 
 Each source should be a relative or absolute path to a directory on your machine.
 
-Source paths may include environment variables (e.g. `$GOPATH`) or tildes (`~`). Use a hyphen (`-`) to exclude a directory.
+Source paths may include environment variables (e.g. `$GOPATH`) or tildes (`~`). Use a hyphen (`-`) to exclude a directory. Source paths also support usage of [glob patterns](https://en.wikipedia.org/wiki/Glob_(programming)).
 
-In the case that a directory begins with a hypgen (e.g. `-foo`), use the following to include it as a source:
+In the case that a directory begins with a hyphen (e.g. `-foo`), use the following to include it as a source:
 
 ```console
 >>> ... FROM ./-foo ...
@@ -114,11 +114,11 @@ In the case that a directory begins with a hypgen (e.g. `-foo`), use the followi
 ```
 
 ```console
->>> ... FROM ., ~/Desktop ...
+>>> ... FROM ~/Desktop, ./*/**.go ...
 ```
 
 ```console
->>> ... FROM ~/Desktop, $GOPATH, -.git/ ...
+>>> ... FROM $GOPATH, -.git/ ...
 ```
 
 ### Condition

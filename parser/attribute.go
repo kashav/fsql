@@ -15,75 +15,82 @@ var allAttributes = map[string]bool{
 	"time": true,
 }
 
-// parseAttrList parses the list of attributes passed to the SELECT clause.
-func (p *parser) parseAttrList(attributes *map[string]bool,
-	modifiers *map[string][]query.Modifier) error {
-	attribute := p.expect(tokenizer.Identifier)
-	if attribute == nil {
-		return p.currentError()
+func isValidAttribute(attribute string) error {
+	if _, ok := allAttributes[attribute]; !ok {
+		return &ErrUnknownToken{attribute}
 	}
-
-	if attribute.Raw == "*" || attribute.Raw == "all" {
-		*attributes = allAttributes
-	} else {
-		p.current = attribute
-		attributeModifiers := make([]query.Modifier, 0)
-		attribute, err := p.parseAttrModifiers(&attributeModifiers)
-		if err != nil {
-			return err
-		}
-		if attribute == nil {
-			return p.currentError()
-		}
-
-		if _, ok := allAttributes[attribute.Raw]; !ok {
-			return &ErrUnknownToken{attribute.Raw}
-		}
-
-		(*attributes)[attribute.Raw] = true
-		(*modifiers)[attribute.Raw] = attributeModifiers
-	}
-
-	// If next token is a comma, recurse!
-	if p.expect(tokenizer.Comma) != nil {
-		return p.parseAttrList(attributes, modifiers)
-	}
-
 	return nil
 }
 
-// parseAttrModifiers parses an attribute's associated modifiers and
-// returns the attribute.
-func (p *parser) parseAttrModifiers(modifiers *[]query.Modifier) (*tokenizer.Token, error) {
+// parseAttrs parses the list of attributes passed to the SELECT clause.
+func (p *parser) parseAttrs(attributes *map[string]bool, modifiers *map[string][]query.Modifier) error {
+	for {
+		ident := p.expect(tokenizer.Identifier)
+		if ident == nil {
+			return p.currentError()
+		}
+
+		if ident.Raw == "*" || ident.Raw == "all" {
+			*attributes = allAttributes
+			break
+		}
+		p.current = ident
+
+		attrModifiers := make([]query.Modifier, 0)
+		attribute, err := p.parseAttr(&attrModifiers)
+		if err != nil {
+			return err
+		}
+		(*attributes)[attribute.Raw] = true
+		(*modifiers)[attribute.Raw] = attrModifiers
+
+		if p.expect(tokenizer.Comma) == nil {
+			break
+		}
+	}
+	return nil
+}
+
+// parseAttr recursively parses an attribute's modifiers and returns the
+// associated attribute.
+func (p *parser) parseAttr(modifiers *[]query.Modifier) (*tokenizer.Token, error) {
 	ident := p.expect(tokenizer.Identifier)
 	if ident == nil {
 		return nil, p.currentError()
 	}
 
+	// ident is a modifier name (e.g. `FORMAT`) iff the next token is an open
+	// paren, otherwise an attribute (e.g. `name`).
 	if token := p.expect(tokenizer.OpenParen); token == nil {
-		// No modifier on this attribute
-		if _, ok := allAttributes[ident.Raw]; !ok {
-			return nil, &ErrUnknownToken{ident.Raw}
+		if err := isValidAttribute(ident.Raw); err != nil {
+			return nil, err
 		}
 		return ident, nil
 	}
 
-	current := query.Modifier{
-		Name:      strings.ToUpper(ident.Raw),
-		Arguments: make([]string, 0),
-	}
-
-	attribute, err := p.parseAttrModifiers(modifiers)
+	// In the case of chained modifiers, we want to recurse and parse each
+	// inner modifier first. parseAttribute returns the associated attribute that
+	// we're looking for.
+	attribute, err := p.parseAttr(modifiers)
 	if err != nil {
 		return nil, err
 	}
 	if attribute == nil {
 		return nil, p.currentError()
 	}
+	if err := isValidAttribute(attribute.Raw); err != nil {
+		return nil, err
+	}
 
+	modifier := query.Modifier{
+		Name:      strings.ToUpper(ident.Raw),
+		Arguments: make([]string, 0),
+	}
+
+	// Parse the modifier arguments.
 	for {
 		if token := p.expect(tokenizer.Identifier); token != nil {
-			current.Arguments = append(current.Arguments, token.Raw)
+			modifier.Arguments = append(modifier.Arguments, token.Raw)
 			continue
 		}
 
@@ -92,7 +99,7 @@ func (p *parser) parseAttrModifiers(modifiers *[]query.Modifier) (*tokenizer.Tok
 		}
 
 		if token := p.expect(tokenizer.CloseParen); token != nil {
-			*modifiers = append(*modifiers, current)
+			*modifiers = append(*modifiers, modifier)
 			return attribute, nil
 		}
 	}

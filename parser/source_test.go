@@ -21,26 +21,51 @@ func TestSourceParser_ExpectCorrectSources(t *testing.T) {
 	}
 
 	cases := []Case{
-		{".", Expected{map[string][]string{"include": []string{"."}}, nil}},
-		{"., ~/foo",
-			Expected{map[string][]string{"include": []string{".", "~/foo"}}, nil}},
-		{"., -.bar",
-			Expected{map[string][]string{
-				"include": []string{"."}, "exclude": []string{".bar"}}, nil}},
-		{"-.bar, ., ~/foo AS foo",
-			Expected{map[string][]string{
-				"include": []string{".", "~/foo"}, "exclude": []string{".bar"}}, nil}},
+		Case{
+			input: ".",
+			expected: Expected{
+				sources: map[string][]string{"include": []string{"."}},
+				err:     nil,
+			},
+		},
+		Case{
+			input: "., ~/foo",
+			expected: Expected{
+				sources: map[string][]string{"include": []string{".", "~/foo"}},
+				err:     nil,
+			},
+		},
+		Case{
+			input: "., -.bar",
+			expected: Expected{
+				sources: map[string][]string{
+					"include": []string{"."},
+					"exclude": []string{".bar"},
+				},
+				err: nil,
+			},
+		},
+		Case{
+			input: "-.bar, ., ~/foo AS foo",
+			expected: Expected{
+				sources: map[string][]string{
+					"include": []string{".", "~/foo"},
+					"exclude": []string{".bar"},
+				},
+				err: nil,
+			},
+		},
 
-		{"", Expected{err: io.ErrUnexpectedEOF}},
-		{"foo,", Expected{err: io.ErrUnexpectedEOF}},
+		Case{input: "", expected: Expected{err: io.ErrUnexpectedEOF}},
+		Case{input: "foo,", expected: Expected{err: io.ErrUnexpectedEOF}},
 	}
 
 	for _, c := range cases {
 		sources := make(map[string][]string, 0)
 		aliases := make(map[string]string, 0)
 
-		err := (&parser{
-			tokenizer: tokenizer.NewTokenizer(c.input)}).parseSourceList(&sources, &aliases)
+		p := &parser{tokenizer: tokenizer.NewTokenizer(c.input)}
+		err := p.parseSourceList(&sources, &aliases)
 
 		if c.expected.err == nil {
 			if err != nil {
@@ -67,22 +92,48 @@ func TestSourceParser_ExpectCorrectAliases(t *testing.T) {
 	}
 
 	cases := []Case{
-		{".", Expected{map[string]string{}, nil}},
-		{". AS cwd", Expected{map[string]string{"cwd": "."}, nil}},
-		{"., -.bar, ~/foo AS foo", Expected{map[string]string{"foo": "~/foo"}, nil}},
+		Case{
+			input: ".",
+			expected: Expected{
+				aliases: map[string]string{},
+				err:     nil,
+			},
+		},
+		Case{
+			input: ". AS cwd",
+			expected: Expected{
+				aliases: map[string]string{"cwd": "."},
+				err:     nil,
+			},
+		},
+		Case{
+			input: "., -.bar, ~/foo AS foo",
+			expected: Expected{
+				aliases: map[string]string{"foo": "~/foo"},
+				err:     nil,
+			},
+		},
 
-		{"-.bar AS bar", Expected{
-			err: errors.New("cannot alias excluded directory .bar")}},
-		{"", Expected{err: io.ErrUnexpectedEOF}},
-		{"foo AS", Expected{err: io.ErrUnexpectedEOF}},
+		Case{
+			input:    "-.bar AS bar",
+			expected: Expected{err: errors.New("cannot alias excluded directory .bar")},
+		},
+		Case{
+			input:    "",
+			expected: Expected{err: io.ErrUnexpectedEOF},
+		},
+		Case{
+			input:    "foo AS",
+			expected: Expected{err: io.ErrUnexpectedEOF},
+		},
 	}
 
 	for _, c := range cases {
 		sources := make(map[string][]string, 0)
 		aliases := make(map[string]string, 0)
 
-		err := (&parser{
-			tokenizer: tokenizer.NewTokenizer(c.input)}).parseSourceList(&sources, &aliases)
+		p := &parser{tokenizer: tokenizer.NewTokenizer(c.input)}
+		err := p.parseSourceList(&sources, &aliases)
 
 		if c.expected.err == nil {
 			if err != nil {
