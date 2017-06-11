@@ -174,22 +174,21 @@ func hash(info os.FileInfo, path string, hasher crypto.SignerOpts) (interface{},
 
 // DefaultFormatValue returns the default format value for the provided
 // attribute attr based on path and info.
-func DefaultFormatValue(attr, path string, info os.FileInfo) interface{} {
+func DefaultFormatValue(attr, path string, info os.FileInfo) (interface{}, error) {
 	switch attr {
 	case "mode":
-		return info.Mode()
+		return info.Mode(), nil
 	case "name":
-		return info.Name()
+		return info.Name(), nil
 	case "size":
-		return info.Size()
+		return info.Size(), nil
 	case "time":
-		return info.ModTime().Format(time.Stamp)
+		return info.ModTime().Format(time.Stamp), nil
 	case "hash":
 		v, err := hash(info, path, crypto.SHA1)
-		if err != nil {
-			panic(err.Error())
+		if err == nil {
+			return truncate(v.(string), 7), nil
 		}
-		return truncate(v.(string), 7)
 	}
-	return nil
+	return nil, &ErrUnsupportedFormat{"", attr}
 }
