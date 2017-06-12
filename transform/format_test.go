@@ -17,7 +17,7 @@ func TestTransform_Format(t *testing.T) {
 		expected Expected
 	}
 
-	// TODO: Add tests for the time attribute!
+	// TODO: Add tests for the time and hash attribute.
 	cases := []Case{
 		{
 			params: &FormatParams{

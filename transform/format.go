@@ -1,17 +1,16 @@
 package transform
 
 import (
-	"crypto"
-	_ "crypto/sha1" //Import SHA-1 hashing function
-	"encoding/hex"
+	"crypto/sha1"
 	"fmt"
-	"io/ioutil"
+	"hash"
 	"os"
-	"reflect"
 	"strconv"
 	"strings"
 	"time"
 )
+
+const defaultHashLength = 7
 
 // FormatParams holds the params for a format-modifier function.
 type FormatParams struct {
@@ -22,26 +21,6 @@ type FormatParams struct {
 
 	Name string
 	Args []string
-}
-
-func (p FormatParams) argAs(index int, kind reflect.Kind) (interface{}, error) {
-	// return args as an int
-	asInt := func() (interface{}, error) {
-		var n int
-		var err error
-		if err == nil && len(p.Args) > 0 && p.Args[index] != "" {
-			if n, err = strconv.Atoi(p.Args[index]); err != nil {
-				return nil, err
-			}
-		}
-		return n, nil
-	}
-	switch kind {
-	case reflect.Int:
-		return asInt()
-	default:
-		return nil, &ErrNotImplemented{p.Name, p.Attribute}
-	}
 }
 
 // Format runs the respective format function on the provided parameters.
@@ -58,7 +37,7 @@ func Format(p *FormatParams) (val interface{}, err error) {
 	case "SHORTPATH":
 		val, err = p.shortPath()
 	case "SHA1":
-		val, err = p.hash(crypto.SHA1)
+		val, err = p.hash(sha1.New())
 	}
 	if err != nil {
 		return nil, err
@@ -79,7 +58,6 @@ func (p *FormatParams) format() (val interface{}, err error) {
 	case "time":
 		val, err = p.formatTime()
 	}
-
 	if err != nil {
 		return nil, err
 	}
@@ -136,57 +114,47 @@ func (p *FormatParams) shortPath() (interface{}, error) {
 	return p.Info.Name(), nil
 }
 
-// hash will take the hash function, based on the hasher type supplied.
-func (p *FormatParams) hash(hasher crypto.SignerOpts) (interface{}, error) {
-	var err error
-	var n interface{}
-	var h interface{}
+// hash applies the provided hash algorithm h with computeHash.
+func (p *FormatParams) hash(h hash.Hash) (interface{}, error) {
+	var (
+		err    error
+		n      int
+		result interface{}
+	)
 
-	n, err = p.argAs(0, reflect.Int)
-	if err != nil {
+	if len(p.Args) == 0 || p.Args[0] == "" {
+		n = defaultHashLength
+	} else if strings.ToUpper(p.Args[0]) == "FULL" {
+		n = -1
+	} else if n, err = strconv.Atoi(p.Args[0]); err != nil {
 		return nil, err
 	}
-	h, err = hash(p.Info, p.Path, hasher)
-	return truncate(h.(string), n.(int)), nil
-}
 
-func hash(info os.FileInfo, path string, hasher crypto.SignerOpts) (interface{}, error) {
-	if info.IsDir() {
-		return strings.Repeat("-", hasher.HashFunc().Size()), nil
-	}
-
-	f, err := os.Open(path)
-	if err != nil {
+	if result, err = computeHash(p.Info, p.Path, h); err != nil {
 		return nil, err
 	}
-	defer f.Close()
-	b, err := ioutil.ReadAll(f)
-	if err != nil {
-		return "", err
-	}
 
-	h := hasher.HashFunc().New()
-	h.Write(b)
-	return hex.EncodeToString(h.Sum(nil)), nil
+	return truncate(result.(string), n), nil
 }
 
 // DefaultFormatValue returns the default format value for the provided
 // attribute attr based on path and info.
-func DefaultFormatValue(attr, path string, info os.FileInfo) (interface{}, error) {
+func DefaultFormatValue(attr, path string, info os.FileInfo) (value interface{}, err error) {
 	switch attr {
 	case "mode":
-		return info.Mode(), nil
+		value = info.Mode()
 	case "name":
-		return info.Name(), nil
+		value = info.Name()
 	case "size":
-		return info.Size(), nil
+		value = info.Size()
 	case "time":
-		return info.ModTime().Format(time.Stamp), nil
+		value = info.ModTime().Format(time.Stamp)
 	case "hash":
-		v, err := hash(info, path, crypto.SHA1)
-		if err == nil {
-			return truncate(v.(string), 7), nil
+		if value, err = computeHash(info, path, sha1.New()); value != nil {
+			value = truncate(value.(string), defaultHashLength)
 		}
+	default:
+		err = fmt.Errorf("unknown attribute %s", attr)
 	}
-	return nil, &ErrUnsupportedFormat{"", attr}
+	return value, err
 }
