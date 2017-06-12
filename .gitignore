@@ -40,3 +40,6 @@ build/
 
 # Editor workspace directories
 .vscode
+
+# Coverage output
+coverage.txt

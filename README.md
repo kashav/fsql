@@ -41,7 +41,7 @@ Install directly via source:
 ```sh
 $ git clone https://github.com/kshvmdn/fsql.git $GOPATH/src/github.com/kshvmdn/fsql
 $ cd $_ # $GOPATH/src/github.com/kshvmdn/fsql
-$ make install && make
+$ make install fsql
 $ ./fsql
 ```
 
@@ -306,19 +306,13 @@ This project is completely open source, feel free to [open an issue](https://git
 Before submitting code, please ensure that tests are passing and the linter is happy. The following commands may be of use, refer to the [Makefile](./Makefile) to see what they do.
 
 ```sh
-$ make fmt
-```
-
-```sh
-$ make lint
-```
-
-```sh
-$ make vet
-```
-
-```sh
-$ make test
+$ make install \
+       get-tools \
+       fmt \
+       vet \
+       lint \
+       test \
+       coverage
 ```
 
 ## License
