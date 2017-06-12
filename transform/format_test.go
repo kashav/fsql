@@ -19,7 +19,7 @@ func TestTransform_Format(t *testing.T) {
 
 	// TODO: Add tests for the time attribute!
 	cases := []Case{
-		Case{
+		{
 			params: &FormatParams{
 				Attribute: "size",
 				Path:      "path",
@@ -33,7 +33,7 @@ func TestTransform_Format(t *testing.T) {
 				err: nil,
 			},
 		},
-		Case{
+		{
 			params: &FormatParams{
 				Attribute: "size",
 				Path:      "path",
@@ -47,7 +47,7 @@ func TestTransform_Format(t *testing.T) {
 				err: &ErrUnsupportedFormat{"kilobytes", "size"},
 			},
 		},
-		Case{
+		{
 			params: &FormatParams{
 				Attribute: "name",
 				Path:      "path",
@@ -58,7 +58,7 @@ func TestTransform_Format(t *testing.T) {
 			},
 			expected: Expected{val: "value", err: nil},
 		},
-		Case{
+		{
 			params: &FormatParams{
 				Attribute: "name",
 				Path:      "path",
@@ -69,7 +69,7 @@ func TestTransform_Format(t *testing.T) {
 			},
 			expected: Expected{val: "VALUE", err: nil},
 		},
-		Case{
+		{
 			params: &FormatParams{
 				Attribute: "name",
 				Path:      "path",

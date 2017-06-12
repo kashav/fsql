@@ -9,11 +9,11 @@ func TestParseLine_ReturnsCorrectValue(t *testing.T) {
 	}
 
 	cases := []Case{
-		Case{line: "select all from .", expected: false},
-		Case{line: "where", expected: false},
-		Case{line: "name like %go", expected: false},
-		Case{line: "select all from where name like %go;", expected: true},
-		Case{line: ";", expected: true},
+		{line: "select all from .", expected: false},
+		{line: "where", expected: false},
+		{line: "name like %go", expected: false},
+		{line: "select all from where name like %go;", expected: true},
+		{line: ";", expected: true},
 	}
 
 	for _, c := range cases {
@@ -37,23 +37,23 @@ func TestParseLine_BuffersCorrectQuery(t *testing.T) {
 	// being, we'll need a note in the README highlighting that quoted strings
 	// should **not** be spread across multiple lines.
 	cases := []Case{
-		Case{
+		{
 			lines:    []string{"SELECT all", "FROM .;"},
 			expected: "SELECT all FROM .",
 		},
-		Case{
+		{
 			lines:    []string{"SELECT all", "FROM .", ";"},
 			expected: "SELECT all FROM . ",
 		},
-		Case{
+		{
 			lines:    []string{"SELECT all FROM . WHERE name IN (", "SELECT name FROM .", ");"},
 			expected: "SELECT all FROM . WHERE name IN ( SELECT name FROM . )",
 		},
-		Case{
+		{
 			lines:    []string{"SELECT all FROM . WHERE name IN [", "foo, bar, baz", "]", ";"},
 			expected: "SELECT all FROM . WHERE name IN [ foo, bar, baz ] ",
 		},
-		Case{
+		{
 			lines:    []string{"SELECT all FROM . WHERE name = \"name with ", "spaces\";"},
 			expected: "SELECT all FROM . WHERE name = \"name with  spaces\"",
 		},

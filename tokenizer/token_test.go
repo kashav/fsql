@@ -9,33 +9,33 @@ func TestToken_TokenTypeString(t *testing.T) {
 	}
 
 	cases := []Case{
-		Case{tt: Identifier, expected: "identifier"},
-		Case{tt: Subquery, expected: "subquery"},
-		Case{tt: Select, expected: "select"},
-		Case{tt: From, expected: "from"},
-		Case{tt: As, expected: "as"},
-		Case{tt: Where, expected: "where"},
-		Case{tt: Or, expected: "or"},
-		Case{tt: And, expected: "and"},
-		Case{tt: Not, expected: "not"},
-		Case{tt: In, expected: "in"},
-		Case{tt: Is, expected: "is"},
-		Case{tt: Like, expected: "like"},
-		Case{tt: RLike, expected: "RLike"},
-		Case{tt: Equals, expected: "equal"},
-		Case{tt: NotEquals, expected: "not-equal"},
-		Case{tt: GreaterThanEquals, expected: "greater-than-or-equal"},
-		Case{tt: GreaterThan, expected: "greater-than"},
-		Case{tt: LessThanEquals, expected: "less-than-or-equal"},
-		Case{tt: LessThan, expected: "less-than"},
-		Case{tt: Comma, expected: "comma"},
-		Case{tt: Hyphen, expected: "hyphen"},
-		Case{tt: ExclamationMark, expected: "exclamation-mark"},
-		Case{tt: OpenParen, expected: "open-parentheses"},
-		Case{tt: CloseParen, expected: "close-parentheses"},
-		Case{tt: OpenBracket, expected: "open-bracket"},
-		Case{tt: CloseBracket, expected: "close-bracket"},
-		Case{tt: Unknown, expected: "unknown"},
+		{tt: Identifier, expected: "identifier"},
+		{tt: Subquery, expected: "subquery"},
+		{tt: Select, expected: "select"},
+		{tt: From, expected: "from"},
+		{tt: As, expected: "as"},
+		{tt: Where, expected: "where"},
+		{tt: Or, expected: "or"},
+		{tt: And, expected: "and"},
+		{tt: Not, expected: "not"},
+		{tt: In, expected: "in"},
+		{tt: Is, expected: "is"},
+		{tt: Like, expected: "like"},
+		{tt: RLike, expected: "RLike"},
+		{tt: Equals, expected: "equal"},
+		{tt: NotEquals, expected: "not-equal"},
+		{tt: GreaterThanEquals, expected: "greater-than-or-equal"},
+		{tt: GreaterThan, expected: "greater-than"},
+		{tt: LessThanEquals, expected: "less-than-or-equal"},
+		{tt: LessThan, expected: "less-than"},
+		{tt: Comma, expected: "comma"},
+		{tt: Hyphen, expected: "hyphen"},
+		{tt: ExclamationMark, expected: "exclamation-mark"},
+		{tt: OpenParen, expected: "open-parentheses"},
+		{tt: CloseParen, expected: "close-parentheses"},
+		{tt: OpenBracket, expected: "open-bracket"},
+		{tt: CloseBracket, expected: "close-bracket"},
+		{tt: Unknown, expected: "unknown"},
 	}
 
 	for _, c := range cases {
@@ -53,11 +53,11 @@ func TestToken_String(t *testing.T) {
 	}
 
 	cases := []Case{
-		Case{
+		{
 			token:    Token{Type: Identifier, Raw: "name"},
 			expected: "{type: identifier, raw: \"name\"}",
 		},
-		Case{
+		{
 			token:    Token{Type: Comma, Raw: ","},
 			expected: "{type: comma, raw: \",\"}",
 		},

@@ -94,21 +94,21 @@ func TestRun_All(t *testing.T) {
 	}
 
 	cases := []Case{
-		Case{
+		{
 			query: "SELECT all FROM ./testdata WHERE name = foo",
 			expected: fmt.Sprintf("drwxr-xr-x\t%s\tfoo\n",
 				strings.Join(GetAttrs("foo", "size", "time"), "\t")),
 		},
-		Case{
+		{
 			query: "SELECT all FROM ./testdata WHERE name LIKE qu AND size > 0",
 			expected: fmt.Sprintf("drwxr-xr-x\t%s\tquuz\n",
 				strings.Join(GetAttrs("foo/quuz", "size", "time"), "\t")),
 		},
-		Case{
+		{
 			query:    "SELECT all FROM ./testdata WHERE FORMAT(time, 'Jan 02 2006 15:04') > 'Jan 01 2999 00:00'",
 			expected: "",
 		},
-		Case{
+		{
 			query: "SELECT all FROM ./testdata WHERE mode IS DIR",
 			expected: fmt.Sprintf(
 				strings.Repeat("%s\n", 8),
@@ -163,15 +163,15 @@ func TestRun_Multiple(t *testing.T) {
 	}
 
 	cases := []Case{
-		Case{
+		{
 			query:    "SELECT name, size FROM ./testdata WHERE name = foo",
 			expected: fmt.Sprintf("%s\tfoo\n", GetAttrs("foo", "size")[0]),
 		},
-		Case{
+		{
 			query:    "SELECT size, name FROM ./testdata WHERE name = foo",
 			expected: fmt.Sprintf("%s\tfoo\n", GetAttrs("foo", "size")[0]),
 		},
-		Case{
+		{
 			query: "SELECT size, time, FULLPATH(name) FROM ./testdata/foo",
 			expected: fmt.Sprintf(
 				strings.Repeat("%s\n", 7),
@@ -222,15 +222,15 @@ func TestRun_Name(t *testing.T) {
 	}
 
 	cases := []Case{
-		Case{
+		{
 			query:    "SELECT name FROM ./testdata WHERE name REGEXP ^g.*",
 			expected: "garply\ngrault\n",
 		},
-		Case{
+		{
 			query:    "SELECT FULLPATH(name) FROM ./testdata WHERE name REGEXP ^b.*",
 			expected: "testdata/bar\ntestdata/baz\n",
 		},
-		Case{
+		{
 			query: "SELECT UPPER(FULLPATH(name)) FROM ./testdata WHERE mode IS DIR",
 			expected: fmt.Sprintf(
 				strings.Repeat("%s\n", 8),
@@ -261,23 +261,23 @@ func TestRun_Size(t *testing.T) {
 	}
 
 	cases := []Case{
-		Case{
+		{
 			query:    "SELECT size FROM ./testdata WHERE name = foo",
 			expected: fmt.Sprintf("%s\n", GetAttrs("foo", "size")[0]),
 		},
-		Case{
+		{
 			query:    "SELECT FORMAT(size, KB) FROM ./testdata WHERE name = foo",
 			expected: fmt.Sprintf("%s\n", GetAttrs("foo", "size:kb")[0]),
 		},
-		Case{
+		{
 			query:    "SELECT FORMAT(size, MB) FROM ./testdata WHERE name = foo",
 			expected: fmt.Sprintf("%s\n", GetAttrs("foo", "size:mb")[0]),
 		},
-		Case{
+		{
 			query:    "SELECT FORMAT(size, GB) FROM ./testdata WHERE name = foo",
 			expected: fmt.Sprintf("%s\n", GetAttrs("foo", "size:gb")[0]),
 		},
-		Case{
+		{
 			query: "SELECT size FROM ./testdata WHERE name LIKE qu",
 			expected: fmt.Sprintf(
 				strings.Repeat("%s\n", 3),
@@ -303,19 +303,19 @@ func TestRun_Time(t *testing.T) {
 	}
 
 	cases := []Case{
-		Case{
+		{
 			query:    "SELECT time FROM ./testdata WHERE name = baz",
 			expected: fmt.Sprintf("%s\n", GetAttrs("baz", "time")[0]),
 		},
-		Case{
+		{
 			query:    "SELECT FORMAT(time, ISO) FROM ./testdata WHERE name = foo",
 			expected: fmt.Sprintf("%s\n", GetAttrs("foo", "time:iso")[0]),
 		},
-		Case{
+		{
 			query:    "SELECT FORMAT(time, 2006) FROM ./testdata WHERE NOT name LIKE .%",
 			expected: strings.Repeat(fmt.Sprintf("%s\n", GetAttrs(".", "time:year")[0]), 14),
 		},
-		Case{
+		{
 			query: "SELECT time FROM ./testdata/foo/quuz",
 			expected: fmt.Sprintf(
 				strings.Repeat("%s\n", 4),
@@ -342,15 +342,15 @@ func TestRun_Mode(t *testing.T) {
 	}
 
 	cases := []Case{
-		Case{
+		{
 			query:    "SELECT mode FROM ./testdata WHERE name = foo",
 			expected: "drwxr-xr-x\n",
 		},
-		Case{
+		{
 			query:    "SELECT mode FROM ./testdata WHERE name = baz",
 			expected: "-rwxr-xr-x\n",
 		},
-		Case{
+		{
 			query:    "SELECT mode FROM ./testdata WHERE mode IS DIR",
 			expected: strings.Repeat("drwxr-xr-x\n", 8),
 		},

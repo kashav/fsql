@@ -23,7 +23,7 @@ func TestParser_ParseSelect(t *testing.T) {
 	}
 
 	cases := []Case{
-		Case{
+		{
 			input: "all",
 			expected: Expected{
 				attributes: allAttributes,
@@ -32,7 +32,7 @@ func TestParser_ParseSelect(t *testing.T) {
 			},
 		},
 
-		Case{
+		{
 			input: "SELECT",
 			expected: Expected{
 				attributes: allAttributes,
@@ -41,7 +41,7 @@ func TestParser_ParseSelect(t *testing.T) {
 			},
 		},
 
-		Case{
+		{
 			input: "FROM",
 			expected: Expected{
 				attributes: allAttributes,
@@ -50,22 +50,22 @@ func TestParser_ParseSelect(t *testing.T) {
 			},
 		},
 
-		Case{
+		{
 			input: "SELECT name",
 			expected: Expected{
 				attributes: map[string]bool{"name": true},
-				modifiers:  map[string][]query.Modifier{"name": []query.Modifier{}},
+				modifiers:  map[string][]query.Modifier{"name": {}},
 				err:        nil,
 			},
 		},
 
-		Case{
+		{
 			input: "SELECT format(size, kb)",
 			expected: Expected{
 				attributes: map[string]bool{"size": true},
 				modifiers: map[string][]query.Modifier{
-					"size": []query.Modifier{
-						query.Modifier{
+					"size": {
+						{
 							Name:      "FORMAT",
 							Arguments: []string{"kb"},
 						},
@@ -75,7 +75,7 @@ func TestParser_ParseSelect(t *testing.T) {
 			},
 		},
 
-		Case{
+		{
 			input:    "",
 			expected: Expected{err: io.ErrUnexpectedEOF},
 		},
@@ -120,60 +120,60 @@ func TestParser_ParseFrom(t *testing.T) {
 	}
 
 	cases := []Case{
-		Case{
+		{
 			input: "WHERE",
 			expected: Expected{
 				sources: map[string][]string{
-					"include": []string{"."},
-					"exclude": []string{},
+					"include": {"."},
+					"exclude": {},
 				},
 				aliases: map[string]string{},
 				err:     nil,
 			},
 		},
 
-		Case{
+		{
 			input: "FROM .",
 			expected: Expected{
 				sources: map[string][]string{
-					"include": []string{"."},
-					"exclude": []string{},
+					"include": {"."},
+					"exclude": {},
 				},
 				aliases: map[string]string{},
 				err:     nil,
 			},
 		},
 
-		Case{
+		{
 			input: "FROM ~/foo, -./.git/",
 			expected: Expected{
 				sources: map[string][]string{
-					"include": []string{u.HomeDir + "/foo"},
-					"exclude": []string{".git"},
+					"include": {u.HomeDir + "/foo"},
+					"exclude": {".git"},
 				},
 				aliases: map[string]string{},
 				err:     nil,
 			},
 		},
 
-		Case{
+		{
 			input: "FROM ./foo/ AS foo",
 			expected: Expected{
 				sources: map[string][]string{
-					"include": []string{"foo"},
-					"exclude": []string{},
+					"include": {"foo"},
+					"exclude": {},
 				},
 				aliases: map[string]string{"foo": "foo"},
 				err:     nil,
 			},
 		},
 
-		Case{
+		{
 			input:    "FROM",
 			expected: Expected{err: io.ErrUnexpectedEOF},
 		},
 
-		Case{
+		{
 			input: "FROM WHERE",
 			expected: Expected{
 				err: &ErrUnexpectedToken{
@@ -216,7 +216,7 @@ func TestParser_ParseWhere(t *testing.T) {
 	}
 
 	cases := []Case{
-		Case{
+		{
 			input: "WHERE name LIKE foo",
 			expected: Expected{
 				tree: &query.ConditionNode{
@@ -232,11 +232,11 @@ func TestParser_ParseWhere(t *testing.T) {
 
 		// Our tree is fully-zeroed in this case, so it's easier just to give it
 		// an empty Expected struct.
-		Case{input: "", expected: Expected{}},
+		{input: "", expected: Expected{}},
 
-		Case{input: "WHERE", expected: Expected{err: io.ErrUnexpectedEOF}},
+		{input: "WHERE", expected: Expected{err: io.ErrUnexpectedEOF}},
 
-		Case{
+		{
 			input: "name LIKE foo",
 			expected: Expected{
 				err: &ErrUnexpectedToken{
@@ -274,67 +274,67 @@ func TestParser_Expect(t *testing.T) {
 	p := &parser{tokenizer: tokenizer.NewTokenizer(input)}
 
 	cases := []Case{
-		Case{
+		{
 			param:    tokenizer.Select,
 			expected: &tokenizer.Token{Type: tokenizer.Select, Raw: "SELECT"},
 		},
-		Case{
+		{
 			param:    tokenizer.From,
 			expected: nil,
 		},
-		Case{
+		{
 			param:    tokenizer.Identifier,
 			expected: &tokenizer.Token{Type: tokenizer.Identifier, Raw: "all"},
 		},
-		Case{
+		{
 			param:    tokenizer.Identifier,
 			expected: nil,
 		},
-		Case{
+		{
 			param:    tokenizer.From,
 			expected: &tokenizer.Token{Type: tokenizer.From, Raw: "FROM"},
 		},
-		Case{
+		{
 			param:    tokenizer.Identifier,
 			expected: &tokenizer.Token{Type: tokenizer.Identifier, Raw: "."},
 		},
-		Case{
+		{
 			param:    tokenizer.Identifier,
 			expected: nil,
 		},
-		Case{
+		{
 			param:    tokenizer.Where,
 			expected: &tokenizer.Token{Type: tokenizer.Where, Raw: "WHERE"},
 		},
-		Case{
+		{
 			param:    tokenizer.Identifier,
 			expected: &tokenizer.Token{Type: tokenizer.Identifier, Raw: "name"},
 		},
-		Case{
+		{
 			param:    tokenizer.Equals,
 			expected: &tokenizer.Token{Type: tokenizer.Equals, Raw: "="},
 		},
-		Case{
+		{
 			param:    tokenizer.Identifier,
 			expected: &tokenizer.Token{Type: tokenizer.Identifier, Raw: "foo"},
 		},
-		Case{
+		{
 			param:    tokenizer.Or,
 			expected: &tokenizer.Token{Type: tokenizer.Or, Raw: "OR"},
 		},
-		Case{
+		{
 			param:    tokenizer.Identifier,
 			expected: &tokenizer.Token{Type: tokenizer.Identifier, Raw: "size"},
 		},
-		Case{
+		{
 			param:    tokenizer.Identifier,
 			expected: nil,
 		},
-		Case{
+		{
 			param:    tokenizer.NotEquals,
 			expected: &tokenizer.Token{Type: tokenizer.NotEquals, Raw: "<>"},
 		},
-		Case{
+		{
 			param:    tokenizer.Identifier,
 			expected: &tokenizer.Token{Type: tokenizer.Identifier, Raw: "100"},
 		},
@@ -352,8 +352,8 @@ func TestParser_SelectAllVariations(t *testing.T) {
 	expected := &query.Query{
 		Attributes: allAttributes,
 		Sources: map[string][]string{
-			"include": []string{"."},
-			"exclude": []string{},
+			"include": {"."},
+			"exclude": {},
 		},
 		ConditionTree: &query.ConditionNode{
 			Condition: &query.Condition{
@@ -397,14 +397,14 @@ func TestParser_Run(t *testing.T) {
 
 	// TODO: Add more cases.
 	cases := []Case{
-		Case{
+		{
 			input: "SELECT all FROM . WHERE name LIKE foo",
 			expected: Expected{
 				q: &query.Query{
 					Attributes: allAttributes,
 					Sources: map[string][]string{
-						"include": []string{"."},
-						"exclude": []string{},
+						"include": {"."},
+						"exclude": {},
 					},
 					ConditionTree: &query.ConditionNode{
 						Condition: &query.Condition{

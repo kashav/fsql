@@ -20,99 +20,99 @@ func TestCmpAlpha(t *testing.T) {
 	}
 
 	cases := []Case{
-		Case{
+		{
 			input:    Input{comp: tokenizer.Equals, a: "a", b: "a"},
 			expected: true,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.Equals, a: "a", b: "b"},
 			expected: false,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.Equals, a: "a", b: "A"},
 			expected: false,
 		},
 
-		Case{
+		{
 			input:    Input{comp: tokenizer.NotEquals, a: "a", b: "a"},
 			expected: false,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.NotEquals, a: "a", b: "b"},
 			expected: true,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.NotEquals, a: "a", b: "A"},
 			expected: true,
 		},
 
-		Case{
+		{
 			input:    Input{comp: tokenizer.Like, a: "abc", b: "%a%"},
 			expected: true,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.Like, a: "aaa", b: "%b%"},
 			expected: false,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.Like, a: "aaa", b: "%a"},
 			expected: true,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.Like, a: "abc", b: "%a"},
 			expected: false,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.Like, a: "abc", b: "a%"},
 			expected: true,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.Like, a: "cba", b: "a%"},
 			expected: false,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.Like, a: "a", b: "a"},
 			expected: true,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.Like, a: "a", b: "b"},
 			expected: false,
 		},
 
-		Case{
+		{
 			input:    Input{comp: tokenizer.RLike, a: "a", b: ".*a.*"},
 			expected: true,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.RLike, a: "a", b: "^$"},
 			expected: false,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.RLike, a: "", b: "^$"},
 			expected: true,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.RLike, a: "...", b: "[\\.]{3}"},
 			expected: true,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.RLike, a: "aaa", b: "\\s+"},
 			expected: false,
 		},
 
-		Case{
+		{
 			input:    Input{comp: tokenizer.In, a: "a", b: map[interface{}]bool{"a": true}},
 			expected: true,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.In, a: "a", b: map[interface{}]bool{"a": false}},
 			expected: true,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.In, a: "a", b: map[interface{}]bool{"b": true}},
 			expected: false,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.In, a: "a", b: map[interface{}]bool{}},
 			expected: false,
 		},
@@ -139,89 +139,89 @@ func TestCmpNumeric(t *testing.T) {
 	}
 
 	cases := []Case{
-		Case{
+		{
 			input:    Input{comp: tokenizer.Equals, a: int64(1), b: int64(1)},
 			expected: true,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.Equals, a: int64(1), b: int64(2)},
 			expected: false,
 		},
 
-		Case{
+		{
 			input:    Input{comp: tokenizer.NotEquals, a: int64(1), b: int64(1)},
 			expected: false,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.NotEquals, a: int64(1), b: int64(2)},
 			expected: true,
 		},
 
-		Case{
+		{
 			input:    Input{comp: tokenizer.GreaterThanEquals, a: int64(1), b: int64(1)},
 			expected: true,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.GreaterThanEquals, a: int64(2), b: int64(1)},
 			expected: true,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.GreaterThanEquals, a: int64(1), b: int64(2)},
 			expected: false,
 		},
 
-		Case{
+		{
 			input:    Input{comp: tokenizer.GreaterThan, a: int64(1), b: int64(1)},
 			expected: false,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.GreaterThan, a: int64(2), b: int64(1)},
 			expected: true,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.GreaterThan, a: int64(1), b: int64(2)},
 			expected: false,
 		},
 
-		Case{
+		{
 			input:    Input{comp: tokenizer.LessThanEquals, a: int64(1), b: int64(1)},
 			expected: true,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.LessThanEquals, a: int64(2), b: int64(1)},
 			expected: false,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.LessThanEquals, a: int64(1), b: int64(2)},
 			expected: true,
 		},
 
-		Case{
+		{
 			input:    Input{comp: tokenizer.LessThan, a: int64(1), b: int64(1)},
 			expected: false,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.LessThan, a: int64(2), b: int64(1)},
 			expected: false,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.LessThan, a: int64(1), b: int64(2)},
 			expected: true,
 		},
 
-		Case{
+		{
 			input:    Input{comp: tokenizer.In, a: int64(1), b: map[interface{}]bool{int64(1): true}},
 			expected: true,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.In, a: int64(1), b: map[interface{}]bool{int64(1): false}},
 			expected: true,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.In, a: int64(1), b: map[interface{}]bool{int64(2): true}},
 			expected: false,
 		},
-		Case{
+		{
 			input:    Input{comp: tokenizer.In, a: int64(1), b: map[interface{}]bool{}},
 			expected: false,
 		},
@@ -248,7 +248,7 @@ func TestCmpTime(t *testing.T) {
 	}
 
 	cases := []Case{
-		Case{
+		{
 			input: Input{
 				comp: tokenizer.Equals,
 				a:    time.Now().Round(time.Minute),
@@ -256,7 +256,7 @@ func TestCmpTime(t *testing.T) {
 			},
 			expected: true,
 		},
-		Case{
+		{
 			input: Input{
 				comp: tokenizer.Equals,
 				a:    time.Now().Add(time.Hour),
@@ -265,7 +265,7 @@ func TestCmpTime(t *testing.T) {
 			expected: false,
 		},
 
-		Case{
+		{
 			input: Input{
 				comp: tokenizer.NotEquals,
 				a:    time.Now().Round(time.Minute),
@@ -273,7 +273,7 @@ func TestCmpTime(t *testing.T) {
 			},
 			expected: false,
 		},
-		Case{
+		{
 			input: Input{
 				comp: tokenizer.NotEquals,
 				a:    time.Now().Add(time.Hour),
@@ -282,7 +282,7 @@ func TestCmpTime(t *testing.T) {
 			expected: true,
 		},
 
-		Case{
+		{
 			input: Input{
 				comp: tokenizer.In,
 				a:    time.Now().Round(time.Minute),
@@ -290,7 +290,7 @@ func TestCmpTime(t *testing.T) {
 			},
 			expected: true,
 		},
-		Case{
+		{
 			input: Input{
 				comp: tokenizer.In,
 				a:    time.Now().Round(time.Minute),

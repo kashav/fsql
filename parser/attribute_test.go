@@ -21,38 +21,38 @@ func TestAttributeParser_ExpectCorrectAttributes(t *testing.T) {
 	}
 
 	cases := []Case{
-		Case{
+		{
 			input:    "name",
 			expected: Expected{attributes: map[string]bool{"name": true}, err: nil},
 		},
-		Case{
+		{
 			input: "name, size",
 			expected: Expected{
 				attributes: map[string]bool{"name": true, "size": true},
 				err:        nil},
 		},
-		Case{
+		{
 			input:    "*",
 			expected: Expected{attributes: allAttributes, err: nil},
 		},
-		Case{
+		{
 			input:    "all",
 			expected: Expected{attributes: allAttributes, err: nil},
 		},
-		Case{
+		{
 			input:    "format(time, iso)",
 			expected: Expected{attributes: map[string]bool{"time": true}, err: nil},
 		},
 
-		Case{
+		{
 			input:    "",
 			expected: Expected{err: io.ErrUnexpectedEOF},
 		},
-		Case{
+		{
 			input:    "name,",
 			expected: Expected{err: io.ErrUnexpectedEOF},
 		},
-		Case{
+		{
 			input:    "identifier",
 			expected: Expected{err: &ErrUnknownToken{"identifier"}},
 		},
@@ -89,19 +89,19 @@ func TestAttributeParser_ExpectCorrectModifiers(t *testing.T) {
 	}
 
 	cases := []Case{
-		Case{
+		{
 			input: "name",
 			expected: Expected{
-				modifiers: map[string][]query.Modifier{"name": []query.Modifier{}},
+				modifiers: map[string][]query.Modifier{"name": {}},
 				err:       nil,
 			},
 		},
-		Case{
+		{
 			input: "upper(name)",
 			expected: Expected{
 				modifiers: map[string][]query.Modifier{
-					"name": []query.Modifier{
-						query.Modifier{
+					"name": {
+						{
 							Name:      "UPPER",
 							Arguments: []string{},
 						},
@@ -110,12 +110,12 @@ func TestAttributeParser_ExpectCorrectModifiers(t *testing.T) {
 				err: nil,
 			},
 		},
-		Case{
+		{
 			input: "format(time, iso)",
 			expected: Expected{
 				modifiers: map[string][]query.Modifier{
-					"time": []query.Modifier{
-						query.Modifier{
+					"time": {
+						{
 							Name:      "FORMAT",
 							Arguments: []string{"iso"},
 						},
@@ -124,12 +124,12 @@ func TestAttributeParser_ExpectCorrectModifiers(t *testing.T) {
 				err: nil,
 			},
 		},
-		Case{
+		{
 			input: "format(time, \"iso\")",
 			expected: Expected{
 				modifiers: map[string][]query.Modifier{
-					"time": []query.Modifier{
-						query.Modifier{
+					"time": {
+						{
 							Name:      "FORMAT",
 							Arguments: []string{"iso"},
 						},
@@ -138,18 +138,18 @@ func TestAttributeParser_ExpectCorrectModifiers(t *testing.T) {
 				err: nil,
 			},
 		},
-		Case{
+		{
 			input: "lower(name), format(size, mb)",
 			expected: Expected{
 				modifiers: map[string][]query.Modifier{
-					"name": []query.Modifier{
-						query.Modifier{
+					"name": {
+						{
 							Name:      "LOWER",
 							Arguments: []string{},
 						},
 					},
-					"size": []query.Modifier{
-						query.Modifier{
+					"size": {
+						{
 							Name:      "FORMAT",
 							Arguments: []string{"mb"},
 						},
@@ -158,16 +158,16 @@ func TestAttributeParser_ExpectCorrectModifiers(t *testing.T) {
 				err: nil,
 			},
 		},
-		Case{
+		{
 			input: "format(fullpath(name), lower)",
 			expected: Expected{
 				modifiers: map[string][]query.Modifier{
-					"name": []query.Modifier{
-						query.Modifier{
+					"name": {
+						{
 							Name:      "FULLPATH",
 							Arguments: []string{},
 						},
-						query.Modifier{
+						{
 							Name:      "FORMAT",
 							Arguments: []string{"lower"},
 						},
@@ -178,11 +178,11 @@ func TestAttributeParser_ExpectCorrectModifiers(t *testing.T) {
 		},
 
 		// No function/parameter validation yet!
-		Case{
+		{
 			input: "foo(name)",
 			expected: Expected{
 				modifiers: map[string][]query.Modifier{
-					"name": []query.Modifier{query.Modifier{
+					"name": {{
 						Name:      "FOO",
 						Arguments: []string{},
 					},
@@ -191,12 +191,12 @@ func TestAttributeParser_ExpectCorrectModifiers(t *testing.T) {
 				err: nil,
 			},
 		},
-		Case{
+		{
 			input: "format(size, tb)",
 			expected: Expected{
 				modifiers: map[string][]query.Modifier{
-					"size": []query.Modifier{
-						query.Modifier{
+					"size": {
+						{
 							Name:      "FORMAT",
 							Arguments: []string{"tb"},
 						},
@@ -205,12 +205,12 @@ func TestAttributeParser_ExpectCorrectModifiers(t *testing.T) {
 				err: nil,
 			},
 		},
-		Case{
+		{
 			input: "format(size, kb, mb)",
 			expected: Expected{
 				modifiers: map[string][]query.Modifier{
-					"size": []query.Modifier{
-						query.Modifier{
+					"size": {
+						{
 							Name:      "FORMAT",
 							Arguments: []string{"kb", "mb"},
 						},
@@ -220,15 +220,15 @@ func TestAttributeParser_ExpectCorrectModifiers(t *testing.T) {
 			},
 		},
 
-		Case{
+		{
 			input:    "",
 			expected: Expected{err: io.ErrUnexpectedEOF},
 		},
-		Case{
+		{
 			input:    "lower(name),",
 			expected: Expected{err: io.ErrUnexpectedEOF},
 		},
-		Case{
+		{
 			input:    "identifier",
 			expected: Expected{err: &ErrUnknownToken{"identifier"}},
 		},

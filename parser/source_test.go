@@ -21,43 +21,43 @@ func TestSourceParser_ExpectCorrectSources(t *testing.T) {
 	}
 
 	cases := []Case{
-		Case{
+		{
 			input: ".",
 			expected: Expected{
-				sources: map[string][]string{"include": []string{"."}},
+				sources: map[string][]string{"include": {"."}},
 				err:     nil,
 			},
 		},
-		Case{
+		{
 			input: "., ~/foo",
 			expected: Expected{
-				sources: map[string][]string{"include": []string{".", "~/foo"}},
+				sources: map[string][]string{"include": {".", "~/foo"}},
 				err:     nil,
 			},
 		},
-		Case{
+		{
 			input: "., -.bar",
 			expected: Expected{
 				sources: map[string][]string{
-					"include": []string{"."},
-					"exclude": []string{".bar"},
+					"include": {"."},
+					"exclude": {".bar"},
 				},
 				err: nil,
 			},
 		},
-		Case{
+		{
 			input: "-.bar, ., ~/foo AS foo",
 			expected: Expected{
 				sources: map[string][]string{
-					"include": []string{".", "~/foo"},
-					"exclude": []string{".bar"},
+					"include": {".", "~/foo"},
+					"exclude": {".bar"},
 				},
 				err: nil,
 			},
 		},
 
-		Case{input: "", expected: Expected{err: io.ErrUnexpectedEOF}},
-		Case{input: "foo,", expected: Expected{err: io.ErrUnexpectedEOF}},
+		{input: "", expected: Expected{err: io.ErrUnexpectedEOF}},
+		{input: "foo,", expected: Expected{err: io.ErrUnexpectedEOF}},
 	}
 
 	for _, c := range cases {
@@ -92,21 +92,21 @@ func TestSourceParser_ExpectCorrectAliases(t *testing.T) {
 	}
 
 	cases := []Case{
-		Case{
+		{
 			input: ".",
 			expected: Expected{
 				aliases: map[string]string{},
 				err:     nil,
 			},
 		},
-		Case{
+		{
 			input: ". AS cwd",
 			expected: Expected{
 				aliases: map[string]string{"cwd": "."},
 				err:     nil,
 			},
 		},
-		Case{
+		{
 			input: "., -.bar, ~/foo AS foo",
 			expected: Expected{
 				aliases: map[string]string{"foo": "~/foo"},
@@ -114,15 +114,15 @@ func TestSourceParser_ExpectCorrectAliases(t *testing.T) {
 			},
 		},
 
-		Case{
+		{
 			input:    "-.bar AS bar",
 			expected: Expected{err: errors.New("cannot alias excluded directory .bar")},
 		},
-		Case{
+		{
 			input:    "",
 			expected: Expected{err: io.ErrUnexpectedEOF},
 		},
-		Case{
+		{
 			input:    "foo AS",
 			expected: Expected{err: io.ErrUnexpectedEOF},
 		},

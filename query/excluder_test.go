@@ -12,10 +12,10 @@ func TestShouldExclude_ExpectAllExcluded(t *testing.T) {
 	excluder := regexpExclude{exclusions: exclusions}
 
 	cases := []Case{
-		Case{input: ".git", expected: true},
-		Case{input: ".git/", expected: true},
-		Case{input: ".git/some/other/file", expected: true},
-		Case{input: ".gitignore", expected: true},
+		{input: ".git", expected: true},
+		{input: ".git/", expected: true},
+		{input: ".git/some/other/file", expected: true},
+		{input: ".gitignore", expected: true},
 	}
 
 	for _, c := range cases {
@@ -36,10 +36,10 @@ func TestShouldExclude_ExpectNotExcluded(t *testing.T) {
 	excluder := regexpExclude{exclusions: exclusions}
 
 	cases := []Case{
-		Case{input: ".git", expected: true},
-		Case{input: ".git/", expected: true},
-		Case{input: ".git/some/other/file", expected: true},
-		Case{input: ".gitignore", expected: false},
+		{input: ".git", expected: true},
+		{input: ".git/", expected: true},
+		{input: ".git/some/other/file", expected: true},
+		{input: ".gitignore", expected: false},
 	}
 
 	for _, c := range cases {

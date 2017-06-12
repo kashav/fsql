@@ -22,7 +22,7 @@ func TestConditionParser_ExpectCorrectCondition(t *testing.T) {
 	}
 
 	cases := []Case{
-		Case{
+		{
 			input: "name LIKE foo%",
 			expected: Expected{
 				condition: &query.Condition{
@@ -34,7 +34,7 @@ func TestConditionParser_ExpectCorrectCondition(t *testing.T) {
 			},
 		},
 
-		Case{
+		{
 			input: "size = 10",
 			expected: Expected{
 				condition: &query.Condition{
@@ -46,7 +46,7 @@ func TestConditionParser_ExpectCorrectCondition(t *testing.T) {
 			},
 		},
 
-		Case{
+		{
 			input: "mode IS dir",
 			expected: Expected{
 				condition: &query.Condition{
@@ -58,13 +58,13 @@ func TestConditionParser_ExpectCorrectCondition(t *testing.T) {
 			},
 		},
 
-		Case{
+		{
 			input: "format(time, iso) >= 2017-05-28T16:37:18Z",
 			expected: Expected{
 				condition: &query.Condition{
 					Attribute: "time",
 					AttributeModifiers: []query.Modifier{
-						query.Modifier{
+						{
 							Name:      "FORMAT",
 							Arguments: []string{"iso"},
 						},
@@ -76,13 +76,13 @@ func TestConditionParser_ExpectCorrectCondition(t *testing.T) {
 			},
 		},
 
-		Case{
+		{
 			input: "upper(name) != FOO",
 			expected: Expected{
 				condition: &query.Condition{
 					Attribute: "name",
 					AttributeModifiers: []query.Modifier{
-						query.Modifier{
+						{
 							Name:      "UPPER",
 							Arguments: []string{},
 						},
@@ -94,7 +94,7 @@ func TestConditionParser_ExpectCorrectCondition(t *testing.T) {
 			},
 		},
 
-		Case{
+		{
 			input: "NOT name IN [foo,bar,baz]",
 			expected: Expected{
 				condition: &query.Condition{
@@ -109,7 +109,7 @@ func TestConditionParser_ExpectCorrectCondition(t *testing.T) {
 
 		// No attribute-operator validation yet (these 3 should /eventually/ throw
 		// some error)!
-		Case{
+		{
 			input: "time RLIKE '.*'",
 			expected: Expected{
 				condition: &query.Condition{
@@ -121,7 +121,7 @@ func TestConditionParser_ExpectCorrectCondition(t *testing.T) {
 			},
 		},
 
-		Case{
+		{
 			input: "size LIKE foo",
 			expected: Expected{
 				condition: &query.Condition{
@@ -133,7 +133,7 @@ func TestConditionParser_ExpectCorrectCondition(t *testing.T) {
 			},
 		},
 
-		Case{
+		{
 			input: "time <> now",
 			expected: Expected{
 				condition: &query.Condition{
@@ -145,12 +145,12 @@ func TestConditionParser_ExpectCorrectCondition(t *testing.T) {
 			},
 		},
 
-		Case{
+		{
 			input:    "name =",
 			expected: Expected{err: io.ErrUnexpectedEOF},
 		},
 
-		Case{
+		{
 			input:    "file IS dir",
 			expected: Expected{err: &ErrUnknownToken{"file"}},
 		},
@@ -192,7 +192,7 @@ func TestConditionParser_ExpectCorrectConditionTree(t *testing.T) {
 	)
 
 	cases := []Case{
-		Case{
+		{
 			input: "name LIKE foo%",
 			expected: Expected{
 				node: &query.ConditionNode{
@@ -206,14 +206,14 @@ func TestConditionParser_ExpectCorrectConditionTree(t *testing.T) {
 			},
 		},
 
-		Case{
+		{
 			input: "upper(name) = MAIN",
 			expected: Expected{
 				node: &query.ConditionNode{
 					Condition: &query.Condition{
 						Attribute: "name",
 						AttributeModifiers: []query.Modifier{
-							query.Modifier{
+							{
 								Name:      "UPPER",
 								Arguments: []string{},
 							},
@@ -226,7 +226,7 @@ func TestConditionParser_ExpectCorrectConditionTree(t *testing.T) {
 			},
 		},
 
-		Case{
+		{
 			input: "name LIKE %foo AND name <> bar.foo",
 			expected: Expected{
 				node: &query.ConditionNode{
@@ -250,7 +250,7 @@ func TestConditionParser_ExpectCorrectConditionTree(t *testing.T) {
 			},
 		},
 
-		Case{
+		{
 			input: "size <= 10 OR NOT mode IS dir",
 			expected: Expected{
 				node: &query.ConditionNode{
@@ -275,7 +275,7 @@ func TestConditionParser_ExpectCorrectConditionTree(t *testing.T) {
 			},
 		},
 
-		Case{
+		{
 			input: "size = 5 AND name = foo",
 			expected: Expected{
 				node: &query.ConditionNode{
@@ -299,7 +299,7 @@ func TestConditionParser_ExpectCorrectConditionTree(t *testing.T) {
 			},
 		},
 
-		Case{
+		{
 			input: "format(size, mb) <= 2 AND (name = foo OR name = bar)",
 			expected: Expected{
 				node: &query.ConditionNode{
@@ -308,7 +308,7 @@ func TestConditionParser_ExpectCorrectConditionTree(t *testing.T) {
 						Condition: &query.Condition{
 							Attribute: "size",
 							AttributeModifiers: []query.Modifier{
-								query.Modifier{
+								{
 									Name:      "FORMAT",
 									Arguments: []string{"mb"},
 								},
@@ -339,7 +339,7 @@ func TestConditionParser_ExpectCorrectConditionTree(t *testing.T) {
 			},
 		},
 
-		Case{
+		{
 			input: "name = foo AND NOT (name = bar OR name = baz)",
 			expected: Expected{
 				node: &query.ConditionNode{},
@@ -350,7 +350,7 @@ func TestConditionParser_ExpectCorrectConditionTree(t *testing.T) {
 			},
 		},
 
-		Case{
+		{
 			input:    "size = 5 AND ()",
 			expected: Expected{err: errors.New("failed to parse conditions")},
 		},

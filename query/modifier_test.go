@@ -9,11 +9,11 @@ func TestModifier_String(t *testing.T) {
 	}
 
 	cases := []Case{
-		Case{
+		{
 			input:    Modifier{Name: "upper", Arguments: []string{}},
 			expected: "upper()",
 		},
-		Case{
+		{
 			input:    Modifier{Name: "format", Arguments: []string{"upper"}},
 			expected: "format(upper)",
 		},
