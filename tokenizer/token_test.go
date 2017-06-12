@@ -9,33 +9,33 @@ func TestToken_TokenTypeString(t *testing.T) {
 	}
 
 	cases := []Case{
-		{Identifier, "identifier"},
-		{Subquery, "subquery"},
-		{Select, "select"},
-		{From, "from"},
-		{As, "as"},
-		{Where, "where"},
-		{Or, "or"},
-		{And, "and"},
-		{Not, "not"},
-		{In, "in"},
-		{Is, "is"},
-		{Like, "like"},
-		{RLike, "RLike"},
-		{Equals, "equal"},
-		{NotEquals, "not-equal"},
-		{GreaterThanEquals, "greater-than-or-equal"},
-		{GreaterThan, "greater-than"},
-		{LessThanEquals, "less-than-or-equal"},
-		{LessThan, "less-than"},
-		{Comma, "comma"},
-		{Hyphen, "hyphen"},
-		{ExclamationMark, "exclamation-mark"},
-		{OpenParen, "open-parentheses"},
-		{CloseParen, "close-parentheses"},
-		{OpenBracket, "open-bracket"},
-		{CloseBracket, "close-bracket"},
-		{Unknown, "unknown"},
+		{tt: Identifier, expected: "identifier"},
+		{tt: Subquery, expected: "subquery"},
+		{tt: Select, expected: "select"},
+		{tt: From, expected: "from"},
+		{tt: As, expected: "as"},
+		{tt: Where, expected: "where"},
+		{tt: Or, expected: "or"},
+		{tt: And, expected: "and"},
+		{tt: Not, expected: "not"},
+		{tt: In, expected: "in"},
+		{tt: Is, expected: "is"},
+		{tt: Like, expected: "like"},
+		{tt: RLike, expected: "RLike"},
+		{tt: Equals, expected: "equal"},
+		{tt: NotEquals, expected: "not-equal"},
+		{tt: GreaterThanEquals, expected: "greater-than-or-equal"},
+		{tt: GreaterThan, expected: "greater-than"},
+		{tt: LessThanEquals, expected: "less-than-or-equal"},
+		{tt: LessThan, expected: "less-than"},
+		{tt: Comma, expected: "comma"},
+		{tt: Hyphen, expected: "hyphen"},
+		{tt: ExclamationMark, expected: "exclamation-mark"},
+		{tt: OpenParen, expected: "open-parentheses"},
+		{tt: CloseParen, expected: "close-parentheses"},
+		{tt: OpenBracket, expected: "open-bracket"},
+		{tt: CloseBracket, expected: "close-bracket"},
+		{tt: Unknown, expected: "unknown"},
 	}
 
 	for _, c := range cases {
@@ -53,8 +53,14 @@ func TestToken_String(t *testing.T) {
 	}
 
 	cases := []Case{
-		{Token{Type: Identifier, Raw: "name"}, "{type: identifier, raw: \"name\"}"},
-		{Token{Type: Comma, Raw: ","}, "{type: comma, raw: \",\"}"},
+		{
+			token:    Token{Type: Identifier, Raw: "name"},
+			expected: "{type: identifier, raw: \"name\"}",
+		},
+		{
+			token:    Token{Type: Comma, Raw: ","},
+			expected: "{type: comma, raw: \",\"}",
+		},
 	}
 
 	for _, c := range cases {

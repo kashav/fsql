@@ -10,10 +10,10 @@ func TestCommon_FormatName(t *testing.T) {
 	}
 
 	cases := []Case{
-		{"upper", "foo", "FOO"},
-		{"upper", "FOO", "FOO"},
-		{"lower", "foo", "foo"},
-		{"lower", "FOO", "foo"},
+		{arg: "upper", name: "foo", expected: "FOO"},
+		{arg: "upper", name: "FOO", expected: "FOO"},
+		{arg: "lower", name: "foo", expected: "foo"},
+		{arg: "lower", name: "FOO", expected: "foo"},
 	}
 
 	for _, c := range cases {
@@ -31,8 +31,8 @@ func TestCommon_Upper(t *testing.T) {
 	}
 
 	cases := []Case{
-		{"foo", "FOO"},
-		{"FOO", "FOO"},
+		{name: "foo", expected: "FOO"},
+		{name: "FOO", expected: "FOO"},
 	}
 
 	for _, c := range cases {
@@ -50,8 +50,8 @@ func TestCommon_Lower(t *testing.T) {
 	}
 
 	cases := []Case{
-		{"foo", "foo"},
-		{"FOO", "foo"},
+		{name: "foo", expected: "foo"},
+		{name: "FOO", expected: "foo"},
 	}
 
 	for _, c := range cases {

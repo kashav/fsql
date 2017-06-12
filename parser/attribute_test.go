@@ -10,7 +10,6 @@ import (
 )
 
 func TestAttributeParser_ExpectCorrectAttributes(t *testing.T) {
-
 	type Expected struct {
 		attributes map[string]bool
 		err        error
@@ -22,23 +21,49 @@ func TestAttributeParser_ExpectCorrectAttributes(t *testing.T) {
 	}
 
 	cases := []Case{
-		{"name", Expected{map[string]bool{"name": true}, nil}},
-		{"name, size", Expected{map[string]bool{"name": true, "size": true}, nil}},
-		{"*", Expected{allAttributes, nil}},
-		{"all", Expected{allAttributes, nil}},
-		{"format(time, iso)", Expected{map[string]bool{"time": true}, nil}},
+		{
+			input:    "name",
+			expected: Expected{attributes: map[string]bool{"name": true}, err: nil},
+		},
+		{
+			input: "name, size",
+			expected: Expected{
+				attributes: map[string]bool{"name": true, "size": true},
+				err:        nil},
+		},
+		{
+			input:    "*",
+			expected: Expected{attributes: allAttributes, err: nil},
+		},
+		{
+			input:    "all",
+			expected: Expected{attributes: allAttributes, err: nil},
+		},
+		{
+			input:    "format(time, iso)",
+			expected: Expected{attributes: map[string]bool{"time": true}, err: nil},
+		},
 
-		{"", Expected{err: io.ErrUnexpectedEOF}},
-		{"name,", Expected{err: io.ErrUnexpectedEOF}},
-		{"identifier", Expected{err: &ErrUnknownToken{"identifier"}}},
+		{
+			input:    "",
+			expected: Expected{err: io.ErrUnexpectedEOF},
+		},
+		{
+			input:    "name,",
+			expected: Expected{err: io.ErrUnexpectedEOF},
+		},
+		{
+			input:    "identifier",
+			expected: Expected{err: &ErrUnknownToken{"identifier"}},
+		},
 	}
 
 	for _, c := range cases {
 		attributes := make(map[string]bool, 0)
 		modifiers := make(map[string][]query.Modifier, 0)
 
-		err := (&parser{
-			tokenizer: tokenizer.NewTokenizer(c.input)}).parseAttrList(&attributes, &modifiers)
+		p := &parser{tokenizer: tokenizer.NewTokenizer(c.input)}
+		err := p.parseAttrs(&attributes, &modifiers)
 
 		if c.expected.err == nil {
 			if err != nil {
@@ -64,48 +89,157 @@ func TestAttributeParser_ExpectCorrectModifiers(t *testing.T) {
 	}
 
 	cases := []Case{
-		{"name", Expected{
-			map[string][]query.Modifier{
-				"name": []query.Modifier{}}, nil}},
-		{"upper(name)", Expected{
-			map[string][]query.Modifier{
-				"name": []query.Modifier{
-					query.Modifier{Name: "UPPER", Arguments: []string{}}}}, nil}},
-		{"format(time, iso)", Expected{
-			map[string][]query.Modifier{
-				"time": []query.Modifier{
-					query.Modifier{Name: "FORMAT", Arguments: []string{"iso"}}}}, nil}},
-		{"format(time, \"iso\")", Expected{
-			map[string][]query.Modifier{
-				"time": []query.Modifier{
-					query.Modifier{Name: "FORMAT", Arguments: []string{"iso"}}}}, nil}},
-		{"lower(name), format(size, mb)", Expected{map[string][]query.Modifier{
-			"name": []query.Modifier{query.Modifier{Name: "LOWER", Arguments: []string{}}},
-			"size": []query.Modifier{query.Modifier{Name: "FORMAT", Arguments: []string{"mb"}}}}, nil}},
-		{"format(fullpath(name), lower)", Expected{map[string][]query.Modifier{
-			"name": []query.Modifier{
-				query.Modifier{Name: "FULLPATH", Arguments: []string{}},
-				query.Modifier{Name: "FORMAT", Arguments: []string{"lower"}}}}, nil}},
+		{
+			input: "name",
+			expected: Expected{
+				modifiers: map[string][]query.Modifier{"name": {}},
+				err:       nil,
+			},
+		},
+		{
+			input: "upper(name)",
+			expected: Expected{
+				modifiers: map[string][]query.Modifier{
+					"name": {
+						{
+							Name:      "UPPER",
+							Arguments: []string{},
+						},
+					},
+				},
+				err: nil,
+			},
+		},
+		{
+			input: "format(time, iso)",
+			expected: Expected{
+				modifiers: map[string][]query.Modifier{
+					"time": {
+						{
+							Name:      "FORMAT",
+							Arguments: []string{"iso"},
+						},
+					},
+				},
+				err: nil,
+			},
+		},
+		{
+			input: "format(time, \"iso\")",
+			expected: Expected{
+				modifiers: map[string][]query.Modifier{
+					"time": {
+						{
+							Name:      "FORMAT",
+							Arguments: []string{"iso"},
+						},
+					},
+				},
+				err: nil,
+			},
+		},
+		{
+			input: "lower(name), format(size, mb)",
+			expected: Expected{
+				modifiers: map[string][]query.Modifier{
+					"name": {
+						{
+							Name:      "LOWER",
+							Arguments: []string{},
+						},
+					},
+					"size": {
+						{
+							Name:      "FORMAT",
+							Arguments: []string{"mb"},
+						},
+					},
+				},
+				err: nil,
+			},
+		},
+		{
+			input: "format(fullpath(name), lower)",
+			expected: Expected{
+				modifiers: map[string][]query.Modifier{
+					"name": {
+						{
+							Name:      "FULLPATH",
+							Arguments: []string{},
+						},
+						{
+							Name:      "FORMAT",
+							Arguments: []string{"lower"},
+						},
+					},
+				},
+				err: nil,
+			},
+		},
 
 		// No function/parameter validation yet!
-		{"foo(name)", Expected{map[string][]query.Modifier{
-			"name": []query.Modifier{query.Modifier{Name: "FOO", Arguments: []string{}}}}, nil}},
-		{"format(size, tb)", Expected{map[string][]query.Modifier{
-			"size": []query.Modifier{query.Modifier{Name: "FORMAT", Arguments: []string{"tb"}}}}, nil}},
-		{"format(size, kb, mb)", Expected{map[string][]query.Modifier{
-			"size": []query.Modifier{query.Modifier{Name: "FORMAT", Arguments: []string{"kb", "mb"}}}}, nil}},
+		{
+			input: "foo(name)",
+			expected: Expected{
+				modifiers: map[string][]query.Modifier{
+					"name": {{
+						Name:      "FOO",
+						Arguments: []string{},
+					},
+					},
+				},
+				err: nil,
+			},
+		},
+		{
+			input: "format(size, tb)",
+			expected: Expected{
+				modifiers: map[string][]query.Modifier{
+					"size": {
+						{
+							Name:      "FORMAT",
+							Arguments: []string{"tb"},
+						},
+					},
+				},
+				err: nil,
+			},
+		},
+		{
+			input: "format(size, kb, mb)",
+			expected: Expected{
+				modifiers: map[string][]query.Modifier{
+					"size": {
+						{
+							Name:      "FORMAT",
+							Arguments: []string{"kb", "mb"},
+						},
+					},
+				},
+				err: nil,
+			},
+		},
 
-		{"", Expected{err: io.ErrUnexpectedEOF}},
-		{"lower(name),", Expected{err: io.ErrUnexpectedEOF}},
-		{"identifier", Expected{err: &ErrUnknownToken{"identifier"}}},
+		{
+			input:    "",
+			expected: Expected{err: io.ErrUnexpectedEOF},
+		},
+		{
+			input:    "lower(name),",
+			expected: Expected{err: io.ErrUnexpectedEOF},
+		},
+		{
+			input:    "identifier",
+			expected: Expected{err: &ErrUnknownToken{"identifier"}},
+		},
 	}
 
 	for _, c := range cases {
 		attributes := make(map[string]bool, 0)
 		modifiers := make(map[string][]query.Modifier, 0)
 
-		err := (&parser{
-			tokenizer: tokenizer.NewTokenizer(c.input)}).parseAttrList(&attributes, &modifiers)
+		p := &parser{tokenizer: tokenizer.NewTokenizer(c.input)}
+		err := p.parseAttrs(&attributes, &modifiers)
 
 		if c.expected.err == nil {
 			if err != nil {

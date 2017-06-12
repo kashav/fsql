@@ -7,8 +7,8 @@ os:
 matrix:
   fast_finish: true
 install:
-  - go get -u -v github.com/kshvmdn/fsql/...
+  - make install get-tools
 before_script:
-  - go vet -v ./...
+  - make fmt vet lint
 script:
-  - go test -v ./...
+  - make test

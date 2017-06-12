@@ -12,28 +12,28 @@ func TestTokenizer_NextTokenType(t *testing.T) {
 	}
 
 	cases := []Case{
-		{"SELECT", Select},
-		{"FROM", From},
-		{"WHERE", Where},
-		{"AS", As},
-		{"OR", Or},
-		{"AND", And},
-		{"NOT", Not},
-		{"IN", In},
-		{"IS", Is},
-		{"LIKE", Like},
-		{"RLIKE", RLike},
-		{"foo", Identifier},
-		{"(", OpenParen},
-		{")", CloseParen},
-		{",", Comma},
-		{"-", Hyphen},
-		{"=", Equals},
-		{"<>", NotEquals},
-		{"<", LessThan},
-		{"<=", LessThanEquals},
-		{">", GreaterThan},
-		{">=", GreaterThanEquals},
+		{input: "SELECT", expected: Select},
+		{input: "FROM", expected: From},
+		{input: "WHERE", expected: Where},
+		{input: "AS", expected: As},
+		{input: "OR", expected: Or},
+		{input: "AND", expected: And},
+		{input: "NOT", expected: Not},
+		{input: "IN", expected: In},
+		{input: "IS", expected: Is},
+		{input: "LIKE", expected: Like},
+		{input: "RLIKE", expected: RLike},
+		{input: "foo", expected: Identifier},
+		{input: "(", expected: OpenParen},
+		{input: ")", expected: CloseParen},
+		{input: ",", expected: Comma},
+		{input: "-", expected: Hyphen},
+		{input: "=", expected: Equals},
+		{input: "<>", expected: NotEquals},
+		{input: "<", expected: LessThan},
+		{input: "<=", expected: LessThanEquals},
+		{input: ">", expected: GreaterThan},
+		{input: ">=", expected: GreaterThanEquals},
 	}
 
 	for _, c := range cases {
@@ -53,13 +53,13 @@ func TestTokenizer_NextRaw(t *testing.T) {
 
 	// TODO: Fix the last 2 cases, they're currently hanging.
 	cases := []Case{
-		{"foo", "foo"},
-		{" foo ", "foo"},
-		{"\" foo \"", " foo "},
-		{"' foo '", " foo "},
-		{"` foo `", " foo "},
-		// {"\"foo'bar\"", "foo'bar"},
-		// {"\"()\"", "()"},
+		{input: "foo", expected: "foo"},
+		{input: " foo ", expected: "foo"},
+		{input: "\" foo \"", expected: " foo "},
+		{input: "' foo '", expected: " foo "},
+		{input: "` foo `", expected: " foo "},
+		// Case{input: "\"foo'bar\"", expected: "foo'bar"},
+		// Case{input: "\"()\"", expected: "()"},
 	}
 
 	for _, c := range cases {
@@ -153,9 +153,9 @@ func TestTokenizer_ReadWord(t *testing.T) {
 	}
 
 	cases := []Case{
-		{"foo", "foo"},
-		{"foo bar", "foo"},
-		{"", ""},
+		{input: "foo", expected: "foo"},
+		{input: "foo bar", expected: "foo"},
+		{input: "", expected: ""},
 	}
 
 	for _, c := range cases {

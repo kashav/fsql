@@ -28,7 +28,8 @@ func main() {
 		fmt.Printf("usage: %s [options] query\n", os.Args[0])
 		flag.PrintDefaults()
 	}
-	flag.BoolVar(&options.interactive, "interactive", false, "run in interactive mode (Ctrl+D to exit)")
+	flag.BoolVar(&options.interactive, "interactive", false,
+		"run in interactive mode (Ctrl+D to exit)")
 	flag.BoolVar(&options.version, "version", false, "print version and exit")
 	flag.Parse()
 
@@ -39,7 +40,7 @@ func main() {
 
 	if options.interactive {
 		if err := fsql.RunInteractive(); err != nil {
-			log.Fatal(err)
+			log.Fatal(err.Error())
 		}
 		os.Exit(0)
 	}
@@ -50,6 +51,6 @@ func main() {
 	}
 
 	if err := fsql.Run(readInput()); err != nil {
-		log.Fatal(err)
+		log.Fatal(err.Error())
 	}
 }

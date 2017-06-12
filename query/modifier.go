@@ -43,7 +43,7 @@ func (q *Query) applyModifiers(path string, info os.FileInfo) map[string]interfa
 				Args:      m.Arguments,
 			})
 			if err != nil {
-				log.Fatalln(err.Error())
+				log.Fatal(err.Error())
 			}
 		}
 

@@ -23,22 +23,62 @@ func TestParser_ParseSelect(t *testing.T) {
 	}
 
 	cases := []Case{
-		{"all", Expected{allAttributes, map[string][]query.Modifier{}, nil}},
-		{"SELECT", Expected{allAttributes, map[string][]query.Modifier{}, nil}},
-		{"FROM", Expected{allAttributes, map[string][]query.Modifier{}, nil}},
+		{
+			input: "all",
+			expected: Expected{
+				attributes: allAttributes,
+				modifiers:  map[string][]query.Modifier{},
+				err:        nil,
+			},
+		},
 
-		{"SELECT name", Expected{
-			map[string]bool{"name": true},
-			map[string][]query.Modifier{"name": []query.Modifier{}},
-			nil}},
+		{
+			input: "SELECT",
+			expected: Expected{
+				attributes: allAttributes,
+				modifiers:  map[string][]query.Modifier{},
+				err:        nil,
+			},
+		},
 
-		{"SELECT format(size, kb)", Expected{
-			map[string]bool{"size": true},
-			map[string][]query.Modifier{
-				"size": []query.Modifier{query.Modifier{Name: "FORMAT", Arguments: []string{"kb"}}}},
-			nil}},
+		{
+			input: "FROM",
+			expected: Expected{
+				attributes: allAttributes,
+				modifiers:  map[string][]query.Modifier{},
+				err:        nil,
+			},
+		},
 
-		{"", Expected{err: io.ErrUnexpectedEOF}},
+		{
+			input: "SELECT name",
+			expected: Expected{
+				attributes: map[string]bool{"name": true},
+				modifiers:  map[string][]query.Modifier{"name": {}},
+				err:        nil,
+			},
+		},
+
+		{
+			input: "SELECT format(size, kb)",
+			expected: Expected{
+				attributes: map[string]bool{"size": true},
+				modifiers: map[string][]query.Modifier{
+					"size": {
+						{
+							Name:      "FORMAT",
+							Arguments: []string{"kb"},
+						},
+					},
+				},
+				err: nil,
+			},
+		},
+
+		{
+			input:    "",
+			expected: Expected{err: io.ErrUnexpectedEOF},
+		},
 	}
 
 	for _, c := range cases {
@@ -80,34 +120,68 @@ func TestParser_ParseFrom(t *testing.T) {
 	}
 
 	cases := []Case{
-		{"WHERE", Expected{
-			map[string][]string{"include": []string{"."}, "exclude": []string{}},
-			map[string]string{},
-			nil}},
+		{
+			input: "WHERE",
+			expected: Expected{
+				sources: map[string][]string{
+					"include": {"."},
+					"exclude": {},
+				},
+				aliases: map[string]string{},
+				err:     nil,
+			},
+		},
 
-		{"FROM .", Expected{
-			map[string][]string{"include": []string{"."}, "exclude": []string{}},
-			map[string]string{},
-			nil}},
+		{
+			input: "FROM .",
+			expected: Expected{
+				sources: map[string][]string{
+					"include": {"."},
+					"exclude": {},
+				},
+				aliases: map[string]string{},
+				err:     nil,
+			},
+		},
 
-		{"FROM ~/foo, -./.git/", Expected{
-			map[string][]string{
-				"include": []string{u.HomeDir + "/foo"},
-				"exclude": []string{".git"}},
-			map[string]string{},
-			nil}},
+		{
+			input: "FROM ~/foo, -./.git/",
+			expected: Expected{
+				sources: map[string][]string{
+					"include": {u.HomeDir + "/foo"},
+					"exclude": {".git"},
+				},
+				aliases: map[string]string{},
+				err:     nil,
+			},
+		},
 
-		{"FROM ./foo/ AS foo", Expected{
-			map[string][]string{"include": []string{"foo"}, "exclude": []string{}},
-			map[string]string{"foo": "foo"},
-			nil}},
+		{
+			input: "FROM ./foo/ AS foo",
+			expected: Expected{
+				sources: map[string][]string{
+					"include": {"foo"},
+					"exclude": {},
+				},
+				aliases: map[string]string{"foo": "foo"},
+				err:     nil,
+			},
+		},
 
-		{"FROM", Expected{err: io.ErrUnexpectedEOF}},
+		{
+			input:    "FROM",
+			expected: Expected{err: io.ErrUnexpectedEOF},
+		},
 
-		{"FROM WHERE", Expected{
-			err: &ErrUnexpectedToken{
-				Actual:   tokenizer.Where,
-				Expected: tokenizer.Identifier}}},
+		{
+			input: "FROM WHERE",
+			expected: Expected{
+				err: &ErrUnexpectedToken{
+					Actual:   tokenizer.Where,
+					Expected: tokenizer.Identifier,
+				},
+			},
+		},
 	}
 
 	for _, c := range cases {
@@ -142,22 +216,35 @@ func TestParser_ParseWhere(t *testing.T) {
 	}
 
 	cases := []Case{
-		{"WHERE name LIKE foo", Expected{
-			&query.ConditionNode{
-				Condition: &query.Condition{
-					Attribute: "name",
-					Operator:  tokenizer.Like,
-					Value:     "foo"}}, nil}},
+		{
+			input: "WHERE name LIKE foo",
+			expected: Expected{
+				tree: &query.ConditionNode{
+					Condition: &query.Condition{
+						Attribute: "name",
+						Operator:  tokenizer.Like,
+						Value:     "foo",
+					},
+				},
+				err: nil,
+			},
+		},
 
 		// Our tree is fully-zeroed in this case, so it's easier just to give it
 		// an empty Expected struct.
-		{"", Expected{}},
+		{input: "", expected: Expected{}},
 
-		{"WHERE", Expected{err: io.ErrUnexpectedEOF}},
+		{input: "WHERE", expected: Expected{err: io.ErrUnexpectedEOF}},
 
-		{"name LIKE foo", Expected{
-			err: &ErrUnexpectedToken{
-				Expected: tokenizer.Where, Actual: tokenizer.Identifier}}},
+		{
+			input: "name LIKE foo",
+			expected: Expected{
+				err: &ErrUnexpectedToken{
+					Expected: tokenizer.Where,
+					Actual:   tokenizer.Identifier,
+				},
+			},
+		},
 	}
 
 	for _, c := range cases {
@@ -187,22 +274,70 @@ func TestParser_Expect(t *testing.T) {
 	p := &parser{tokenizer: tokenizer.NewTokenizer(input)}
 
 	cases := []Case{
-		{tokenizer.Select, &tokenizer.Token{Type: tokenizer.Select, Raw: "SELECT"}},
-		{tokenizer.From, nil},
-		{tokenizer.Identifier, &tokenizer.Token{Type: tokenizer.Identifier, Raw: "all"}},
-		{tokenizer.Identifier, nil},
-		{tokenizer.From, &tokenizer.Token{Type: tokenizer.From, Raw: "FROM"}},
-		{tokenizer.Identifier, &tokenizer.Token{Type: tokenizer.Identifier, Raw: "."}},
-		{tokenizer.Identifier, nil},
-		{tokenizer.Where, &tokenizer.Token{Type: tokenizer.Where, Raw: "WHERE"}},
-		{tokenizer.Identifier, &tokenizer.Token{Type: tokenizer.Identifier, Raw: "name"}},
-		{tokenizer.Equals, &tokenizer.Token{Type: tokenizer.Equals, Raw: "="}},
-		{tokenizer.Identifier, &tokenizer.Token{Type: tokenizer.Identifier, Raw: "foo"}},
-		{tokenizer.Or, &tokenizer.Token{Type: tokenizer.Or, Raw: "OR"}},
-		{tokenizer.Identifier, &tokenizer.Token{Type: tokenizer.Identifier, Raw: "size"}},
-		{tokenizer.Identifier, nil},
-		{tokenizer.NotEquals, &tokenizer.Token{Type: tokenizer.NotEquals, Raw: "<>"}},
-		{tokenizer.Identifier, &tokenizer.Token{Type: tokenizer.Identifier, Raw: "100"}},
+		{
+			param:    tokenizer.Select,
+			expected: &tokenizer.Token{Type: tokenizer.Select, Raw: "SELECT"},
+		},
+		{
+			param:    tokenizer.From,
+			expected: nil,
+		},
+		{
+			param:    tokenizer.Identifier,
+			expected: &tokenizer.Token{Type: tokenizer.Identifier, Raw: "all"},
+		},
+		{
+			param:    tokenizer.Identifier,
+			expected: nil,
+		},
+		{
+			param:    tokenizer.From,
+			expected: &tokenizer.Token{Type: tokenizer.From, Raw: "FROM"},
+		},
+		{
+			param:    tokenizer.Identifier,
+			expected: &tokenizer.Token{Type: tokenizer.Identifier, Raw: "."},
+		},
+		{
+			param:    tokenizer.Identifier,
+			expected: nil,
+		},
+		{
+			param:    tokenizer.Where,
+			expected: &tokenizer.Token{Type: tokenizer.Where, Raw: "WHERE"},
+		},
+		{
+			param:    tokenizer.Identifier,
+			expected: &tokenizer.Token{Type: tokenizer.Identifier, Raw: "name"},
+		},
+		{
+			param:    tokenizer.Equals,
+			expected: &tokenizer.Token{Type: tokenizer.Equals, Raw: "="},
+		},
+		{
+			param:    tokenizer.Identifier,
+			expected: &tokenizer.Token{Type: tokenizer.Identifier, Raw: "foo"},
+		},
+		{
+			param:    tokenizer.Or,
+			expected: &tokenizer.Token{Type: tokenizer.Or, Raw: "OR"},
+		},
+		{
+			param:    tokenizer.Identifier,
+			expected: &tokenizer.Token{Type: tokenizer.Identifier, Raw: "size"},
+		},
+		{
+			param:    tokenizer.Identifier,
+			expected: nil,
+		},
+		{
+			param:    tokenizer.NotEquals,
+			expected: &tokenizer.Token{Type: tokenizer.NotEquals, Raw: "<>"},
+		},
+		{
+			param:    tokenizer.Identifier,
+			expected: &tokenizer.Token{Type: tokenizer.Identifier, Raw: "100"},
+		},
 	}
 
 	for _, c := range cases {
@@ -216,12 +351,17 @@ func TestParser_Expect(t *testing.T) {
 func TestParser_SelectAllVariations(t *testing.T) {
 	expected := &query.Query{
 		Attributes: allAttributes,
-		Sources:    map[string][]string{"include": []string{"."}, "exclude": []string{}},
+		Sources: map[string][]string{
+			"include": {"."},
+			"exclude": {},
+		},
 		ConditionTree: &query.ConditionNode{
 			Condition: &query.Condition{
 				Attribute: "name",
 				Operator:  tokenizer.Like,
-				Value:     "foo"}},
+				Value:     "foo",
+			},
+		},
 		SourceAliases: map[string]string{},
 		Modifiers:     map[string][]query.Modifier{},
 	}
@@ -262,12 +402,17 @@ func TestParser_Run(t *testing.T) {
 			expected: Expected{
 				q: &query.Query{
 					Attributes: allAttributes,
-					Sources:    map[string][]string{"include": []string{"."}, "exclude": []string{}},
+					Sources: map[string][]string{
+						"include": {"."},
+						"exclude": {},
+					},
 					ConditionTree: &query.ConditionNode{
 						Condition: &query.Condition{
 							Attribute: "name",
 							Operator:  tokenizer.Like,
-							Value:     "foo"}},
+							Value:     "foo",
+						},
+					},
 					SourceAliases: map[string]string{},
 					Modifiers:     map[string][]query.Modifier{},
 				},

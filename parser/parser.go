@@ -45,7 +45,7 @@ func (p *parser) parseSelectClause(q *query.Query) error {
 	// Determine if we should show all attributes. This is only true when
 	// no attributes are provided (regardless of if the SELECT keyword is
 	// provided or not).
-	showAll := true
+	var showAll = true
 	if p.expect(tokenizer.Select) == nil {
 		if p.current == nil || p.current.Type == tokenizer.Identifier {
 			showAll = false
@@ -53,23 +53,19 @@ func (p *parser) parseSelectClause(q *query.Query) error {
 			// No SELECT and next token is FROM/WHERE, show all!
 			showAll = true
 		} else {
-			// No SELECT and next token is not Ident nor FROM/WHERE -> malformed input.
+			// No SELECT and next token is not Identifier nor FROM/WHERE -> malformed
+			// input.
 			return p.currentError()
 		}
-	} else {
-		if current := p.expect(tokenizer.Identifier); current != nil {
-			p.current = current
-			showAll = false
-		}
+	} else if current := p.expect(tokenizer.Identifier); current != nil {
+		p.current = current
+		showAll = false
 	}
 
 	if showAll {
 		q.Attributes = allAttributes
-	} else {
-		err := p.parseAttrList(&q.Attributes, &q.Modifiers)
-		if err != nil {
-			return err
-		}
+	} else if err := p.parseAttrs(&q.Attributes, &q.Modifiers); err != nil {
+		return err
 	}
 
 	return nil
