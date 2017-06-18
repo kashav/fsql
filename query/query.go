@@ -101,7 +101,9 @@ func (q *Query) walkFunc(seen map[string]bool, excluder Excluder,
 			return nil
 		}
 
-		if !q.ConditionTree.evaluateTree(path, info) {
+		if ok, err := q.ConditionTree.evaluateTree(path, info); err != nil {
+			return err
+		} else if !ok {
 			return nil
 		}
 

@@ -1,7 +1,6 @@
 package transform
 
 import (
-	"crypto/sha1"
 	"fmt"
 	"hash"
 	"os"
@@ -37,7 +36,7 @@ func Format(p *FormatParams) (val interface{}, err error) {
 	case "SHORTPATH":
 		val, err = p.shortPath()
 	case "SHA1":
-		val, err = p.hash(sha1.New())
+		val, err = p.hash(FindHash(p.Name)())
 	}
 	if err != nil {
 		return nil, err
@@ -114,7 +113,7 @@ func (p *FormatParams) shortPath() (interface{}, error) {
 	return p.Info.Name(), nil
 }
 
-// hash applies the provided hash algorithm h with computeHash.
+// hash applies the provided hash algorithm h with ComputeHash.
 func (p *FormatParams) hash(h hash.Hash) (interface{}, error) {
 	var (
 		err    error
@@ -130,7 +129,7 @@ func (p *FormatParams) hash(h hash.Hash) (interface{}, error) {
 		return nil, err
 	}
 
-	if result, err = computeHash(p.Info, p.Path, h); err != nil {
+	if result, err = ComputeHash(p.Info, p.Path, h); err != nil {
 		return nil, err
 	}
 
@@ -150,7 +149,7 @@ func DefaultFormatValue(attr, path string, info os.FileInfo) (value interface{},
 	case "time":
 		value = info.ModTime().Format(time.Stamp)
 	case "hash":
-		if value, err = computeHash(info, path, sha1.New()); value != nil {
+		if value, err = ComputeHash(info, path, FindHash("SHA1")()); value != nil {
 			value = truncate(value.(string), defaultHashLength)
 		}
 	default:

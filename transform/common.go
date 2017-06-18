@@ -1,6 +1,7 @@
 package transform
 
 import (
+	"crypto/sha1"
 	"encoding/hex"
 	"hash"
 	"io/ioutil"
@@ -39,9 +40,18 @@ func truncate(str string, n int) string {
 	return str[0:n]
 }
 
-// computeHash applies the hash h to the file located at path. Returns a line
+// FindHash returns a func to create a new hash based on the provided name.
+func FindHash(name string) func() hash.Hash {
+	switch strings.ToUpper(name) {
+	case "SHA1":
+		return sha1.New
+	}
+	return nil
+}
+
+// ComputeHash applies the hash h to the file located at path. Returns a line
 // of dashes for directories.
-func computeHash(info os.FileInfo, path string, h hash.Hash) (interface{}, error) {
+func ComputeHash(info os.FileInfo, path string, h hash.Hash) (interface{}, error) {
 	if info.IsDir() {
 		return strings.Repeat("-", h.Size()*2), nil
 	}

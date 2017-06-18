@@ -1,6 +1,8 @@
 package transform
 
 import (
+	"hash"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -39,7 +41,7 @@ func Parse(p *ParseParams) (val interface{}, err error) {
 		return s.Interface(), nil
 	}
 
-	// If we have a map, recursively run Parse on each KEY and create a new
+	// If we have a map, recursively run Parse on each *key* and create a new
 	// map out of the return values.
 	if kind == reflect.Map {
 		result := reflect.MakeMap(reflect.TypeOf(p.Value))
@@ -53,6 +55,7 @@ func Parse(p *ParseParams) (val interface{}, err error) {
 		return result.Interface(), nil
 	}
 
+	// Not a slice nor a map.
 	switch strings.ToUpper(p.Name) {
 	case "FORMAT":
 		val, err = p.format()
@@ -60,6 +63,8 @@ func Parse(p *ParseParams) (val interface{}, err error) {
 		val = upper(p.Value.(string))
 	case "LOWER":
 		val = lower(p.Value.(string))
+	case "SHA1":
+		val, err = p.hash(FindHash(p.Name)())
 	}
 
 	if err != nil {
@@ -81,7 +86,6 @@ func (p *ParseParams) format() (val interface{}, err error) {
 	case "time":
 		val, err = p.formatTime()
 	}
-
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +102,6 @@ func (p *ParseParams) formatSize() (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	switch strings.ToUpper(p.Args[0]) {
 	case "B":
 		size *= 1
@@ -111,7 +114,6 @@ func (p *ParseParams) formatSize() (interface{}, error) {
 	default:
 		return nil, nil
 	}
-
 	return size, nil
 }
 
@@ -119,9 +121,10 @@ func (p *ParseParams) formatSize() (interface{}, error) {
 // `UNIX`, (case insensitive) or a custom layout. If a custom layout is
 // provided, it must be set according to 2006-01-02T15:04:05.999999-07:00.
 func (p *ParseParams) formatTime() (interface{}, error) {
-	var t time.Time
-	var err error
-
+	var (
+		t   time.Time
+		err error
+	)
 	switch strings.ToUpper(p.Args[0]) {
 	case "ISO":
 		t, err = time.Parse(time.RFC3339, p.Value.(string))
@@ -130,10 +133,16 @@ func (p *ParseParams) formatTime() (interface{}, error) {
 	default:
 		t, err = time.Parse(p.Args[0], p.Value.(string))
 	}
-
 	if err != nil {
 		return nil, err
 	}
-
 	return t, nil
+}
+
+func (p *ParseParams) hash(h hash.Hash) (interface{}, error) {
+	info, err := os.Stat(p.Value.(string))
+	if err != nil {
+		return nil, err
+	}
+	return ComputeHash(info, p.Value.(string), h)
 }
