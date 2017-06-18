@@ -1,9 +1,9 @@
-NAME := fsql
-
+NAME = fsql
+MAIN = ./cmd/fsql
 SRCS := $(shell find . -type f -name '*.go')
 PKGS := $(shell go list ./... | grep -v /vendor)
 
-build = GOOS=$(1) GOARCH=$(2) go build -o build/$(NAME)$(3) ./cmd/fsql
+build = GOOS=$(1) GOARCH=$(2) go build -o build/$(NAME)$(3) $(MAIN)
 tar = cd build && tar -cvzf $(1)_$(2).tar.gz $(NAME)$(3) && rm $(NAME)$(3)
 zip = cd build && zip $(1)_$(2).zip $(NAME)$(3) && rm $(NAME)$(3)
 
@@ -27,7 +27,7 @@ clean:
 
 fsql: $(SRCS)
 	@echo "+ $@"
-	@go build -o ./$(NAME) -v ./cmd/fsql
+	@go build -o ./$(NAME) -v $(MAIN)
 
 fmt:
 	@echo "+ $@"
