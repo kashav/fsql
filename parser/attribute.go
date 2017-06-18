@@ -32,17 +32,17 @@ func (p *parser) parseAttrs(attributes *map[string]bool, modifiers *map[string][
 
 		if ident.Raw == "*" || ident.Raw == "all" {
 			*attributes = allAttributes
-			break
-		}
-		p.current = ident
+		} else {
+			p.current = ident
 
-		attrModifiers := make([]query.Modifier, 0)
-		attribute, err := p.parseAttr(&attrModifiers)
-		if err != nil {
-			return err
+			attrModifiers := make([]query.Modifier, 0)
+			attribute, err := p.parseAttr(&attrModifiers)
+			if err != nil {
+				return err
+			}
+			(*attributes)[attribute.Raw] = true
+			(*modifiers)[attribute.Raw] = attrModifiers
 		}
-		(*attributes)[attribute.Raw] = true
-		(*modifiers)[attribute.Raw] = attrModifiers
 
 		if p.expect(tokenizer.Comma) == nil {
 			break
