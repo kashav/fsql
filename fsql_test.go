@@ -42,26 +42,16 @@ func GetAttrs(path string, attrs ...string) []string {
 		// Hard-coding modifiers works for the time being, but we might need a more
 		// elegant solution when we introduce new modifiers in the future.
 		switch attr {
-
 		case "hash":
-			f, err := os.Open(path)
+			b, err := ioutil.ReadFile(path)
 			if err != nil {
 				return []string{}
 			}
-			defer f.Close()
-
-			b, err := ioutil.ReadAll(f)
-			if err != nil {
-				return []string{}
-			}
-
 			h := sha1.New()
 			if _, err := h.Write(b); err != nil {
 				return []string{}
 			}
-
 			result[i] = hex.EncodeToString(h.Sum(nil))[:7]
-
 		case "size":
 			result[i] = fmt.Sprintf("%d", (*file).Size())
 		case "size:kb", "size:mb", "size:gb":
@@ -74,7 +64,6 @@ func GetAttrs(path string, attrs ...string) []string {
 			case "gb":
 				result[i] = fmt.Sprintf("%fgb", float64(size)/(1<<30))
 			}
-
 		case "time":
 			result[i] = (*file).ModTime().Format(time.Stamp)
 		case "time:iso":

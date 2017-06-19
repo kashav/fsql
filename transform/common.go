@@ -55,21 +55,12 @@ func ComputeHash(info os.FileInfo, path string, h hash.Hash) (interface{}, error
 	if info.IsDir() {
 		return strings.Repeat("-", h.Size()*2), nil
 	}
-
-	f, err := os.Open(path)
+	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
-
-	b, err := ioutil.ReadAll(f)
-	if err != nil {
-		return nil, err
-	}
-
 	if _, err := h.Write(b); err != nil {
 		return nil, err
 	}
-
 	return hex.EncodeToString(h.Sum(nil)), nil
 }

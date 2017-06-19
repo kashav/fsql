@@ -131,7 +131,7 @@ func cmpHash(o *Opts) (result bool, err error) {
 
 	hashFunc := transform.FindHash(hashType)
 	if hashFunc == nil {
-		return false, fmt.Errorf("unexpeceted hash algorithm %s", hashType)
+		return false, fmt.Errorf("unexpected hash algorithm %s", hashType)
 	}
 	h, err := transform.ComputeHash(o.File, o.Path, hashFunc())
 	if err != nil {
