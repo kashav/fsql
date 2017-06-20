@@ -1,12 +1,11 @@
 package query
 
 import (
+	"errors"
 	"fmt"
-	"log"
 	"os"
-	"strconv"
-	"time"
 
+	"github.com/kshvmdn/fsql/evaluate"
 	"github.com/kshvmdn/fsql/tokenizer"
 	"github.com/kshvmdn/fsql/transform"
 )
@@ -31,21 +30,21 @@ func (root *ConditionNode) String() string {
 // evaluateTree runs pre-order traversal on the ConditionNode tree rooted at
 // root and evaluates each conditional along the path with the provided compare
 // method.
-func (root *ConditionNode) evaluateTree(path string, info os.FileInfo) bool {
+func (root *ConditionNode) evaluateTree(path string, info os.FileInfo) (bool, error) {
 	if root == nil {
-		return true
+		return true, nil
 	}
 
 	if root.Condition != nil {
 		if root.Condition.IsSubquery {
 			// Unevaluated subquery.
 			// TODO: Handle this case.
-			return false
+			return false, errors.New("not implemented")
 		}
 
 		if !root.Condition.Parsed {
 			if err := root.Condition.applyModifiers(); err != nil {
-				log.Fatal(err.Error())
+				return false, err
 			}
 		}
 
@@ -53,20 +52,24 @@ func (root *ConditionNode) evaluateTree(path string, info os.FileInfo) bool {
 	}
 
 	if *root.Type == tokenizer.And {
-		if !root.Left.evaluateTree(path, info) {
-			return false
+		if ok, err := root.Left.evaluateTree(path, info); err != nil {
+			return false, err
+		} else if !ok {
+			return false, nil
 		}
 		return root.Right.evaluateTree(path, info)
 	}
 
 	if *root.Type == tokenizer.Or {
-		if root.Left.evaluateTree(path, info) {
-			return true
+		if ok, err := root.Left.evaluateTree(path, info); err != nil {
+			return false, nil
+		} else if ok {
+			return true, nil
 		}
 		return root.Right.evaluateTree(path, info)
 	}
 
-	return false
+	return false, nil
 }
 
 // Condition represents a WHERE condition.
@@ -106,78 +109,29 @@ func (c *Condition) applyModifiers() error {
 }
 
 // evaluate runs the respective evaluate function for this Condition.
-func (c *Condition) evaluate(path string, file os.FileInfo) bool {
-	var retval bool
-
-	switch c.Attribute {
-	case "name":
-		retval = c.evaluateName(path, file)
-	case "size":
-		retval = c.evaluateSize(path, file)
-	case "time":
-		retval = c.evaluateTime(path, file)
-	case "mode":
-		retval = c.evaluateMode(path, file)
+func (c *Condition) evaluate(path string, file os.FileInfo) (bool, error) {
+	// FIXME: This is a bit of a hack. We can't pass c.AttributeModifiers, since
+	// that'll cause a import cycle, so we have to recreate the attribute
+	// modifiers slice using a separate type defined in evaluate.
+	modifiers := make([]evaluate.Modifier, len(c.AttributeModifiers))
+	for i, m := range c.AttributeModifiers {
+		modifiers[i] = evaluate.Modifier{Name: m.Name, Arguments: m.Arguments}
 	}
 
+	o := &evaluate.Opts{
+		Path:      path,
+		File:      file,
+		Attribute: c.Attribute,
+		Modifiers: modifiers,
+		Operator:  c.Operator,
+		Value:     c.Value,
+	}
+	result, err := evaluate.Evaluate(o)
+	if err != nil {
+		return false, err
+	}
 	if c.Negate {
-		return !retval
+		return !result, nil
 	}
-
-	return retval
-}
-
-// evaluateName evaluates a Condition with attribute `name`.
-func (c *Condition) evaluateName(path string, file os.FileInfo) bool {
-	switch c.Value.(type) {
-	case string:
-		return cmpAlpha(c.Operator, file.Name(), c.Value.(string))
-	case []string:
-		return cmpAlpha(c.Operator, file.Name(), c.Value.([]string))
-	case map[interface{}]bool:
-		return cmpAlpha(c.Operator, file.Name(), c.Value.(map[interface{}]bool))
-	}
-
-	return false
-}
-
-// evaluateSize evaluates a Condition with attribute `size`.
-func (c *Condition) evaluateSize(path string, file os.FileInfo) bool {
-	switch c.Value.(type) {
-	case float64:
-		return cmpNumeric(c.Operator, file.Size(), int64(c.Value.(float64)))
-	case string:
-		size, err := strconv.ParseFloat(c.Value.(string), 10)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-		return cmpNumeric(c.Operator, file.Size(), int64(size))
-	case map[interface{}]bool:
-		return cmpNumeric(c.Operator, file.Size(), c.Value.(map[interface{}]bool))
-	}
-
-	return false
-}
-
-// evaluateTime evaluates a Condition with attribute `time`.
-func (c *Condition) evaluateTime(path string, file os.FileInfo) bool {
-	switch c.Value.(type) {
-	case string:
-		t, err := time.Parse("Jan 02 2006 15 04", c.Value.(string))
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-		return cmpTime(c.Operator, file.ModTime(), t)
-	case time.Time:
-		return cmpTime(c.Operator, file.ModTime(), c.Value.(time.Time))
-	case map[interface{}]bool:
-		return cmpTime(c.Operator, file.ModTime(), c.Value.(map[interface{}]bool))
-	}
-
-	return false
-}
-
-// evaluateMode evaluates a Condition with attribute `mode`.
-func (c *Condition) evaluateMode(path string, file os.FileInfo) bool {
-	return cmpMode(c.Operator, file, c.Value)
+	return result, nil
 }

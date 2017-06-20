@@ -2,10 +2,14 @@ package transform
 
 import (
 	"fmt"
+	"hash"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
+
+const defaultHashLength = 7
 
 // FormatParams holds the params for a format-modifier function.
 type FormatParams struct {
@@ -31,8 +35,9 @@ func Format(p *FormatParams) (val interface{}, err error) {
 		val, err = p.fullPath()
 	case "SHORTPATH":
 		val, err = p.shortPath()
+	case "SHA1":
+		val, err = p.hash(FindHash(p.Name)())
 	}
-
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +57,6 @@ func (p *FormatParams) format() (val interface{}, err error) {
 	case "time":
 		val, err = p.formatTime()
 	}
-
 	if err != nil {
 		return nil, err
 	}
@@ -109,18 +113,47 @@ func (p *FormatParams) shortPath() (interface{}, error) {
 	return p.Info.Name(), nil
 }
 
+// hash applies the provided hash algorithm h with ComputeHash.
+func (p *FormatParams) hash(h hash.Hash) (interface{}, error) {
+	var (
+		err    error
+		n      int
+		result interface{}
+	)
+
+	if len(p.Args) == 0 || p.Args[0] == "" {
+		n = defaultHashLength
+	} else if strings.ToUpper(p.Args[0]) == "FULL" {
+		n = -1
+	} else if n, err = strconv.Atoi(p.Args[0]); err != nil {
+		return nil, err
+	}
+
+	if result, err = ComputeHash(p.Info, p.Path, h); err != nil {
+		return nil, err
+	}
+
+	return truncate(result.(string), n), nil
+}
+
 // DefaultFormatValue returns the default format value for the provided
 // attribute attr based on path and info.
-func DefaultFormatValue(attr, path string, info os.FileInfo) interface{} {
+func DefaultFormatValue(attr, path string, info os.FileInfo) (value interface{}, err error) {
 	switch attr {
 	case "mode":
-		return info.Mode()
+		value = info.Mode()
 	case "name":
-		return info.Name()
+		value = info.Name()
 	case "size":
-		return info.Size()
+		value = info.Size()
 	case "time":
-		return info.ModTime().Format(time.Stamp)
+		value = info.ModTime().Format(time.Stamp)
+	case "hash":
+		if value, err = ComputeHash(info, path, FindHash("SHA1")()); value != nil {
+			value = truncate(value.(string), defaultHashLength)
+		}
+	default:
+		err = fmt.Errorf("unknown attribute %s", attr)
 	}
-	return nil
+	return value, err
 }

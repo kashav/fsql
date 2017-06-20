@@ -25,7 +25,10 @@ func (q *Query) applyModifiers(path string, info os.FileInfo) map[string]interfa
 	results := make(map[string]interface{}, len(q.Attributes))
 
 	for attribute := range q.Attributes {
-		value := transform.DefaultFormatValue(attribute, path, info)
+		value, err := transform.DefaultFormatValue(attribute, path, info)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
 
 		if _, ok := q.Modifiers[attribute]; !ok {
 			results[attribute] = value
@@ -33,7 +36,6 @@ func (q *Query) applyModifiers(path string, info os.FileInfo) map[string]interfa
 		}
 
 		for _, m := range q.Modifiers[attribute] {
-			var err error
 			value, err = transform.Format(&transform.FormatParams{
 				Attribute: attribute,
 				Path:      path,

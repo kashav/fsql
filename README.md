@@ -76,9 +76,9 @@ If you're providing your query via stdin, quotes are **not** required, however y
 
 ### Attribute
 
-Currently supported attributes include `name`, `size`, `mode`, `time`, and `all`.
+Currently supported attributes include `name`, `size`, `time`, `hash`, `mode`.
 
-If no attribute is provided, `all` is chosen by default.
+Use `all` or `*` to choose all; if no attribute is provided, this is chosen by default.
 
 **Examples**:
 
@@ -149,9 +149,14 @@ A single condition is made up of 3 parts: an attribute, an operator, and a value
 
     - All basic algebraic operators: `>`, `>=`, `<`, `<=`, `=`, and `<>` / `!=`.
 
+  - `hash`:
+
+    - `=` or `<>` / `!=`
+
   - `mode`:
 
     - `IS`
+
 
 - **Value**:
 
@@ -162,6 +167,8 @@ A single condition is made up of 3 parts: an attribute, an operator, and a value
   The default format for `time` is `MMM DD YYYY HH MM` (e.g. `"Jan 02 2006 15 04"`).
 
   Use `mode` to test if a file is regular (`IS REG`) or if it's a directory (`IS DIR`).
+
+  Use `hash` to compute and/or compare the hash value of a file. The default algorithm is `SHA1`
 
 #### Conjunction / Disjunction
 
@@ -199,30 +206,43 @@ The table below lists currently-supported modifiers. Note that the first paramet
 
 | Attribute | Modifier  | Supported in `SELECT` | Supported in `WHERE` |
 | :---: | --- | :---: | :---: |
-| `name` | `UPPER` (synonymous to `FORMAT(, UPPER)` | ✔️ | ✔️ |
-| | `LOWER` (synonymous to `FORMAT(, LOWER)` | ✔️ | ✔️ |
+| `hash` | `SHA1(, n)` | ✔️ | ✔️ |
+| `name` | `UPPER` (synonymous to `FORMAT(, UPPER)`) | ✔️ | ✔️ |
+| | `LOWER` (synonymous to `FORMAT(, LOWER)`) | ✔️ | ✔️ |
 | | `FULLPATH` | ✔️ |  |
 | | `SHORTPATH`  | ✔️ |  |
 | `size` | `FORMAT(, unit)` | ✔️ | ✔️ |
 | `time` | `FORMAT(, layout)` | ✔️ | ✔️ |
 
 
-Supported `unit` values: `B` (byte), `KB` (kilobyte), `MB` (megabyte), or `GB` (gigabyte).
+- **`n`**:
 
-Supported `layout` values: [`ISO`](https://en.wikipedia.org/wiki/ISO_8601), [`UNIX`](https://en.wikipedia.org/wiki/Unix_time), or [custom](https://golang.org/pkg/time/#Time.Format). Custom layouts must be provided in reference to the following date: `Mon Jan 2 15:04:05 -0700 MST 2006`.
+  Specify the length of the hash value. Use a negative integer or `ALL` to display all digits.
+
+- **`unit`**:
+
+  Specify the size unit. One of: `B` (byte), `KB` (kilobyte), `MB` (megabyte), or `GB` (gigabyte).
+
+- **`layout`**:
+
+  Specify the time layout. One of: [`ISO`](https://en.wikipedia.org/wiki/ISO_8601), [`UNIX`](https://en.wikipedia.org/wiki/Unix_time), or [custom](https://golang.org/pkg/time/#Time.Format). Custom layouts must be provided in reference to the following date: `Mon Jan 2 15:04:05 -0700 MST 2006`.
 
 **Examples**:
 
 ```console
->>> ... WHERE UPPER(name) LIKE %.go ...
+>>> SELECT SHA1(hash, 20) ...
 ```
 
 ```console
->>> ... WHERE FORMAT(size, GB) > 2 ...
+>>> ... WHERE UPPER(name) ...
 ```
 
 ```console
->>> ... SELECT FORMAT(time, "Mon Jan 2 2006 15:04:05") ...
+>>> SELECT FORMAT(size, MB) ...
+```
+
+```console
+>>> ... WHERE FORMAT(time, "Mon Jan 2 2006 15:04:05") ...
 ```
 
 ### Subqueries

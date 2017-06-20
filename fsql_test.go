@@ -2,8 +2,11 @@ package fsql
 
 import (
 	"bytes"
+	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -28,7 +31,8 @@ func GetAttrs(path string, attrs ...string) []string {
 		}
 	}
 
-	file, ok := files[filepath.Clean(fmt.Sprintf("testdata/%s", path))]
+	path = filepath.Clean(fmt.Sprintf("testdata/%s", path))
+	file, ok := files[path]
 	if !ok {
 		return []string{}
 	}
@@ -38,6 +42,16 @@ func GetAttrs(path string, attrs ...string) []string {
 		// Hard-coding modifiers works for the time being, but we might need a more
 		// elegant solution when we introduce new modifiers in the future.
 		switch attr {
+		case "hash":
+			b, err := ioutil.ReadFile(path)
+			if err != nil {
+				return []string{}
+			}
+			h := sha1.New()
+			if _, err := h.Write(b); err != nil {
+				return []string{}
+			}
+			result[i] = hex.EncodeToString(h.Sum(nil))[:7]
 		case "size":
 			result[i] = fmt.Sprintf("%d", (*file).Size())
 		case "size:kb", "size:mb", "size:gb":
@@ -96,13 +110,13 @@ func TestRun_All(t *testing.T) {
 	cases := []Case{
 		{
 			query: "SELECT all FROM ./testdata WHERE name = foo",
-			expected: fmt.Sprintf("drwxr-xr-x\t%s\tfoo\n",
+			expected: fmt.Sprintf("drwxr-xr-x\t%s\t-------\tfoo\n",
 				strings.Join(GetAttrs("foo", "size", "time"), "\t")),
 		},
 		{
-			query: "SELECT all FROM ./testdata WHERE name LIKE qu AND size > 0",
-			expected: fmt.Sprintf("drwxr-xr-x\t%s\tquuz\n",
-				strings.Join(GetAttrs("foo/quuz", "size", "time"), "\t")),
+			query: "SELECT all FROM ./testdata WHERE name LIKE waldo",
+			expected: fmt.Sprintf("-rw-r--r--\t%s\twaldo\n",
+				strings.Join(GetAttrs("foo/quuz/waldo", "size", "time", "hash"), "\t")),
 		},
 		{
 			query:    "SELECT all FROM ./testdata WHERE FORMAT(time, 'Jan 02 2006 15:04') > 'Jan 01 2999 00:00'",
@@ -113,35 +127,35 @@ func TestRun_All(t *testing.T) {
 			expected: fmt.Sprintf(
 				strings.Repeat("%s\n", 8),
 				fmt.Sprintf(
-					"drwxr-xr-x\t%s\ttestdata",
+					"drwxr-xr-x\t%s\t-------\ttestdata",
 					strings.Join(GetAttrs(".", "size", "time"), "\t"),
 				),
 				fmt.Sprintf(
-					"drwxr-xr-x\t%s\tbar",
+					"drwxr-xr-x\t%s\t-------\tbar",
 					strings.Join(GetAttrs("bar", "size", "time"), "\t"),
 				),
 				fmt.Sprintf(
-					"drwxr-xr-x\t%s\tgarply",
+					"drwxr-xr-x\t%s\t-------\tgarply",
 					strings.Join(GetAttrs("bar/garply", "size", "time"), "\t"),
 				),
 				fmt.Sprintf(
-					"drwxr-xr-x\t%s\txyzzy",
+					"drwxr-xr-x\t%s\t-------\txyzzy",
 					strings.Join(GetAttrs("bar/garply/xyzzy", "size", "time"), "\t"),
 				),
 				fmt.Sprintf(
-					"drwxr-xr-x\t%s\tthud",
+					"drwxr-xr-x\t%s\t-------\tthud",
 					strings.Join(GetAttrs("bar/garply/xyzzy/thud", "size", "time"), "\t"),
 				),
 				fmt.Sprintf(
-					"drwxr-xr-x\t%s\tfoo",
+					"drwxr-xr-x\t%s\t-------\tfoo",
 					strings.Join(GetAttrs("foo", "size", "time"), "\t"),
 				),
 				fmt.Sprintf(
-					"drwxr-xr-x\t%s\tquuz",
+					"drwxr-xr-x\t%s\t-------\tquuz",
 					strings.Join(GetAttrs("foo/quuz", "size", "time"), "\t"),
 				),
 				fmt.Sprintf(
-					"drwxr-xr-x\t%s\tfred",
+					"drwxr-xr-x\t%s\t-------\tfred",
 					strings.Join(GetAttrs("foo/quuz/fred", "size", "time"), "\t"),
 				),
 			),
@@ -355,6 +369,23 @@ func TestRun_Mode(t *testing.T) {
 			expected: strings.Repeat("drwxr-xr-x\n", 8),
 		},
 	}
+
+	for _, c := range cases {
+		actual := DoRun(c.query)
+		if !reflect.DeepEqual(c.expected, actual) {
+			t.Fatalf("\nExpected:\n%v\nGot:\n%v", c.expected, actual)
+		}
+	}
+}
+
+func TestRun_Hash(t *testing.T) {
+	type Case struct {
+		query    string
+		expected string
+	}
+
+	// TODO
+	cases := []Case{}
 
 	for _, c := range cases {
 		actual := DoRun(c.query)

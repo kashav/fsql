@@ -22,21 +22,17 @@ type parser struct {
 
 // parse runs the respective parser function on each clause of the query.
 func (p *parser) parse(input string) (*query.Query, error) {
-	p.tokenizer = tokenizer.NewTokenizer(input)
 	q := query.NewQuery()
-
+	p.tokenizer = tokenizer.NewTokenizer(input)
 	if err := p.parseSelectClause(q); err != nil {
 		return nil, err
 	}
-
 	if err := p.parseFromClause(q); err != nil {
 		return nil, err
 	}
-
 	if err := p.parseWhereClause(q); err != nil {
 		return nil, err
 	}
-
 	return q, nil
 }
 
