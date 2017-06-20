@@ -6,6 +6,7 @@ import (
 	"hash"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -52,9 +53,25 @@ func FindHash(name string) func() hash.Hash {
 // ComputeHash applies the hash h to the file located at path. Returns a line
 // of dashes for directories.
 func ComputeHash(info os.FileInfo, path string, h hash.Hash) (interface{}, error) {
-	if info.IsDir() {
-		return strings.Repeat("-", h.Size()*2), nil
+	fallback := strings.Repeat("-", h.Size()*2)
+
+	// If the current file is a symlink, attempt to evaluate the link and
+	// stat the resultant file. If either process fails, ignore the error and
+	// return the fallback.
+	if info.Mode()&os.ModeSymlink == os.ModeSymlink {
+		var err error
+		if path, err = filepath.EvalSymlinks(path); err != nil {
+			return fallback, nil
+		}
+		if info, err = os.Stat(path); err != nil {
+			return fallback, nil
+		}
 	}
+
+	if info.IsDir() {
+		return fallback, nil
+	}
+
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
