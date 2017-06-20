@@ -10,6 +10,7 @@ import (
 var allAttributes = map[string]bool{
 	"mode": true,
 	"name": true,
+	"hash": true,
 	"size": true,
 	"time": true,
 }
