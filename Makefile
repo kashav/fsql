@@ -92,7 +92,7 @@ build-all: $(SRCS) VERSION
 		-output="$(DIST_DIR)/{{.OS}}-{{.Arch}}/{{.Dir}}" $(MAIN)
 
 .PHONY: dist
-dist: build-all
+dist: clean build-all
 	@echo "+ $@"
 	@cd $(DIST_DIR) && \
 		$(DIST_DIRS) cp ../LICENSE {} && \
