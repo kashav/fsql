@@ -8,7 +8,7 @@ var GITCOMMIT string
 // VERSION indicates which version of the binary is running.
 var VERSION string
 
-const majorRelease = "0.2.x"
+const majorRelease = "0.3.x"
 
 // Version returns the version/commit string.
 func Version() string {
