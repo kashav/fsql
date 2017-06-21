@@ -16,11 +16,13 @@
 
 [![fsql.gif](./media/fsql.gif)](https://asciinema.org/a/120534)
 
-## Setup / installation
+## Installation
 
-Assumes that Go is [installed](https://golang.org/doc/install) and [setup](https://golang.org/doc/install#testing).
+#### Binaries
 
-Install with `go get`:
+[View latest release](https://github.com/kshvmdn/fsql/releases/latest).
+
+#### Via Go
 
 ```sh
 $ go get -u -v github.com/kshvmdn/fsql/...
@@ -28,20 +30,20 @@ $ which fsql
 $GOPATH/bin/fsql
 ```
 
-Install with [Homebrew](https://brew.sh/):
+#### Via Homebrew
 
-```console
+```sh
 $ brew install fsql
 $ which fsql
 /usr/local/bin/fsql
 ```
 
-Install directly via source:
+#### Build manually
 
 ```sh
 $ git clone https://github.com/kshvmdn/fsql.git $GOPATH/src/github.com/kshvmdn/fsql
 $ cd $_ # $GOPATH/src/github.com/kshvmdn/fsql
-$ make install fsql
+$ make
 $ ./fsql
 ```
 
@@ -56,8 +58,10 @@ View the usage dialogue with the `-help` flag.
 ```sh
 $ fsql -help
 usage: fsql [options] query
+  -i  run in interactive mode (shorthand)
   -interactive
       run in interactive mode (Ctrl+D to exit)
+  -v  print version and exit (shorthand)
   -version
       print version and exit
 ```
@@ -327,12 +331,14 @@ Before submitting code, please ensure that tests are passing and the linter is h
 
 ```sh
 $ make install \
-       get-tools \
-       fmt \
+       get-tools
+$ make fmt \
        vet \
-       lint \
-       test \
+       lint
+$ make test \
        coverage
+$ make bootstrap-dist \
+       dist
 ```
 
 ## License

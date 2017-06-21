@@ -9,9 +9,6 @@ import (
 	"github.com/kshvmdn/fsql/query"
 )
 
-// Version holds the current version number.
-const Version = "0.2.1"
-
 var q *query.Query
 var attrs = [...]string{"mode", "size", "time", "hash", "name"}
 

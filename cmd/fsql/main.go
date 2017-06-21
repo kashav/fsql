@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/kshvmdn/fsql"
+	"github.com/kshvmdn/fsql/meta"
 )
 
 var options struct {
@@ -28,13 +29,17 @@ func main() {
 		fmt.Printf("usage: %s [options] query\n", os.Args[0])
 		flag.PrintDefaults()
 	}
+
 	flag.BoolVar(&options.interactive, "interactive", false,
 		"run in interactive mode (Ctrl+D to exit)")
+	flag.BoolVar(&options.interactive, "i", false, "run in interactive mode (shorthand)")
 	flag.BoolVar(&options.version, "version", false, "print version and exit")
+	flag.BoolVar(&options.version, "v", false,
+		"print version and exit (shorthand)")
 	flag.Parse()
 
 	if options.version {
-		fmt.Printf("fsql v%v\n", fsql.Version)
+		fmt.Printf("%s\n", meta.Version())
 		os.Exit(0)
 	}
 

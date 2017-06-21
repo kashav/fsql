@@ -33,7 +33,7 @@ _testmain.go
 fsql
 debug
 main
-build/
+dist/
 
 # Allow cmd/fsql
 !cmd/fsql
