@@ -86,7 +86,7 @@ build-all: $(SRCS) VERSION
 	@echo "+ $@"
 	@gox -verbose \
 		-ldflags "${LDFLAGS}" \
-		-os="darwin freebsd netbsd openbsd linux windows" \
+		-os="darwin freebsd netbsd openbsd linux solaris windows" \
 		-arch="386 amd64 arm arm64" \
 		-osarch="!darwin/arm !darwin/arm64" \
 		-output="$(DIST_DIR)/{{.OS}}-{{.Arch}}/{{.Dir}}" $(MAIN)
