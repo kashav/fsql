@@ -13,7 +13,7 @@ const majorRelease = "0.3.x"
 // Version returns the version/commit string.
 func Version() string {
 	version, commit := VERSION, GITCOMMIT
-	if commit == "" && version == "" {
+	if commit == "" || version == "" {
 		version, commit = majorRelease, "master"
 	}
 	return fmt.Sprintf("fsql version %v, built off %v", version, commit)
