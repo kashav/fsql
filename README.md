@@ -49,9 +49,7 @@ $ ./fsql
 
 ## Usage
 
-fsql expects a single query via stdin.
-
-You may also choose to use fsql in interactive mode. Note that this mode is currently a work-in-progress, so many common shell features are not implemented yet (e.g. arrow key support, autocomplete, history, etc).
+fsql expects a single query via stdin. You may also choose to use fsql in interactive mode.
 
 View the usage dialogue with the `-help` flag.
 

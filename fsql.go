@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/kshvmdn/fsql/parser"
-	"github.com/kshvmdn/fsql/prompt"
 	"github.com/kshvmdn/fsql/query"
 )
 
@@ -35,16 +34,4 @@ func Run(input string) (err error) {
 		return err
 	}
 	return nil
-}
-
-// RunInteractive starts the prompt and continuously calls Run until the
-// process is exited or prompt.Run reads nothing.
-func RunInteractive() error {
-	for {
-		if input := prompt.Run(); input == nil {
-			return nil
-		} else if err := Run(*input); err != nil {
-			return err
-		}
-	}
 }

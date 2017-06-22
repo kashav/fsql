@@ -9,6 +9,7 @@ import (
 
 	"github.com/kshvmdn/fsql"
 	"github.com/kshvmdn/fsql/meta"
+	"github.com/kshvmdn/fsql/terminal"
 )
 
 var options struct {
@@ -44,7 +45,7 @@ func main() {
 	}
 
 	if options.interactive {
-		if err := fsql.RunInteractive(); err != nil {
+		if err := terminal.Start(); err != nil {
 			log.Fatal(err.Error())
 		}
 		os.Exit(0)
