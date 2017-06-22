@@ -7,6 +7,14 @@
 	],
 	"Deps": [
 		{
+			"ImportPath": "golang.org/x/crypto/ssh/terminal",
+			"Rev": "adbae1b6b6fb4b02448a0fc0dbbc9ba2b95b294d"
+		},
+		{
+			"ImportPath": "golang.org/x/sys/unix",
+			"Rev": "99f16d856c9836c42d24e7ab64ea72916925fa97"
+		},
+		{
 			"ImportPath": "gopkg.in/oleiade/lane.v1",
 			"Comment": "v1.0.0",
 			"Rev": "28f7c3f09254f12b51e620fa4db136ba58804762"
