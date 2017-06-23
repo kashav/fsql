@@ -107,7 +107,10 @@ func (q *Query) walkFunc(seen map[string]bool, excluder Excluder,
 			return nil
 		}
 
-		results := q.applyModifiers(path, info)
+		results, err := q.applyModifiers(path, info)
+		if err != nil {
+			return err
+		}
 		workFunc.(func(string, os.FileInfo, map[string]interface{}))(path, info, results)
 		return nil
 	}

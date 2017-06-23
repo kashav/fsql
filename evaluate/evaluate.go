@@ -1,7 +1,6 @@
 package evaluate
 
 import (
-	"log"
 	"os"
 	"strconv"
 	"time"
@@ -68,7 +67,7 @@ func evaluateSize(o *Opts) (bool, error) {
 	case string:
 		size, err := strconv.ParseFloat(o.Value.(string), 10)
 		if err != nil {
-			log.Fatal(err.Error())
+			return false, err
 		}
 		a = o.File.Size()
 		b = int64(size)
@@ -85,7 +84,7 @@ func evaluateTime(o *Opts) (bool, error) {
 	case string:
 		t, err := time.Parse("Jan 02 2006 15 04", o.Value.(string))
 		if err != nil {
-			log.Fatal(err.Error())
+			return false, err
 		}
 		a = o.File.ModTime()
 		b = t

@@ -30,8 +30,5 @@ func Run(input string) (err error) {
 	if q, err = parser.Run(input); err != nil {
 		return err
 	}
-	if err = q.Execute(output); err != nil {
-		return err
-	}
-	return nil
+	return q.Execute(output)
 }

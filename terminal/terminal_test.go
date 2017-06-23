@@ -1,7 +1,6 @@
 package terminal
 
 import (
-	"bytes"
 	"errors"
 	"reflect"
 	"testing"
@@ -14,7 +13,7 @@ func TestRun(t *testing.T) {
 	}
 
 	type Case struct {
-		query    *bytes.Buffer
+		query    string
 		expected Expected
 	}
 
@@ -22,14 +21,14 @@ func TestRun(t *testing.T) {
 	// with _simple_ queries for the following cases.
 	cases := []Case{
 		{
-			query: bytes.NewBufferString("select name, hash from ../testdata where name = baz"),
+			query: "select name, hash from ../testdata where name = baz",
 			expected: Expected{
 				out: "da39a3e\tbaz\n",
 				err: nil,
 			},
 		},
 		{
-			query: bytes.NewBufferString("select all from"),
+			query: "select all from",
 			expected: Expected{
 				out: "",
 				err: errors.New("unexpected EOF"),
@@ -38,7 +37,7 @@ func TestRun(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		actual, err := run(*c.query)
+		actual, err := run(c.query)
 		if c.expected.err == nil {
 			if err != nil {
 				t.Fatalf("\nExpected no error\n     Got %v", err)

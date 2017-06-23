@@ -47,7 +47,8 @@ func Start() error {
 		}
 
 		// TODO: If the previous character was a paren., bracket, or quote, we
-		// don't want to add a space here.
+		// don't want to add a space here (although this the tokenizer /will/
+		// handle excess whitespace).
 		if query.Len() > 0 {
 			query.WriteString(" ")
 		}
@@ -56,13 +57,18 @@ func Start() error {
 		if strings.HasSuffix(line, ";") {
 			query.Truncate(query.Len() - 1)
 
-			if out, err := run(query); err != nil {
+			b := []byte{}
+			if out, err := run(query.String()); err != nil {
 				// This error was likely caused by the query itself, so instead of
 				// exiting interactive mode, we simply write the error to stdout and
 				// proceed.
-				term.Write([]byte(err.Error() + "\n"))
+				b = append(b, term.Escape.Red...)
+				b = append(b, []byte(err.Error())...)
+				b = append(b, term.Escape.Reset...)
+				b = append(b, '\a', '\n')
+				term.Write(b)
 			} else if len(out) > 0 {
-				b := []byte(out)
+				b = append(b, []byte(out)...)
 
 				_, h, err := terminal.GetSize(fd)
 				if err != nil {
@@ -91,11 +97,7 @@ func Start() error {
 }
 
 // run invokes fsql.Run with the provided query string.
-//
-// TODO: We ignore all stderr output, so the terminal breaks whenever anything
-// is logged by fsql.Run. We need to find a way of capturing stderr and
-// returning the error when it's non-empty.
-func run(query bytes.Buffer) (string, error) {
+func run(query string) (out string, err error) {
 	stdout := os.Stdout
 	r, w, err := os.Pipe()
 	if err != nil {
@@ -111,10 +113,11 @@ func run(query bytes.Buffer) (string, error) {
 		ch <- buf.String()
 	}()
 
-	err = fsql.Run(query.String())
-	w.Close()
-	if err != nil {
-		return "", err
+	err = fsql.Run(query)
+	// Must happen after the function call and before we try to read from ch.
+	if closeErr := w.Close(); closeErr != nil {
+		return "", closeErr
 	}
-	return <-ch, nil
+	out = <-ch
+	return
 }
