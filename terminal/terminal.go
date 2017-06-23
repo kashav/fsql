@@ -68,16 +68,18 @@ func Start() error {
 				b = append(b, '\a', '\n')
 				term.Write(b)
 			} else if len(out) > 0 {
-				b = append(b, []byte(out)...)
-
 				_, h, err := terminal.GetSize(fd)
 				if err != nil {
 					return err
 				}
 
-				// Invoke the pager iff out has more lines than 3/4 of the height of
-				// the terminal.
-				if float64(strings.Count(out, "\n")) <= 0.75*float64(h) {
+				b = append(b, []byte(out)...)
+
+				// Write to stdout if out is less than 3/4 of the height of the
+				// window OR the `less` command doesn't exist; otherwise, invoke the
+				// pager.
+				if float64(strings.Count(out, "\n")) <= 0.75*float64(h) ||
+					!pager.CommandExists() {
 					term.Write(b)
 				} else if err = pager.New(b); err != nil {
 					return err

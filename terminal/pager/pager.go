@@ -2,31 +2,28 @@ package pager
 
 import (
 	"bytes"
-	"errors"
 	"os"
 	"os/exec"
 )
 
-var cmds = [...]string{"less", "more"}
+const cmd = "less"
 
-// findPagerPath iterates through cmds until finding an executable path on
-// the host machine.
-func findPagerPath() (path string, err error) {
-	for _, cmd := range cmds {
-		if path, err = exec.LookPath(cmd); err == nil {
-			return path, nil
-		}
-	}
-	return "", errors.New("failed to find command")
+var opts = []string{"-S"}
+
+// CommandExists returns true iff cmd exists on the host machine.
+func CommandExists() bool {
+	_, err := exec.LookPath(cmd)
+	return err == nil
 }
 
-// New invokes an available pager exectuable with in provided as stdin.
+// New invokes cmd with in provided as stdin, if cmd is unavailable, return
+// an error.
 func New(in []byte) error {
-	path, err := findPagerPath()
+	path, err := exec.LookPath(cmd)
 	if err != nil {
 		return err
 	}
-	pager := exec.Command(path)
+	pager := exec.Command(path, opts...)
 	pager.Stdin = bytes.NewReader(in)
 	pager.Stdout = os.Stdout
 	pager.Stderr = os.Stderr
