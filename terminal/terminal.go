@@ -2,30 +2,40 @@ package terminal
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"strings"
 
 	"github.com/kshvmdn/fsql"
+	"github.com/kshvmdn/fsql/terminal/pager"
 
 	"golang.org/x/crypto/ssh/terminal"
 )
 
+var fd = int(os.Stdin.Fd())
+var query bytes.Buffer
+
 // Start listens for queries via stdin and invokes fsql.Run whenever a
 // semicolon is read.
 func Start() error {
-	state, err := terminal.MakeRaw(0)
+	if !terminal.IsTerminal(fd) {
+		return errors.New("not a terminal")
+	}
+
+	state, err := terminal.MakeRaw(fd)
 	if err != nil {
 		return err
 	}
-	defer terminal.Restore(0, state)
+	defer terminal.Restore(fd, state)
 
 	prompt := ">>> "
 	term := terminal.NewTerminal(os.Stdin, prompt)
 
-	var query bytes.Buffer
-
+	// Listen for queries and invoke run whenever a semicolon is read. Continues
+	// until receiving an EOF (Ctrl-D) or _fatal_ error (i.e. anything not
+	// caused by the query itself).
 	for {
 		line, err := term.ReadLine()
 		if err == io.EOF {
@@ -36,27 +46,37 @@ func Start() error {
 			return err
 		}
 
-		// TODO: If the previous character was a paren, bracket, or quote, we don't
-		// want to add a space after it.
+		// TODO: If the previous character was a paren., bracket, or quote, we
+		// don't want to add a space here.
 		if query.Len() > 0 {
 			query.WriteString(" ")
 		}
 		query.WriteString(line)
 
 		if strings.HasSuffix(line, ";") {
-			// Remove trailing semicolon.
 			query.Truncate(query.Len() - 1)
 
-			var buf bytes.Buffer
 			if out, err := run(query); err != nil {
 				// This error was likely caused by the query itself, so instead of
 				// exiting interactive mode, we simply write the error to stdout and
-				// continue.
-				buf.WriteString(err.Error() + "\n")
-			} else {
-				buf.WriteString(out)
+				// proceed.
+				term.Write([]byte(err.Error() + "\n"))
+			} else if len(out) > 0 {
+				b := []byte(out)
+
+				_, h, err := terminal.GetSize(fd)
+				if err != nil {
+					return err
+				}
+
+				// Invoke the pager iff out has more lines than 3/4 of the height of
+				// the terminal.
+				if float64(strings.Count(out, "\n")) <= 0.75*float64(h) {
+					term.Write(b)
+				} else if err = pager.New(b); err != nil {
+					return err
+				}
 			}
-			term.Write(buf.Bytes())
 
 			query.Reset()
 		}
@@ -73,8 +93,8 @@ func Start() error {
 // run invokes fsql.Run with the provided query string.
 //
 // TODO: We ignore all stderr output, so the terminal breaks whenever anything
-// is logged. We need to find a way of capturing stderr and returning an error
-// when it's non-empty.
+// is logged by fsql.Run. We need to find a way of capturing stderr and
+// returning the error when it's non-empty.
 func run(query bytes.Buffer) (string, error) {
 	stdout := os.Stdout
 	r, w, err := os.Pipe()
