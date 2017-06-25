@@ -2,7 +2,6 @@ package query
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
@@ -21,13 +20,13 @@ func (m *Modifier) String() string {
 
 // applyModifiers iterates through each SELECT attribute for this query
 // and applies the associated modifier to the attribute's output value.
-func (q *Query) applyModifiers(path string, info os.FileInfo) map[string]interface{} {
+func (q *Query) applyModifiers(path string, info os.FileInfo) (map[string]interface{}, error) {
 	results := make(map[string]interface{}, len(q.Attributes))
 
 	for attribute := range q.Attributes {
 		value, err := transform.DefaultFormatValue(attribute, path, info)
 		if err != nil {
-			log.Fatal(err.Error())
+			return map[string]interface{}{}, err
 		}
 
 		if _, ok := q.Modifiers[attribute]; !ok {
@@ -45,12 +44,12 @@ func (q *Query) applyModifiers(path string, info os.FileInfo) map[string]interfa
 				Args:      m.Arguments,
 			})
 			if err != nil {
-				log.Fatal(err.Error())
+				return map[string]interface{}{}, err
 			}
 		}
 
 		results[attribute] = value
 	}
 
-	return results
+	return results, nil
 }

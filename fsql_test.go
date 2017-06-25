@@ -394,11 +394,3 @@ func TestRun_Hash(t *testing.T) {
 		}
 	}
 }
-
-func TestRunInteractive(t *testing.T) {
-	// TODO: Complete this.
-	//
-	// I'm not really sure how to test this. We're already testing the core of
-	// this function above, so I guess this test should just ensure that it
-	// retrieves input from prompt.Run and runs until the process is killed?
-}
