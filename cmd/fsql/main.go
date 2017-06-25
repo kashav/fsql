@@ -13,8 +13,7 @@ import (
 )
 
 var options struct {
-	version     bool
-	interactive bool
+	version bool
 }
 
 func readInput() string {
@@ -27,13 +26,10 @@ func readInput() string {
 
 func main() {
 	flag.Usage = func() {
-		fmt.Printf("usage: %s [options] query\n", os.Args[0])
+		fmt.Printf("usage: %s [options] [query]\n", os.Args[0])
 		flag.PrintDefaults()
 	}
 
-	flag.BoolVar(&options.interactive, "interactive", false,
-		"run in interactive mode (Ctrl+D to exit)")
-	flag.BoolVar(&options.interactive, "i", false, "run in interactive mode (shorthand)")
 	flag.BoolVar(&options.version, "version", false, "print version and exit")
 	flag.BoolVar(&options.version, "v", false,
 		"print version and exit (shorthand)")
@@ -44,16 +40,11 @@ func main() {
 		os.Exit(0)
 	}
 
-	if options.interactive {
+	if len(flag.Args()) == 0 {
 		if err := terminal.Start(); err != nil {
 			log.Fatal(err.Error())
 		}
 		os.Exit(0)
-	}
-
-	if len(flag.Args()) == 0 {
-		flag.Usage()
-		os.Exit(1)
 	}
 
 	if err := fsql.Run(readInput()); err != nil {

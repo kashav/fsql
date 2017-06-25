@@ -55,10 +55,7 @@ View the usage dialogue with the `-help` flag.
 
 ```sh
 $ fsql -help
-usage: fsql [options] query
-  -i  run in interactive mode (shorthand)
-  -interactive
-      run in interactive mode (Ctrl+D to exit)
+usage: fsql [options] [query]
   -v  print version and exit (shorthand)
   -version
       print version and exit

@@ -46,9 +46,14 @@ func Start() error {
 			return err
 		}
 
+		if line == "exit" {
+			fmt.Print("bye\r\n")
+			break
+		}
+
 		// TODO: If the previous character was a paren., bracket, or quote, we
-		// don't want to add a space here (although this the tokenizer /will/
-		// handle excess whitespace).
+		// don't want to add a space here (although not necessary, since the
+		// tokenizer handles excess whitespace).
 		if query.Len() > 0 {
 			query.WriteString(" ")
 		}
@@ -59,12 +64,9 @@ func Start() error {
 
 			b := []byte{}
 			if out, err := run(query.String()); err != nil {
-				// This error was likely caused by the query itself, so instead of
-				// exiting interactive mode, we simply write the error to stdout and
-				// proceed.
-				b = append(b, term.Escape.Red...)
+				// This error likely corresponds to the query, so instead of exiting
+				// interactive mode, we simply write the error to stdout and proceed.
 				b = append(b, []byte(err.Error())...)
-				b = append(b, term.Escape.Reset...)
 				b = append(b, '\a', '\n')
 				term.Write(b)
 			} else if len(out) > 0 {
