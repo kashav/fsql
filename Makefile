@@ -20,8 +20,10 @@ LDFLAGS := ${LDFLAGS} \
 	-X $(PKG)/meta.GITCOMMIT=${GITCOMMIT} \
 	-X $(PKG)/meta.VERSION=${VERSION}
 
-.PHONY: build
-build: $(SRCS) VERSION
+.PHONY: all
+all: $(NAME)
+
+$(NAME): $(SRCS) VERSION
 	@echo "+ $@"
 	@go build -ldflags "${LDFLAGS}" -o $(NAME) -v $(MAIN)
 
