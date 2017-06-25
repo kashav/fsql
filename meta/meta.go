@@ -8,13 +8,15 @@ var GITCOMMIT string
 // VERSION indicates which version of the binary is running.
 var VERSION string
 
-const majorRelease = "0.3.x"
+// Release holds the current release number, should match the value
+// in $GOPATH/src/github.com/kshvmdn/fsql/VERSION.
+const Release = "0.3.0"
 
-// Version returns the version/commit string.
-func Version() string {
+// Meta returns the version/commit string.
+func Meta() string {
 	version, commit := VERSION, GITCOMMIT
 	if commit == "" || version == "" {
-		version, commit = majorRelease, "master"
+		version, commit = Release, "master"
 	}
 	return fmt.Sprintf("fsql version %v, built off %v", version, commit)
 }

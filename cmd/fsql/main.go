@@ -36,7 +36,7 @@ func main() {
 	flag.Parse()
 
 	if options.version {
-		fmt.Printf("%s\n", meta.Version())
+		fmt.Printf("%s\n", meta.Meta())
 		os.Exit(0)
 	}
 
