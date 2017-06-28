@@ -12,7 +12,7 @@ import (
 
 func TestParser_ParseSelect(t *testing.T) {
 	type Expected struct {
-		attributes map[string]bool
+		attributes []string
 		modifiers  map[string][]query.Modifier
 		err        error
 	}
@@ -53,7 +53,7 @@ func TestParser_ParseSelect(t *testing.T) {
 		{
 			input: "SELECT name",
 			expected: Expected{
-				attributes: map[string]bool{"name": true},
+				attributes: []string{"name"},
 				modifiers:  map[string][]query.Modifier{"name": {}},
 				err:        nil,
 			},
@@ -62,7 +62,7 @@ func TestParser_ParseSelect(t *testing.T) {
 		{
 			input: "SELECT format(size, kb)",
 			expected: Expected{
-				attributes: map[string]bool{"size": true},
+				attributes: []string{"size"},
 				modifiers: map[string][]query.Modifier{
 					"size": {
 						{

@@ -11,7 +11,7 @@ import (
 
 func TestAttributeParser_ExpectCorrectAttributes(t *testing.T) {
 	type Expected struct {
-		attributes map[string]bool
+		attributes []string
 		err        error
 	}
 
@@ -23,13 +23,14 @@ func TestAttributeParser_ExpectCorrectAttributes(t *testing.T) {
 	cases := []Case{
 		{
 			input:    "name",
-			expected: Expected{attributes: map[string]bool{"name": true}, err: nil},
+			expected: Expected{attributes: []string{"name"}, err: nil},
 		},
 		{
 			input: "name, size",
 			expected: Expected{
-				attributes: map[string]bool{"name": true, "size": true},
-				err:        nil},
+				attributes: []string{"name", "size"},
+				err:        nil,
+			},
 		},
 		{
 			input:    "*",
@@ -41,7 +42,7 @@ func TestAttributeParser_ExpectCorrectAttributes(t *testing.T) {
 		},
 		{
 			input:    "format(time, iso)",
-			expected: Expected{attributes: map[string]bool{"time": true}, err: nil},
+			expected: Expected{attributes: []string{"time"}, err: nil},
 		},
 
 		{
@@ -59,8 +60,8 @@ func TestAttributeParser_ExpectCorrectAttributes(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		attributes := make(map[string]bool, 0)
-		modifiers := make(map[string][]query.Modifier, 0)
+		attributes := make([]string, 0)
+		modifiers := make(map[string][]query.Modifier)
 
 		p := &parser{tokenizer: tokenizer.NewTokenizer(c.input)}
 		err := p.parseAttrs(&attributes, &modifiers)
@@ -235,8 +236,8 @@ func TestAttributeParser_ExpectCorrectModifiers(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		attributes := make(map[string]bool, 0)
-		modifiers := make(map[string][]query.Modifier, 0)
+		attributes := make([]string, 0)
+		modifiers := make(map[string][]query.Modifier)
 
 		p := &parser{tokenizer: tokenizer.NewTokenizer(c.input)}
 		err := p.parseAttrs(&attributes, &modifiers)

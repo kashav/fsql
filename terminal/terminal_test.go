@@ -23,7 +23,7 @@ func TestRun(t *testing.T) {
 		{
 			query: "select name, hash from ../testdata where name = baz",
 			expected: Expected{
-				out: "da39a3e\tbaz\n",
+				out: "baz\tda39a3e\n",
 				err: nil,
 			},
 		},

@@ -23,7 +23,7 @@ func (m *Modifier) String() string {
 func (q *Query) applyModifiers(path string, info os.FileInfo) (map[string]interface{}, error) {
 	results := make(map[string]interface{}, len(q.Attributes))
 
-	for attribute := range q.Attributes {
+	for _, attribute := range q.Attributes {
 		value, err := transform.DefaultFormatValue(attribute, path, info)
 		if err != nil {
 			return map[string]interface{}{}, err

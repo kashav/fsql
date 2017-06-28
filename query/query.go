@@ -8,7 +8,7 @@ import (
 
 // Query represents an input query.
 type Query struct {
-	Attributes map[string]bool
+	Attributes []string
 	Modifiers  map[string][]Modifier
 
 	Sources       map[string][]string
@@ -20,13 +20,13 @@ type Query struct {
 // NewQuery returns a pointer to a Query.
 func NewQuery() *Query {
 	return &Query{
-		Attributes: make(map[string]bool, 0),
-		Modifiers:  make(map[string][]Modifier, 0),
+		Attributes: make([]string, 0),
+		Modifiers:  make(map[string][]Modifier),
 		Sources: map[string][]string{
 			"include": make([]string, 0),
 			"exclude": make([]string, 0),
 		},
-		SourceAliases: make(map[string]string, 0),
+		SourceAliases: make(map[string]string),
 		ConditionTree: nil,
 	}
 }
@@ -34,8 +34,10 @@ func NewQuery() *Query {
 // HasAttribute checks if this query contains any of the provided attributes.
 func (q *Query) HasAttribute(attributes ...string) bool {
 	for _, attribute := range attributes {
-		if _, found := q.Attributes[attribute]; found {
-			return true
+		for _, queryAttribute := range q.Attributes {
+			if attribute == queryAttribute {
+				return true
+			}
 		}
 	}
 	return false

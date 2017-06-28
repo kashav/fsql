@@ -5,30 +5,49 @@ import (
 	"os"
 
 	"github.com/kshvmdn/fsql/parser"
-	"github.com/kshvmdn/fsql/query"
 )
 
-var q *query.Query
-var attrs = [...]string{"mode", "size", "time", "hash", "name"}
+// Run parses the input and executes the resultant query.
+func Run(input string) error {
+	q, err := parser.Run(input)
+	if err != nil {
+		return err
+	}
 
-// output prints the result value for each SELECTed attribute. Attribute output
-// order is based on order of appearance in attrs.
-func output(path string, info os.FileInfo, result map[string]interface{}) {
-	for i, attr := range attrs {
-		if q.HasAttribute(attr) {
-			fmt.Printf("%v", result[attr])
-			if q.HasAttribute(attrs[i+1:]...) {
+	// Find length of the longest name to normalize name output.
+	var max = 0
+	var results = make([]map[string]interface{}, 0)
+
+	err = q.Execute(
+		func(path string, info os.FileInfo, result map[string]interface{}) {
+			results = append(results, result)
+			if !q.HasAttribute("name") {
+				return
+			}
+			if s, ok := result["name"].(string); ok && len(s) > max {
+				max = len(s)
+			}
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	for _, result := range results {
+		for j, attribute := range q.Attributes {
+			// If the current attribute is "name", pad the output string by `max`
+			// spaces.
+			format := "%v"
+			if attribute == "name" {
+				format = fmt.Sprintf("%%-%ds", max)
+			}
+			fmt.Printf(format, result[attribute])
+			if j != len(q.Attributes)-1 {
 				fmt.Print("\t")
 			}
 		}
+		fmt.Print("\n")
 	}
-	fmt.Print("\n")
-}
 
-// Run parses the input and executes the resultant query.
-func Run(input string) (err error) {
-	if q, err = parser.Run(input); err != nil {
-		return err
-	}
-	return q.Execute(output)
+	return nil
 }

@@ -17,90 +17,6 @@ import (
 
 var files = map[string]*os.FileInfo{}
 
-func GetAttrs(path string, attrs ...string) []string {
-	// If the files map is empty, walk ./testdata and populate it!
-	if len(files) == 0 {
-		if err := filepath.Walk(
-			"./testdata",
-			func(path string, info os.FileInfo, err error) error {
-				files[filepath.Clean(path)] = &info
-				return nil
-			},
-		); err != nil {
-			return []string{}
-		}
-	}
-
-	path = filepath.Clean(fmt.Sprintf("testdata/%s", path))
-	file, ok := files[path]
-	if !ok {
-		return []string{}
-	}
-
-	result := make([]string, len(attrs))
-	for i, attr := range attrs {
-		// Hard-coding modifiers works for the time being, but we might need a more
-		// elegant solution when we introduce new modifiers in the future.
-		switch attr {
-		case "hash":
-			b, err := ioutil.ReadFile(path)
-			if err != nil {
-				return []string{}
-			}
-			h := sha1.New()
-			if _, err := h.Write(b); err != nil {
-				return []string{}
-			}
-			result[i] = hex.EncodeToString(h.Sum(nil))[:7]
-		case "size":
-			result[i] = fmt.Sprintf("%d", (*file).Size())
-		case "size:kb", "size:mb", "size:gb":
-			size := (*file).Size()
-			switch attr[len(attr)-2:] {
-			case "kb":
-				result[i] = fmt.Sprintf("%fkb", float64(size)/(1<<10))
-			case "mb":
-				result[i] = fmt.Sprintf("%fmb", float64(size)/(1<<20))
-			case "gb":
-				result[i] = fmt.Sprintf("%fgb", float64(size)/(1<<30))
-			}
-		case "time":
-			result[i] = (*file).ModTime().Format(time.Stamp)
-		case "time:iso":
-			result[i] = (*file).ModTime().Format(time.RFC3339)
-		case "time:year":
-			result[i] = (*file).ModTime().Format("2006")
-		}
-	}
-	return result
-}
-
-// DoRun executes fsql.Run and returns the output.
-func DoRun(query string) string {
-	stdout := os.Stdout
-	ch := make(chan string)
-
-	r, w, err := os.Pipe()
-	if err != nil {
-		return ""
-	}
-	os.Stdout = w
-
-	if err := Run(query); err != nil {
-		return ""
-	}
-
-	go func() {
-		var buf bytes.Buffer
-		io.Copy(&buf, r)
-		ch <- buf.String()
-	}()
-
-	w.Close()
-	os.Stdout = stdout
-	return <-ch
-}
-
 func TestRun_All(t *testing.T) {
 	type Case struct {
 		query    string
@@ -127,36 +43,44 @@ func TestRun_All(t *testing.T) {
 			expected: fmt.Sprintf(
 				strings.Repeat("%s\n", 8),
 				fmt.Sprintf(
-					"drwxr-xr-x\t%s\t-------\ttestdata",
+					"drwxr-xr-x\t%s\t-------\t%-8s",
 					strings.Join(GetAttrs(".", "size", "time"), "\t"),
+					"testdata",
 				),
 				fmt.Sprintf(
-					"drwxr-xr-x\t%s\t-------\tbar",
+					"drwxr-xr-x\t%s\t-------\t%-8s",
 					strings.Join(GetAttrs("bar", "size", "time"), "\t"),
+					"bar",
 				),
 				fmt.Sprintf(
-					"drwxr-xr-x\t%s\t-------\tgarply",
+					"drwxr-xr-x\t%s\t-------\t%-8s",
 					strings.Join(GetAttrs("bar/garply", "size", "time"), "\t"),
+					"garply",
 				),
 				fmt.Sprintf(
-					"drwxr-xr-x\t%s\t-------\txyzzy",
+					"drwxr-xr-x\t%s\t-------\t%-8s",
 					strings.Join(GetAttrs("bar/garply/xyzzy", "size", "time"), "\t"),
+					"xyzzy",
 				),
 				fmt.Sprintf(
-					"drwxr-xr-x\t%s\t-------\tthud",
+					"drwxr-xr-x\t%s\t-------\t%-8s",
 					strings.Join(GetAttrs("bar/garply/xyzzy/thud", "size", "time"), "\t"),
+					"thud",
 				),
 				fmt.Sprintf(
-					"drwxr-xr-x\t%s\t-------\tfoo",
+					"drwxr-xr-x\t%s\t-------\t%-8s",
 					strings.Join(GetAttrs("foo", "size", "time"), "\t"),
+					"foo",
 				),
 				fmt.Sprintf(
-					"drwxr-xr-x\t%s\t-------\tquuz",
+					"drwxr-xr-x\t%s\t-------\t%-8s",
 					strings.Join(GetAttrs("foo/quuz", "size", "time"), "\t"),
+					"quuz",
 				),
 				fmt.Sprintf(
-					"drwxr-xr-x\t%s\t-------\tfred",
+					"drwxr-xr-x\t%s\t-------\t%-8s",
 					strings.Join(GetAttrs("foo/quuz/fred", "size", "time"), "\t"),
+					"fred",
 				),
 			),
 		},
@@ -179,42 +103,49 @@ func TestRun_Multiple(t *testing.T) {
 	cases := []Case{
 		{
 			query:    "SELECT name, size FROM ./testdata WHERE name = foo",
-			expected: fmt.Sprintf("%s\tfoo\n", GetAttrs("foo", "size")[0]),
+			expected: fmt.Sprintf("foo\t%s\n", GetAttrs("foo", "size")[0]),
 		},
 		{
 			query:    "SELECT size, name FROM ./testdata WHERE name = foo",
 			expected: fmt.Sprintf("%s\tfoo\n", GetAttrs("foo", "size")[0]),
 		},
 		{
-			query: "SELECT size, time, FULLPATH(name) FROM ./testdata/foo",
+			query: "SELECT FULLPATH(name), size, time FROM ./testdata/foo",
 			expected: fmt.Sprintf(
 				strings.Repeat("%s\n", 7),
 				fmt.Sprintf(
-					"%s\ttestdata/foo",
+					"%-31s\t%s",
+					"testdata/foo",
 					strings.Join(GetAttrs("foo", "size", "time"), "\t"),
 				),
 				fmt.Sprintf(
-					"%s\ttestdata/foo/quux",
+					"%-31s\t%s",
+					"testdata/foo/quux",
 					strings.Join(GetAttrs("foo/quux", "size", "time"), "\t"),
 				),
 				fmt.Sprintf(
-					"%s\ttestdata/foo/quuz",
+					"%-31s\t%s",
+					"testdata/foo/quuz",
 					strings.Join(GetAttrs("foo/quuz", "size", "time"), "\t"),
 				),
 				fmt.Sprintf(
-					"%s\ttestdata/foo/quuz/fred",
+					"%-31s\t%s",
+					"testdata/foo/quuz/fred",
 					strings.Join(GetAttrs("foo/quuz/fred", "size", "time"), "\t"),
 				),
 				fmt.Sprintf(
-					"%s\ttestdata/foo/quuz/fred/.gitkeep",
+					"%-31s\t%s",
+					"testdata/foo/quuz/fred/.gitkeep",
 					strings.Join(GetAttrs("foo/quuz/fred/.gitkeep", "size", "time"), "\t"),
 				),
 				fmt.Sprintf(
-					"%s\ttestdata/foo/quuz/waldo",
+					"%-31s\t%s",
+					"testdata/foo/quuz/waldo",
 					strings.Join(GetAttrs("foo/quuz/waldo", "size", "time"), "\t"),
 				),
 				fmt.Sprintf(
-					"%s\ttestdata/foo/qux",
+					"%-31s\t%s",
+					"testdata/foo/qux",
 					strings.Join(GetAttrs("foo/qux", "size", "time"), "\t"),
 				),
 			),
@@ -247,7 +178,7 @@ func TestRun_Name(t *testing.T) {
 		{
 			query: "SELECT UPPER(FULLPATH(name)) FROM ./testdata WHERE mode IS DIR",
 			expected: fmt.Sprintf(
-				strings.Repeat("%s\n", 8),
+				strings.Repeat("%-30s\n", 8),
 				"TESTDATA",
 				"TESTDATA/BAR",
 				"TESTDATA/BAR/GARPLY",
@@ -393,4 +324,88 @@ func TestRun_Hash(t *testing.T) {
 			t.Fatalf("\nExpected:\n%v\nGot:\n%v", c.expected, actual)
 		}
 	}
+}
+
+func GetAttrs(path string, attrs ...string) []string {
+	// If the files map is empty, walk ./testdata and populate it.
+	if len(files) == 0 {
+		if err := filepath.Walk(
+			"./testdata",
+			func(path string, info os.FileInfo, err error) error {
+				files[filepath.Clean(path)] = &info
+				return nil
+			},
+		); err != nil {
+			return []string{}
+		}
+	}
+
+	path = filepath.Clean(fmt.Sprintf("testdata/%s", path))
+	file, ok := files[path]
+	if !ok {
+		return []string{}
+	}
+
+	result := make([]string, len(attrs))
+	for i, attr := range attrs {
+		// Hard-coding modifiers works for the time being, but we might need a more
+		// elegant solution when we introduce new modifiers in the future.
+		switch attr {
+		case "hash":
+			b, err := ioutil.ReadFile(path)
+			if err != nil {
+				return []string{}
+			}
+			h := sha1.New()
+			if _, err := h.Write(b); err != nil {
+				return []string{}
+			}
+			result[i] = hex.EncodeToString(h.Sum(nil))[:7]
+		case "size":
+			result[i] = fmt.Sprintf("%d", (*file).Size())
+		case "size:kb", "size:mb", "size:gb":
+			size := (*file).Size()
+			switch attr[len(attr)-2:] {
+			case "kb":
+				result[i] = fmt.Sprintf("%fkb", float64(size)/(1<<10))
+			case "mb":
+				result[i] = fmt.Sprintf("%fmb", float64(size)/(1<<20))
+			case "gb":
+				result[i] = fmt.Sprintf("%fgb", float64(size)/(1<<30))
+			}
+		case "time":
+			result[i] = (*file).ModTime().Format(time.Stamp)
+		case "time:iso":
+			result[i] = (*file).ModTime().Format(time.RFC3339)
+		case "time:year":
+			result[i] = (*file).ModTime().Format("2006")
+		}
+	}
+	return result
+}
+
+// DoRun executes fsql.Run and returns the output.
+func DoRun(query string) string {
+	stdout := os.Stdout
+	ch := make(chan string)
+
+	r, w, err := os.Pipe()
+	if err != nil {
+		return ""
+	}
+	os.Stdout = w
+
+	if err := Run(query); err != nil {
+		return ""
+	}
+
+	go func() {
+		var buf bytes.Buffer
+		io.Copy(&buf, r)
+		ch <- buf.String()
+	}()
+
+	w.Close()
+	os.Stdout = stdout
+	return <-ch
 }

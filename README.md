@@ -273,7 +273,7 @@ $ fsql "SELECT name FROM ~/Desktop, ~/Downloads WHERE name LIKE %csc%"
 List all files in the current directory that are also present in some other directory:
 
 ```console
-$ fsql -interactive
+$ fsql
 >>> SELECT all FROM . WHERE name IN (
 ...   SELECT name FROM ~/Desktop/files.bak/
 ... );
@@ -286,7 +286,7 @@ List all files named `main.go` in `$GOPATH` which are larger than 10.5 kilobytes
 ```console
 $ fsql SELECT all FROM $GOPATH WHERE name = main.go AND \(FORMAT\(size, KB\) \>= 10.5 OR size \< 100\)
 $ fsql "SELECT all FROM $GOPATH WHERE name = main.go AND (FORMAT(size, KB) >= 10.5 OR size < 100)"
-$ fsql -interactive
+$ fsql
 >>> SELECT
 ...   all
 ... FROM
@@ -305,7 +305,7 @@ List the name, size, and modification time of JavaScript files in the current di
 ```console
 $ fsql SELECT UPPER\(name\), FORMAT\(size, KB\), FORMAT\(time, ISO\) FROM . WHERE name LIKE %.js AND time \> \'Apr 01 2017 00 00\'
 $ fsql "SELECT UPPER(name), FORMAT(size, KB), FORMAT(time, ISO) FROM . WHERE name LIKE %.js AND time > 'Apr 01 2017 00 00'"
-$ fsql -interactve
+$ fsql
 >>> SELECT
 ...   UPPER(name),
 ...   FORMAT(size, KB),

@@ -7,23 +7,19 @@ import (
 	"github.com/kshvmdn/fsql/tokenizer"
 )
 
-var allAttributes = map[string]bool{
-	"mode": true,
-	"name": true,
-	"hash": true,
-	"size": true,
-	"time": true,
-}
+var allAttributes = []string{"mode", "size", "time", "hash", "name"}
 
 func isValidAttribute(attribute string) error {
-	if _, ok := allAttributes[attribute]; !ok {
-		return &ErrUnknownToken{attribute}
+	for _, valid := range allAttributes {
+		if attribute == valid {
+			return nil
+		}
 	}
-	return nil
+	return &ErrUnknownToken{attribute}
 }
 
 // parseAttrs parses the list of attributes passed to the SELECT clause.
-func (p *parser) parseAttrs(attributes *map[string]bool, modifiers *map[string][]query.Modifier) error {
+func (p *parser) parseAttrs(attributes *[]string, modifiers *map[string][]query.Modifier) error {
 	for {
 		ident := p.expect(tokenizer.Identifier)
 		if ident == nil {
@@ -40,7 +36,7 @@ func (p *parser) parseAttrs(attributes *map[string]bool, modifiers *map[string][
 			if err != nil {
 				return err
 			}
-			(*attributes)[attribute.Raw] = true
+			*attributes = append(*attributes, attribute.Raw)
 			(*modifiers)[attribute.Raw] = attrModifiers
 		}
 
