@@ -1,6 +1,7 @@
 package fsql
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 
@@ -34,6 +35,7 @@ func Run(input string) error {
 	}
 
 	for _, result := range results {
+		var buf bytes.Buffer
 		for j, attribute := range q.Attributes {
 			// If the current attribute is "name", pad the output string by `max`
 			// spaces.
@@ -41,12 +43,12 @@ func Run(input string) error {
 			if attribute == "name" {
 				format = fmt.Sprintf("%%-%ds", max)
 			}
-			fmt.Printf(format, result[attribute])
+			buf.WriteString(fmt.Sprintf(format, result[attribute]))
 			if j != len(q.Attributes)-1 {
-				fmt.Print("\t")
+				buf.WriteString("\t")
 			}
 		}
-		fmt.Print("\n")
+		fmt.Printf("%s\n", buf.String())
 	}
 
 	return nil
