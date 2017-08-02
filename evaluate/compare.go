@@ -2,6 +2,7 @@ package evaluate
 
 import (
 	"fmt"
+	"io/ioutil"
 	"regexp"
 	"strings"
 	"time"
@@ -147,4 +148,21 @@ func cmpHash(o *Opts) (result bool, err error) {
 		err = &ErrUnsupportedOperator{o.Attribute, o.Operator}
 	}
 	return result, err
+}
+
+// cmpFile reads the contents of the current file and compares them with the
+// provided input.
+func cmpFile(o *Opts) (result bool, err error) {
+	if o.Operator != tokenizer.Contains {
+		return false, &ErrUnsupportedOperator{o.Attribute, o.Operator}
+	}
+
+	b, err := ioutil.ReadFile(o.Path)
+	if err != nil {
+		// If the file can't be read, we swallow the error and return false (this
+		// file doesn't contain the input value).
+		return false, nil
+	}
+
+	return strings.Contains(string(b), o.Value.(string)), nil
 }

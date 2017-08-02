@@ -37,6 +37,8 @@ func Evaluate(o *Opts) (bool, error) {
 		return evaluateMode(o)
 	case "hash":
 		return evaluateHash(o)
+	case "file":
+		return evaluateFile(o)
 	}
 	return false, &ErrUnsupportedAttribute{o.Attribute}
 }
@@ -102,3 +104,6 @@ func evaluateMode(o *Opts) (bool, error) { return cmpMode(o) }
 
 // evaluateHash evaluates a Condition with attribute `hash`.
 func evaluateHash(o *Opts) (bool, error) { return cmpHash(o) }
+
+// evaluateFile evaluates a Condition with attribute `file`.
+func evaluateFile(o *Opts) (bool, error) { return cmpFile(o) }

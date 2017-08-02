@@ -25,6 +25,7 @@ const (
 	Is
 	Like
 	RLike
+	Contains
 
 	Equals
 	NotEquals
@@ -70,6 +71,8 @@ func (t TokenType) String() string {
 		return "like"
 	case RLike:
 		return "RLike"
+	case Contains:
+		return "Contains"
 	case Equals:
 		return "equal"
 	case NotEquals:

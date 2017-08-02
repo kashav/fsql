@@ -7,13 +7,20 @@ import (
 	"github.com/kshvmdn/fsql/tokenizer"
 )
 
+var validAttributes = map[string]bool{
+	"mode": true,
+	"size": true,
+	"time": true,
+	"hash": true,
+	"name": true,
+	"file": false,
+}
+
 var allAttributes = []string{"mode", "size", "time", "hash", "name"}
 
 func isValidAttribute(attribute string) error {
-	for _, valid := range allAttributes {
-		if attribute == valid {
-			return nil
-		}
+	if _, ok := validAttributes[attribute]; ok {
+		return nil
 	}
 	return &ErrUnknownToken{attribute}
 }

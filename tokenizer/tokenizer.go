@@ -101,6 +101,8 @@ func (t *Tokenizer) Next() *Token {
 			tok.Type = Like
 		case "REGEXP", "RLIKE":
 			tok.Type = RLike
+		case "CONTAINS":
+			tok.Type = Contains
 		default:
 			tok.Type = Identifier
 		}
