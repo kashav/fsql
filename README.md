@@ -5,7 +5,7 @@
 ## Contents
 
 - [Demo](#demo)
-- [Installation](#setup--installation)
+- [Installation](#installation)
 - [Usage](#usage)
 - [Query Syntax](#query-syntax)
 - [Examples](#usage-examples)
