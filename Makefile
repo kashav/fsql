@@ -35,7 +35,7 @@ install:
 .PHONY: get-tools
 get-tools:
 	@echo "+ $@"
-	@go get -u -v github.com/golang/lint/golint
+	@go get -u -v golang.org/x/lint/golint
 
 .PHONY: clean
 clean:
