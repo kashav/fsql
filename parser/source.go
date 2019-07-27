@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/kshvmdn/fsql/tokenizer"
+	"github.com/kashav/fsql/tokenizer"
 )
 
 // parseSourceList parses the list of directories passed to the FROM clause. If

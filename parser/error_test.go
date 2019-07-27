@@ -3,7 +3,7 @@ package parser
 import (
 	"testing"
 
-	"github.com/kshvmdn/fsql/tokenizer"
+	"github.com/kashav/fsql/tokenizer"
 )
 
 func TestParser_ErrUnexpectedToken(t *testing.T) {

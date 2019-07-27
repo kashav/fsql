@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/kshvmdn/fsql/evaluate"
-	"github.com/kshvmdn/fsql/tokenizer"
-	"github.com/kshvmdn/fsql/transform"
+	"github.com/kashav/fsql/evaluate"
+	"github.com/kashav/fsql/tokenizer"
+	"github.com/kashav/fsql/transform"
 )
 
 // ConditionNode represents a single node of a query's WHERE clause tree.

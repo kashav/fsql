@@ -8,8 +8,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/kshvmdn/fsql"
-	"github.com/kshvmdn/fsql/terminal/pager"
+	"github.com/kashav/fsql"
+	"github.com/kashav/fsql/terminal/pager"
 
 	"golang.org/x/crypto/ssh/terminal"
 )

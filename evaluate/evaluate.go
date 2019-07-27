@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/kshvmdn/fsql/tokenizer"
+	"github.com/kashav/fsql/tokenizer"
 )
 
 // Opts represents a set of options used in the evaluate functions.

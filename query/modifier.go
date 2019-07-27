@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/kshvmdn/fsql/transform"
+	"github.com/kashav/fsql/transform"
 )
 
 // Modifier represents an attribute modifier.

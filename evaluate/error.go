@@ -3,7 +3,7 @@ package evaluate
 import (
 	"fmt"
 
-	"github.com/kshvmdn/fsql/tokenizer"
+	"github.com/kashav/fsql/tokenizer"
 )
 
 // ErrUnsupportedAttribute represents an unsupported attribute error.

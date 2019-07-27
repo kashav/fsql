@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/kshvmdn/fsql"
-	"github.com/kshvmdn/fsql/meta"
-	"github.com/kshvmdn/fsql/terminal"
+	"github.com/kashav/fsql"
+	"github.com/kashav/fsql/meta"
+	"github.com/kashav/fsql/terminal"
 )
 
 var options struct {
