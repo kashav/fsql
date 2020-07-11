@@ -1,4 +1,4 @@
-# fsql [![Build Status](https://travis-ci.org/kshvmdn/fsql.svg?branch=master)](https://travis-ci.org/kshvmdn/fsql) [![Go Report Card](https://goreportcard.com/badge/github.com/kshvmdn/fsql)](https://goreportcard.com/report/github.com/kshvmdn/fsql)
+# fsql [![Build Status](https://travis-ci.org/kashav/fsql.svg?branch=master)](https://travis-ci.org/kashav/fsql) [![Go Report Card](https://goreportcard.com/badge/github.com/kashav/fsql)](https://goreportcard.com/report/github.com/kashav/fsql)
 
 >Search through your filesystem with SQL-esque queries.
 
@@ -20,12 +20,12 @@
 
 #### Binaries
 
-[View latest release](https://github.com/kshvmdn/fsql/releases/latest).
+[View latest release](https://github.com/kashav/fsql/releases/latest).
 
 #### Via Go
 
 ```sh
-$ go get -u -v github.com/kshvmdn/fsql/...
+$ go get -u -v github.com/kashav/fsql/...
 $ which fsql
 $GOPATH/bin/fsql
 ```
@@ -41,8 +41,8 @@ $ which fsql
 #### Build manually
 
 ```sh
-$ git clone https://github.com/kshvmdn/fsql.git $GOPATH/src/github.com/kshvmdn/fsql
-$ cd $_ # $GOPATH/src/github.com/kshvmdn/fsql
+$ git clone https://github.com/kashav/fsql.git $GOPATH/src/github.com/kashav/fsql
+$ cd $_ # $GOPATH/src/github.com/kashav/fsql
 $ make
 $ ./fsql
 ```
@@ -248,7 +248,7 @@ The table below lists currently-supported modifiers. Note that the first paramet
 
 Subqueries allow for more complex condition statements. These queries are recursively evaluated while parsing. SELECTing multiple attributes in a subquery is not currently supported; if more than one attribute (or `all`) is provided, only the first attribute is used.
 
-Support for referencing superqueries is not yet implemented, see [#4](https://github.com/kshvmdn/fsql/issues/4) if you'd like to help with this.
+Support for referencing superqueries is not yet implemented, see [#4](https://github.com/kashav/fsql/issues/4) if you'd like to help with this.
 
 **Examples**:
 
@@ -320,7 +320,7 @@ $ fsql
 
 ## Contribute
 
-This project is completely open source, feel free to [open an issue](https://github.com/kshvmdn/fsql/issues) or [submit a pull request](https://github.com/kshvmdn/fsql/pulls).
+This project is completely open source, feel free to [open an issue](https://github.com/kashav/fsql/issues) or [submit a pull request](https://github.com/kashav/fsql/pulls).
 
 Before submitting code, please ensure that tests are passing and the linter is happy. The following commands may be of use, refer to the [Makefile](./Makefile) to see what they do.
 
