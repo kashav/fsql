@@ -1,14 +1,14 @@
 PREFIX ?= $(shell pwd)
 
 NAME = fsql
-PKG = github.com/kshvmdn/$(NAME)
+PKG = github.com/kashav/$(NAME)
 MAIN = $(PKG)/cmd/$(NAME)
 
 DIST_DIR := ${PREFIX}/dist
 DIST_DIRS := find . -type d | sed "s|^\./||" | grep -v \\. | tr '\n' '\0' | xargs -0 -I '{}'
 
 SRCS := $(shell find . -type f -name '*.go')
-PKGS := $(shell go list ./... | grep -v /vendor)
+PKGS := $(shell go list ./...)
 
 VERSION := $(shell cat VERSION)
 GITCOMMIT := $(shell git rev-parse --short HEAD)
@@ -46,13 +46,13 @@ clean:
 .PHONY: fmt
 fmt:
 	@echo "+ $@"
-	@test -z "$$(gofmt -s -l . 2>&1 | grep -v ^vendor/ | tee /dev/stderr)" || \
+	@test -z "$$(gofmt -s -l . 2>&1 | tee /dev/stderr)" || \
 		(echo >&2 "+ please format Go code with 'gofmt -s', or use 'make fmt-save'" && false)
 
 .PHONY: fmt-save
 fmt-save:
 	@echo "+ $@"
-	@gofmt -s -l . 2>&1 | grep -v ^vendor/ | xargs gofmt -s -l -w
+	@gofmt -s -l . 2>&1 | xargs gofmt -s -l -w
 
 .PHONY: vet
 vet:
@@ -64,7 +64,7 @@ lint:
 	@echo "+ $@"
 	$(if $(shell which golint || echo ''),, \
 		$(error Please install golint: `make get-tools`))
-	@test -z "$$(golint ./... 2>&1 | grep -v ^vendor/ | grep -v mock/ | tee /dev/stderr)"
+	@test -z "$$(golint ./... 2>&1 | grep -v mock/ | tee /dev/stderr)"
 
 .PHONY: test
 test:
