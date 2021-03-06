@@ -90,7 +90,7 @@ build-all: $(SRCS) VERSION
 		-ldflags "${LDFLAGS}" \
 		-os="darwin freebsd netbsd openbsd linux solaris windows" \
 		-arch="386 amd64 arm arm64" \
-		-osarch="!darwin/arm !darwin/arm64" \
+		-osarch="!darwin/386 !darwin/arm !darwin/arm64" \
 		-output="$(DIST_DIR)/{{.OS}}-{{.Arch}}/{{.Dir}}" $(MAIN)
 
 .PHONY: dist
