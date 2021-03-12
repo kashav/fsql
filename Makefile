@@ -91,7 +91,7 @@ build-all: $(SRCS) VERSION
 		-os="darwin freebsd netbsd openbsd linux solaris windows" \
 		-arch="386 amd64 arm arm64" \
 		-osarch="!darwin/386 !darwin/arm !darwin/arm64" \
-		-output="$(DIST_DIR)/{{.OS}}-{{.Arch}}/{{.Dir}}" $(MAIN)
+		-output="$(DIST_DIR)/$(NAME)-{{.OS}}-{{.Arch}}/{{.Dir}}" $(MAIN)
 
 .PHONY: dist
 dist: clean build-all
