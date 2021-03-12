@@ -4,7 +4,7 @@ import (
 	"errors"
 	"os"
 
-	"gopkg.in/oleiade/lane.v1"
+	"github.com/oleiade/lane"
 
 	"github.com/kashav/fsql/query"
 	"github.com/kashav/fsql/tokenizer"
