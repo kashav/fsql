@@ -1,4 +1,4 @@
-# fsql [![Build Status](https://travis-ci.org/kashav/fsql.svg?branch=master)](https://travis-ci.org/kashav/fsql) [![Go Report Card](https://goreportcard.com/badge/github.com/kashav/fsql)](https://goreportcard.com/report/github.com/kashav/fsql)
+# fsql
 
 >Search through your filesystem with SQL-esque queries.
 
