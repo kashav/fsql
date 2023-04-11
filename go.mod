@@ -1,6 +1,6 @@
 module github.com/kashav/fsql
 
-go 1.17
+go 1.20
 
 require (
 	github.com/oleiade/lane v1.0.1
