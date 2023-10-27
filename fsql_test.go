@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -361,7 +360,7 @@ func GetAttrs(path string, attrs ...string) []string {
 		// elegant solution when we introduce new modifiers in the future.
 		switch attr {
 		case "hash":
-			b, err := ioutil.ReadFile(path)
+			b, err := os.ReadFile(path)
 			if err != nil {
 				return []string{}
 			}
