@@ -10,7 +10,7 @@ var VERSION string
 
 // Release holds the current release number, should match the value
 // in $GOPATH/src/github.com/kashav/fsql/VERSION.
-const Release = "0.5.1"
+const Release = "0.5.2"
 
 // Meta returns the version/commit string.
 func Meta() string {
