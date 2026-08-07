@@ -21,6 +21,7 @@ func Run(input string) error {
 
 	err = q.Execute(
 		func(path string, info os.FileInfo, result map[string]interface{}) {
+			result["name"] = path
 			results = append(results, result)
 			if !q.HasAttribute("name") {
 				return
